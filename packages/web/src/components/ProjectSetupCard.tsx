@@ -1,0 +1,195 @@
+/**
+ * F113 Phase E: ProjectSetupCard
+ * Shown when a thread opens with a project that needs governance bootstrap.
+ * Three options: clone repo / git init / skip git.
+ * Separate from GovernanceBlockedCard (which handles dispatch-failure retry).
+ */
+import { useCallback, useState } from 'react';
+import { apiFetch } from '@/utils/api-client';
+import { GovernanceShieldIcon } from './icons/GovernanceShieldIcon';
+
+interface ProjectSetupCardProps {
+  projectPath: string;
+  isEmptyDir: boolean;
+  isGitRepo: boolean;
+  gitAvailable: boolean;
+  onComplete: () => void;
+}
+
+type CardState = 'idle' | 'processing' | 'done' | 'error';
+
+const ERROR_LABELS: Record<string, string> = {
+  auth_failed: '认证失败，请检查仓库权限',
+  network_error: '网络错误，无法连接到 Git 服务器',
+  not_found: '仓库不存在，请检查 URL',
+  not_empty: '目录不为空，无法克隆',
+  timeout: '克隆超时（120秒），仓库可能过大',
+  git_unavailable: '未检测到 Git，请先安装',
+};
+
+export function ProjectSetupCard({
+  projectPath,
+  isEmptyDir,
+  isGitRepo,
+  gitAvailable,
+  onComplete,
+}: ProjectSetupCardProps) {
+  const [state, setState] = useState<CardState>('idle');
+  const [cloneUrl, setCloneUrl] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const dirName = projectPath.split(/[/\\]/).pop() ?? projectPath;
+
+  const handleSetup = useCallback(
+    async (mode: 'clone' | 'init' | 'skip') => {
+      setState('processing');
+      setErrorMsg('');
+      try {
+        const payload: Record<string, string> = { projectPath, mode };
+        if (mode === 'clone') payload.gitCloneUrl = cloneUrl.trim();
+
+        const res = await apiFetch('/api/projects/setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          const kind = data.errorKind as string | undefined;
+          setState('error');
+          setErrorMsg(kind ? (ERROR_LABELS[kind] ?? data.error) : (data.error ?? '初始化失败'));
+          return;
+        }
+
+        setState('done');
+        onComplete();
+      } catch {
+        setState('error');
+        setErrorMsg('网络错误');
+      }
+    },
+    [projectPath, cloneUrl, onComplete],
+  );
+
+  if (state === 'done') {
+    return (
+      <div className="flex justify-center mb-3">
+        <div className="max-w-[85%] w-full rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+          <p className="text-sm text-green-700">项目初始化完成，猫猫已就绪</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="project-setup-card" className="flex justify-center mb-3">
+      <div className="max-w-[85%] w-full rounded-lg border border-cocreator-primary/20 bg-cocreator-bg/30 p-5">
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-4">
+          <GovernanceShieldIcon className="w-5 h-5 text-cocreator-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-cafe-black">发现了一片新大陆！</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              项目 <code className="px-1 py-0.5 bg-cocreator-bg rounded text-[10px]">{dirName}</code>{' '}
+              {isEmptyDir ? '是空目录，' : ''}需要初始化后猫猫才能工作。
+            </p>
+          </div>
+        </div>
+
+        {state === 'error' && (
+          <div className="mb-3 px-3 py-2 rounded bg-red-50 border border-red-200">
+            <p className="text-xs text-red-600">{errorMsg}</p>
+            <button type="button" onClick={() => setState('idle')} className="text-xs text-red-500 underline mt-1">
+              重试
+            </button>
+          </div>
+        )}
+
+        {state === 'processing' && (
+          <div className="text-center py-4">
+            <span className="text-sm text-gray-500 animate-pulse">正在初始化项目...</span>
+          </div>
+        )}
+
+        {state === 'idle' && (
+          <div className="space-y-2.5">
+            {/* Option 1: Clone (primary, recommended) */}
+            {isEmptyDir && gitAvailable && !isGitRepo && (
+              <div className="rounded-lg border border-cocreator-primary/30 p-3 bg-white">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base">🔗</span>
+                  <span className="text-sm font-medium text-cafe-black">克隆 Git 仓库</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cocreator-primary/10 text-cocreator-primary">
+                    推荐
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500 mb-2">将现有代码拉取到此目录，包含完整历史记录。</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={cloneUrl}
+                    onChange={(e) => setCloneUrl(e.target.value)}
+                    placeholder="https:// 或 git@..."
+                    className="flex-1 text-xs px-3 py-2 rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-cocreator-primary"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing && cloneUrl.trim()) handleSetup('clone');
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleSetup('clone')}
+                    disabled={!cloneUrl.trim()}
+                    className="px-4 py-2 rounded-lg bg-cocreator-primary hover:bg-cocreator-dark text-white text-xs font-medium transition-colors disabled:opacity-40"
+                  >
+                    克隆并初始化
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Option 2: Git init (secondary) */}
+            {gitAvailable && !isGitRepo && (
+              <div className="rounded-lg border border-gray-200 p-3 bg-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🪄</span>
+                    <div>
+                      <span className="text-sm font-medium text-cafe-black">初始化全新项目</span>
+                      <p className="text-[11px] text-gray-500">执行 git init 并铺设治理文件，从零开始。</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSetup('init')}
+                    className="px-4 py-2 rounded-lg border border-cocreator-primary text-cocreator-primary text-xs font-medium hover:bg-cocreator-bg transition-colors"
+                  >
+                    初始化
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Option 3: Skip git (tertiary, de-emphasized) */}
+            <div className="flex items-center justify-between px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">⏩</span>
+                <span className="text-xs text-gray-500">
+                  {isGitRepo ? '已检测到 Git，仅需初始化治理文件' : '跳过 Git，直接开始'}
+                </span>
+                {!isGitRepo && <span className="text-[10px] text-amber-600">部分协作功能不可用</span>}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSetup('skip')}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                {isGitRepo ? '初始化治理' : '仍然继续'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
