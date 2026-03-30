@@ -201,12 +201,13 @@ export function DirectoryBrowser({ initialPath, activeProjectPath, onSelect, onC
         <button
           type="button"
           onClick={handleStartCreateDir}
-          className="ml-auto flex-shrink-0 w-6 h-6 flex items-center justify-center rounded hover:bg-cocreator-bg text-gray-400 hover:text-cocreator-primary transition-colors"
+          className="ml-auto flex-shrink-0 px-2 py-1 flex items-center gap-1 rounded-md border border-cocreator-primary/30 bg-cocreator-bg/50 text-cocreator-primary hover:bg-cocreator-bg hover:border-cocreator-primary/50 transition-colors text-[11px] font-medium"
           title="新建文件夹"
         >
           <svg aria-hidden="true" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
             <path d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" />
           </svg>
+          新建
         </button>
       </div>
 
@@ -224,7 +225,10 @@ export function DirectoryBrowser({ initialPath, activeProjectPath, onSelect, onC
                 onChange={(e) => setNewDirName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCreateDir();
-                  if (e.key === 'Escape') { setCreatingDir(false); setMkdirError(null); }
+                  if (e.key === 'Escape') {
+                    setCreatingDir(false);
+                    setMkdirError(null);
+                  }
                 }}
                 placeholder="文件夹名称..."
                 className="flex-1 text-sm px-2 py-1 rounded border border-cocreator-primary/30 bg-white focus:outline-none focus:ring-1 focus:ring-cocreator-primary"
@@ -240,7 +244,10 @@ export function DirectoryBrowser({ initialPath, activeProjectPath, onSelect, onC
               </button>
               <button
                 type="button"
-                onClick={() => { setCreatingDir(false); setMkdirError(null); }}
+                onClick={() => {
+                  setCreatingDir(false);
+                  setMkdirError(null);
+                }}
                 className="text-xs text-gray-400 hover:text-gray-600"
               >
                 取消

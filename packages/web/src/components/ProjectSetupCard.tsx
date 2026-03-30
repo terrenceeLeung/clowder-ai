@@ -170,12 +170,12 @@ export function ProjectSetupCard({
               </div>
             )}
 
-            {/* Option 3: Skip git (tertiary, de-emphasized) */}
+            {/* Option 3: Skip git — still bootstraps governance */}
             <div className="flex items-center justify-between px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className="text-base">⏩</span>
                 <span className="text-xs text-gray-500">
-                  {isGitRepo ? '已检测到 Git，仅需初始化治理文件' : '跳过 Git，直接开始'}
+                  {isGitRepo ? '已检测到 Git，仅需初始化协作配置' : '跳过 Git，仅初始化协作配置'}
                 </span>
                 {!isGitRepo && <span className="text-[10px] text-amber-600">部分协作功能不可用</span>}
               </div>
@@ -184,9 +184,14 @@ export function ProjectSetupCard({
                 onClick={() => handleSetup('skip')}
                 className="text-xs text-gray-500 hover:text-gray-700 underline"
               >
-                {isGitRepo ? '初始化治理' : '仍然继续'}
+                初始化协作
               </button>
             </div>
+
+            {/* Explanation of what "初始化" does */}
+            <p className="text-[10px] text-gray-400 px-3 mt-1">
+              初始化将写入协作规则（CLAUDE.md 等）、Skills 链接和方法论模板。已有文件不会被覆盖。
+            </p>
           </div>
         )}
       </div>
