@@ -41,6 +41,7 @@ export function useGovernanceStatus(projectPath: string | undefined): UseGoverna
     const pp = projectPathRef.current;
     if (!pp || pp === 'default' || pp === 'lobby') {
       setStatus(null);
+      setLoading(false);
       return;
     }
     setLoading(true);
