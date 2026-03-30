@@ -1,8 +1,12 @@
 /**
  * F113 Phase E: Hook to fetch governance status for a project path.
  * Used by ChatContainer to decide whether to show ProjectSetupCard.
+ *
+ * Uses a ref for projectPath so `refetch` always reads the latest value,
+ * solving the first-create timing issue where storeThreads → projectPath
+ * hasn't propagated yet when ChatContainer first mounts.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../utils/api-client';
 
 export interface GovernanceStatus {
@@ -23,18 +27,20 @@ interface UseGovernanceStatusResult {
 export function useGovernanceStatus(projectPath: string | undefined): UseGovernanceStatusResult {
   const [status, setStatus] = useState<GovernanceStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const projectPathRef = useRef(projectPath);
+  projectPathRef.current = projectPath;
 
-  const fetch_ = useCallback(async () => {
-    if (!projectPath || projectPath === 'default' || projectPath === 'lobby') {
+  const refetch = useCallback(async () => {
+    const pp = projectPathRef.current;
+    if (!pp || pp === 'default' || pp === 'lobby') {
       setStatus(null);
       return;
     }
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/governance/status?projectPath=${encodeURIComponent(projectPath)}`);
+      const res = await apiFetch(`/api/governance/status?projectPath=${encodeURIComponent(pp)}`);
       if (res.ok) {
-        const data = await res.json();
-        setStatus(data);
+        setStatus(await res.json());
       } else {
         setStatus(null);
       }
@@ -43,11 +49,12 @@ export function useGovernanceStatus(projectPath: string | undefined): UseGoverna
     } finally {
       setLoading(false);
     }
-  }, [projectPath]);
+  }, []); // stable — reads projectPath from ref
 
+  // Auto-fetch when projectPath changes
   useEffect(() => {
-    fetch_();
-  }, [fetch_]);
+    refetch();
+  }, [projectPath, refetch]);
 
-  return { status, loading, refetch: fetch_ };
+  return { status, loading, refetch };
 }

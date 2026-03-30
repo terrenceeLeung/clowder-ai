@@ -72,11 +72,38 @@ export function ProjectSetupCard({
     [projectPath, cloneUrl, onComplete],
   );
 
-  if (state === 'done') {
+  // Processing and done states: full card with icon (matches GovernanceBlockedCard)
+  if (state === 'processing' || state === 'done') {
     return (
-      <div className="flex justify-center mb-3">
-        <div className="max-w-[85%] w-full rounded-lg border border-green-200 bg-green-50 p-4 text-center">
-          <p className="text-sm text-green-700">项目初始化完成，猫猫已就绪</p>
+      <div data-testid="project-setup-card" className="flex justify-center mb-3">
+        <div
+          className={`max-w-[85%] w-full rounded-lg border p-4 ${state === 'done' ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}
+        >
+          <div className="flex items-start gap-3">
+            <GovernanceShieldIcon
+              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${state === 'done' ? 'text-green-500' : 'text-amber-500'}`}
+            />
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${state === 'done' ? 'text-green-800' : 'text-amber-800'}`}>
+                项目{' '}
+                <code className={`px-1 py-0.5 rounded text-xs ${state === 'done' ? 'bg-green-100' : 'bg-amber-100'}`}>
+                  {dirName}
+                </code>{' '}
+                {state === 'done' ? '初始化完成' : '正在初始化'}
+              </p>
+              <p className={`text-xs mt-1 ${state === 'done' ? 'text-green-600' : 'text-amber-600'}`}>
+                {state === 'done'
+                  ? '协作规则（CLAUDE.md 等）、Skills 链接和方法论模板已就绪。'
+                  : '正在写入协作规则（CLAUDE.md 等）、Skills 链接和方法论模板...'}
+              </p>
+              <div className="mt-2">
+                {state === 'processing' && (
+                  <span className="text-sm text-amber-700 animate-pulse">正在初始化治理...</span>
+                )}
+                {state === 'done' && <span className="text-sm text-green-700">治理初始化完成，猫猫已就绪</span>}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -103,12 +130,6 @@ export function ProjectSetupCard({
             <button type="button" onClick={() => setState('idle')} className="text-xs text-red-500 underline mt-1">
               重试
             </button>
-          </div>
-        )}
-
-        {state === 'processing' && (
-          <div className="text-center py-4">
-            <span className="text-sm text-gray-500 animate-pulse">正在初始化项目...</span>
           </div>
         )}
 
