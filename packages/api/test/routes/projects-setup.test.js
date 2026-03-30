@@ -45,8 +45,8 @@ describe('POST /api/projects/setup', () => {
     // Governance files should be created
     const entries = await readdir(testRoot, { recursive: true });
     const entryNames = entries.map(String);
-    // At minimum, some governance artifact should exist
-    assert.ok(body.governanceReport != null || entryNames.length >= 0);
+    // Governance bootstrap must produce at least one artifact
+    assert.ok(entryNames.length > 0, 'skip mode should still create governance files');
   });
 
   it('mode=init runs git init then governance bootstrap', async () => {

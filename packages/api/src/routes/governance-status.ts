@@ -27,8 +27,9 @@ async function isEmptyDir(dirPath: string): Promise<boolean> {
 
 async function isGitRepo(dirPath: string): Promise<boolean> {
   try {
-    const gitStat = await stat(join(dirPath, '.git'));
-    return gitStat.isDirectory();
+    // .git can be a directory (normal repo) or a file (worktree: "gitdir: ...")
+    await stat(join(dirPath, '.git'));
+    return true;
   } catch {
     return false;
   }

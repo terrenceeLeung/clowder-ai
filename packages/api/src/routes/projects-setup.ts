@@ -34,7 +34,7 @@ function classifyGitError(exitCode: number | null, stderr: string, killed: boole
     if (lc.includes('authentication') || lc.includes('could not read') || lc.includes('permission denied')) {
       return { ok: false, errorKind: 'auth_failed', error: 'Authentication failed' };
     }
-    if (lc.includes('not found') || lc.includes('does not exist') || lc.includes('repository') ) {
+    if (lc.includes('not found') || lc.includes('does not exist') || lc.includes('repository')) {
       return { ok: false, errorKind: 'not_found', error: 'Repository not found' };
     }
   }
@@ -125,6 +125,13 @@ export const projectSetupRoute: FastifyPluginAsync = async (app) => {
       return { error: 'Project path not allowed' };
     }
 
+    // Guard: never bootstrap Cat Cafe's own directory (same as governance/confirm)
+    const catCafeRoot = findMonorepoRoot(process.cwd());
+    if (validated === catCafeRoot) {
+      reply.status(400);
+      return { error: 'Cannot setup governance for Cat Cafe itself' };
+    }
+
     // ── Mode: clone ──
     if (mode === 'clone') {
       if (!gitCloneUrl) {
@@ -137,7 +144,11 @@ export const projectSetupRoute: FastifyPluginAsync = async (app) => {
       }
       if (!(await isEmptyDir(validated))) {
         reply.status(409);
-        return { ok: false, errorKind: 'not_empty', error: 'Directory is not empty. Clone requires an empty directory.' };
+        return {
+          ok: false,
+          errorKind: 'not_empty',
+          error: 'Directory is not empty. Clone requires an empty directory.',
+        };
       }
       const result = await gitClone(gitCloneUrl, validated);
       if (!result.ok) {
@@ -148,12 +159,10 @@ export const projectSetupRoute: FastifyPluginAsync = async (app) => {
 
     // ── Mode: init ──
     if (mode === 'init') {
-      // Check if already a git repo
+      // Check if already a git repo (.git can be dir or file in worktrees)
       try {
-        const gitStat = await stat(join(validated, '.git'));
-        if (gitStat.isDirectory()) {
-          // Already initialized — skip git init, still run governance
-        }
+        await stat(join(validated, '.git'));
+        // Already initialized — skip git init, still run governance
       } catch {
         await gitInit(validated);
       }
@@ -161,7 +170,6 @@ export const projectSetupRoute: FastifyPluginAsync = async (app) => {
 
     // ── Governance bootstrap (all modes) ──
     try {
-      const catCafeRoot = findMonorepoRoot(process.cwd());
       const { GovernanceBootstrapService } = await import('../config/governance/governance-bootstrap.js');
       const service = new GovernanceBootstrapService(catCafeRoot);
       const report = await service.bootstrap(validated, { dryRun: false });

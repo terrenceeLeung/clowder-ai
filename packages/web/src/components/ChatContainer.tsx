@@ -305,7 +305,7 @@ export function ChatContainer({ threadId }: ChatContainerProps) {
   // F113-E: Fetch governance status for the current project (drives ProjectSetupCard)
   const currentProjectPath = useChatStore((s) => s.currentProjectPath);
   const { status: govStatus, refetch: refetchGovStatus } = useGovernanceStatus(currentProjectPath);
-  const showSetupCard = !!(govStatus?.needsBootstrap && messages.length === 0);
+  const showSetupCard = !!((govStatus?.needsBootstrap || govStatus?.needsConfirmation) && messages.length === 0);
 
   const socketCallbacks = useChatSocketCallbacks({
     threadId,
