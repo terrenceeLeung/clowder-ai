@@ -1,10 +1,10 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import Fastify from 'fastify';
 import { projectSetupRoute } from '../../dist/routes/projects-setup.js';
@@ -106,7 +106,11 @@ describe('POST /api/projects/setup', () => {
       method: 'POST',
       url: '/api/projects/setup',
       headers: HEADERS,
-      payload: { projectPath: testRoot, mode: 'clone', gitCloneUrl: 'https://github.com/nonexistent-org-xyz/nonexistent-repo-xyz.git' },
+      payload: {
+        projectPath: testRoot,
+        mode: 'clone',
+        gitCloneUrl: 'https://github.com/nonexistent-org-xyz/nonexistent-repo-xyz.git',
+      },
     });
     // Should fail with a classified error
     assert.ok(res.statusCode >= 400);
