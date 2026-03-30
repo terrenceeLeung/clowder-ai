@@ -232,7 +232,6 @@ export function DirectoryBrowser({ initialPath, activeProjectPath, onSelect, onC
                 }}
                 placeholder="文件夹名称..."
                 className="flex-1 text-sm px-2 py-1 rounded border border-cocreator-primary/30 bg-white focus:outline-none focus:ring-1 focus:ring-cocreator-primary"
-                autoFocus
               />
               <button
                 type="button"
