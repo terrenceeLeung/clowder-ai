@@ -41,7 +41,7 @@ function classifyGitError(exitCode: number | null, stderr: string, killed: boole
   if (lc.includes('unable to access') || lc.includes('could not resolve')) {
     return { ok: false, errorKind: 'network_error', error: 'Network error' };
   }
-  return { ok: false, errorKind: 'not_found', error: stderr.slice(0, 500) || 'Clone failed' };
+  return { ok: false, errorKind: 'unknown', error: stderr.slice(0, 500) || 'Clone failed' };
 }
 
 async function gitClone(url: string, targetPath: string): Promise<CloneResult> {

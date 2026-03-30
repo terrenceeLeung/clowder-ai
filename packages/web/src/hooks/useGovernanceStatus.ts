@@ -29,8 +29,15 @@ export function useGovernanceStatus(projectPath: string | undefined): UseGoverna
   const [loading, setLoading] = useState(false);
   const projectPathRef = useRef(projectPath);
   projectPathRef.current = projectPath;
+  // Abort stale requests when projectPath changes or component unmounts
+  const abortRef = useRef<AbortController | null>(null);
 
   const refetch = useCallback(async () => {
+    // Cancel any in-flight request before starting a new one
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+
     const pp = projectPathRef.current;
     if (!pp || pp === 'default' || pp === 'lobby') {
       setStatus(null);
@@ -38,22 +45,28 @@ export function useGovernanceStatus(projectPath: string | undefined): UseGoverna
     }
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/governance/status?projectPath=${encodeURIComponent(pp)}`);
+      const res = await apiFetch(`/api/governance/status?projectPath=${encodeURIComponent(pp)}`, { signal: ac.signal });
+      if (ac.signal.aborted) return; // guard: response arrived after abort
       if (res.ok) {
         setStatus(await res.json());
       } else {
         setStatus(null);
       }
-    } catch {
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       setStatus(null);
     } finally {
-      setLoading(false);
+      if (!ac.signal.aborted) setLoading(false);
     }
   }, []); // stable — reads projectPath from ref
 
-  // Auto-fetch when projectPath changes
+  // Auto-fetch when projectPath changes; cleanup aborts stale request.
+  // projectPath is intentional: ref assignment (line above) runs during render,
+  // so refetch() always reads the latest value — but we need the dep to re-trigger.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: projectPath triggers refetch
   useEffect(() => {
     refetch();
+    return () => abortRef.current?.abort();
   }, [projectPath, refetch]);
 
   return { status, loading, refetch };

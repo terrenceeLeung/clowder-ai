@@ -25,6 +25,7 @@ const ERROR_LABELS: Record<string, string> = {
   not_empty: '目录不为空，无法克隆',
   timeout: '克隆超时（120秒），仓库可能过大',
   git_unavailable: '未检测到 Git，请先安装',
+  unknown: '克隆失败，请检查 Git 配置或仓库状态',
 };
 
 export function ProjectSetupCard({
