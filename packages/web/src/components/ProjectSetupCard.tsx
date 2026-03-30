@@ -6,7 +6,7 @@
  */
 import { useCallback, useState } from 'react';
 import { apiFetch } from '@/utils/api-client';
-import { GovernanceShieldIcon } from './icons/GovernanceShieldIcon';
+import { DoneCatIcon, SetupCatIcon, WorkingCatIcon } from './icons/ProjectSetupIcons';
 
 interface ProjectSetupCardProps {
   projectPath: string;
@@ -80,10 +80,12 @@ export function ProjectSetupCard({
         <div
           className={`max-w-[85%] w-full rounded-lg border p-4 ${state === 'done' ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}
         >
-          <div className="flex items-start gap-3">
-            <GovernanceShieldIcon
-              className={`w-5 h-5 flex-shrink-0 mt-0.5 ${state === 'done' ? 'text-green-500' : 'text-amber-500'}`}
-            />
+          <div className="flex items-start gap-4">
+            {state === 'done' ? (
+              <DoneCatIcon className="w-12 h-12 flex-shrink-0 text-green-500" />
+            ) : (
+              <WorkingCatIcon className="w-12 h-12 flex-shrink-0 text-amber-500" />
+            )}
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-medium ${state === 'done' ? 'text-green-800' : 'text-amber-800'}`}>
                 项目{' '}
@@ -114,8 +116,8 @@ export function ProjectSetupCard({
     <div data-testid="project-setup-card" className="flex justify-center mb-3">
       <div className="max-w-[85%] w-full rounded-lg border border-cocreator-primary/20 bg-cocreator-bg/30 p-5">
         {/* Header */}
-        <div className="flex items-start gap-3 mb-4">
-          <GovernanceShieldIcon className="w-5 h-5 text-cocreator-primary flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-4 mb-4">
+          <SetupCatIcon className="w-12 h-12 text-cocreator-primary flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-cafe-black">发现了一片新大陆！</p>
             <p className="text-xs text-gray-500 mt-0.5">
