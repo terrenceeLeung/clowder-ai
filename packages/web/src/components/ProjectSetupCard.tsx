@@ -195,21 +195,27 @@ export function ProjectSetupCard({
             )}
 
             {/* Option 3: Skip git — still bootstraps governance */}
-            <div className="flex items-center justify-between px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-base">⏩</span>
-                <span className="text-xs text-gray-500">
-                  {isGitRepo ? '已检测到 Git，仅需初始化协作配置' : '跳过 Git，仅初始化协作配置'}
-                </span>
-                {!isGitRepo && <span className="text-[10px] text-amber-600">部分协作功能不可用</span>}
+            <div className="rounded-lg border border-gray-200 p-3 bg-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">⏩</span>
+                  <div>
+                    <span className="text-sm font-medium text-cafe-black">
+                      {isGitRepo ? '初始化协作配置' : '跳过 Git，仅初始化协作'}
+                    </span>
+                    <p className="text-[11px] text-gray-500">
+                      {isGitRepo ? '已检测到 Git，仅需铺设协作规则。' : '不使用版本控制，部分协作功能不可用。'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleSetup('skip')}
+                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors"
+                >
+                  {isGitRepo ? '初始化' : '跳过'}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => handleSetup('skip')}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-              >
-                初始化协作
-              </button>
             </div>
 
             {/* Explanation of what "初始化" does */}
