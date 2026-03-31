@@ -548,6 +548,7 @@ export function ChatContainer({ threadId }: ChatContainerProps) {
                 {showSetupCard && govStatus && (
                   <div className="mt-6 text-left">
                     <ProjectSetupCard
+                      key={threadId}
                       projectPath={currentProjectPath}
                       isEmptyDir={govStatus.isEmptyDir}
                       isGitRepo={govStatus.isGitRepo}
