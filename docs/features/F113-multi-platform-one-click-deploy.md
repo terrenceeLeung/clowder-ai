@@ -41,7 +41,19 @@ UX 要点：
 - **前端**: `ProjectSetupCard` 三栏卡片设计（暹罗猫"魔法卡片列阵"方案）
 - **治理联动**: `useGovernanceStatus` hook 驱动卡片展示/隐藏
 
-Phase E 交付行为：
+设计决策：
+- **三栏卡片 vs 多步向导**：选择一屏展示三个选项（clone/init/skip）而非多步向导，因为选项少且互斥，一屏更快
+- **`key={threadId}` 强制重挂载 vs `useEffect` 重置**：选 key 方案，因为组件内部状态较多（state + cloneUrl + errorMsg），逐个重置易遗漏
+- **PNG 插画 vs SVG**：选 PNG（Gemini 生成），因为动漫风格手绘感 SVG 无法表达
+
+状态机：`idle` → `processing` → `done` | `error`（error 可重试回 `idle`）
+
+API 契约：
+- `POST /api/projects/setup` body: `{ projectPath, mode: 'clone'|'init'|'skip', gitCloneUrl? }`
+- 成功: `200 { ok: true }`
+- 失败: `4xx/5xx { error, errorKind? }` errorKind 枚举: auth_failed / network_error / not_found / not_empty / timeout / git_unavailable / unknown
+
+交付行为：
 1. 空目录打开 → 展示三栏初始化卡片（clone/init/skip）
 2. 用户选择后 → 展示 Working 猫猫动画（最少 1.2s）→ Done 猫猫
 3. 切换 thread → 卡片状态正确重置（`key={threadId}` 强制重挂载）
