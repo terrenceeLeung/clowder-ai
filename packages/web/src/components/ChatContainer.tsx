@@ -304,21 +304,22 @@ export function ChatContainer({ threadId }: ChatContainerProps) {
 
   // F113-E: Fetch governance status for the current project (drives ProjectSetupCard)
   const currentProjectPath = useChatStore((s) => s.currentProjectPath);
-  const { status: govStatus } = useGovernanceStatus(currentProjectPath);
+  const { status: govStatus, refetch: govRefetch } = useGovernanceStatus(currentProjectPath);
   const [setupDone, setSetupDone] = useState(false);
   // Show card when: needs setup (idle) OR just completed setup (done) — only in empty threads
   const showSetupCard = !!(
     (govStatus?.needsBootstrap || govStatus?.needsConfirmation || setupDone) &&
     messages.length === 0
   );
-  // Reset setupDone on thread switch
+  // Reset setupDone + refetch governance on thread switch (same project may have stale status)
   const prevThreadSetup = useRef(threadId);
   useEffect(() => {
     if (prevThreadSetup.current !== threadId) {
       prevThreadSetup.current = threadId;
       setSetupDone(false);
+      govRefetch();
     }
-  }, [threadId]);
+  }, [threadId, govRefetch]);
 
   const socketCallbacks = useChatSocketCallbacks({
     threadId,
@@ -551,7 +552,10 @@ export function ChatContainer({ threadId }: ChatContainerProps) {
                       isEmptyDir={govStatus.isEmptyDir}
                       isGitRepo={govStatus.isGitRepo}
                       gitAvailable={govStatus.gitAvailable}
-                      onComplete={() => setSetupDone(true)}
+                      onComplete={() => {
+                        setSetupDone(true);
+                        govRefetch();
+                      }}
                     />
                   </div>
                 )}

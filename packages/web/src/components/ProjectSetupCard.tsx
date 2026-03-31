@@ -6,7 +6,8 @@
  */
 import { useCallback, useState } from 'react';
 import { apiFetch } from '@/utils/api-client';
-import { DoneCatIcon, SetupCatIcon, WorkingCatIcon } from './icons/ProjectSetupIcons';
+
+/* Anime-style cat illustrations generated via Gemini */
 
 interface ProjectSetupCardProps {
   projectPath: string;
@@ -81,11 +82,11 @@ export function ProjectSetupCard({
           className={`max-w-[85%] w-full rounded-lg border p-4 ${state === 'done' ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}
         >
           <div className="flex items-start gap-4">
-            {state === 'done' ? (
-              <DoneCatIcon className="w-12 h-12 flex-shrink-0 text-green-500" />
-            ) : (
-              <WorkingCatIcon className="w-12 h-12 flex-shrink-0 text-amber-500" />
-            )}
+            <img
+              src={state === 'done' ? '/images/setup-cat-done.png' : '/images/setup-cat-working.png'}
+              alt={state === 'done' ? '完成' : '工作中'}
+              className="w-20 h-20 flex-shrink-0 object-contain"
+            />
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-medium ${state === 'done' ? 'text-green-800' : 'text-amber-800'}`}>
                 项目{' '}
@@ -117,7 +118,7 @@ export function ProjectSetupCard({
       <div className="max-w-[85%] w-full rounded-lg border border-cocreator-primary/20 bg-cocreator-bg/30 p-5">
         {/* Header */}
         <div className="flex items-start gap-4 mb-4">
-          <SetupCatIcon className="w-12 h-12 text-cocreator-primary flex-shrink-0" />
+          <img src="/images/setup-cat-idle.png" alt="设置" className="w-20 h-20 flex-shrink-0 object-contain" />
           <div>
             <p className="text-sm font-medium text-cafe-black">发现了一片新大陆！</p>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -137,19 +138,23 @@ export function ProjectSetupCard({
         )}
 
         {state === 'idle' && (
-          <div className="space-y-2.5">
-            {/* Option 1: Clone (primary, recommended) */}
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500 font-medium">请选择你的开荒方式：</p>
+
+            {/* Option 1: Clone (recommended) */}
             {isEmptyDir && gitAvailable && !isGitRepo && (
-              <div className="rounded-lg border border-cocreator-primary/30 p-3 bg-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-base">🔗</span>
-                  <span className="text-sm font-medium text-cafe-black">克隆 Git 仓库</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cocreator-primary/10 text-cocreator-primary">
-                    推荐
-                  </span>
+              <div className="rounded-xl ring-1 ring-cocreator-primary/30 p-4 hover:bg-cocreator-primary/[0.03] transition-colors">
+                <div className="flex items-center gap-3 mb-2.5">
+                  <span className="text-lg">🐱</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-cafe-black">克隆 Git 仓库</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cocreator-primary/10 text-cocreator-primary font-medium">
+                      推荐
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[11px] text-gray-500 mb-2">将现有代码拉取到此目录，包含完整历史记录。</p>
-                <div className="flex gap-2">
+                <p className="text-[11px] text-gray-500 mb-3 ml-8">将现有的代码宝藏搬到新营地，包含完整历史记录。</p>
+                <div className="flex gap-2 ml-8">
                   <input
                     type="text"
                     value={cloneUrl}
@@ -164,62 +169,58 @@ export function ProjectSetupCard({
                     type="button"
                     onClick={() => handleSetup('clone')}
                     disabled={!cloneUrl.trim()}
-                    className="px-4 py-2 rounded-lg bg-cocreator-primary hover:bg-cocreator-dark text-white text-xs font-medium transition-colors disabled:opacity-40"
+                    className="min-w-[6.5rem] px-4 py-2 rounded-lg bg-cocreator-primary hover:bg-cocreator-dark text-white text-xs font-medium transition-colors disabled:opacity-40"
                   >
-                    克隆并初始化
+                    🐾 立即拉取
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Option 2: Git init (secondary) */}
+            {/* Option 2: Git init */}
             {gitAvailable && !isGitRepo && (
-              <div className="rounded-lg border border-gray-200 p-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🪄</span>
-                    <div>
-                      <span className="text-sm font-medium text-cafe-black">初始化全新项目</span>
-                      <p className="text-[11px] text-gray-500">执行 git init 并铺设治理文件，从零开始。</p>
-                    </div>
+              <div className="rounded-xl ring-1 ring-cocreator-primary/30 p-4 hover:bg-cocreator-primary/[0.03] transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🐾</span>
+                  <div className="flex-1">
+                    <span className="text-sm font-semibold text-cafe-black">初始化全新项目</span>
+                    <p className="text-[11px] text-gray-500 mt-0.5">从零开始，为你铺设标准的协作规则和猫砂盆。</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleSetup('init')}
-                    className="px-4 py-2 rounded-lg border border-cocreator-primary text-cocreator-primary text-xs font-medium hover:bg-cocreator-bg transition-colors"
+                    className="min-w-[6.5rem] px-4 py-2 rounded-lg bg-cocreator-primary hover:bg-cocreator-dark text-white text-xs font-medium transition-colors"
                   >
-                    初始化
+                    🐾 初始化
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Option 3: Skip git — still bootstraps governance */}
-            <div className="rounded-lg border border-gray-200 p-3 bg-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">⏩</span>
-                  <div>
-                    <span className="text-sm font-medium text-cafe-black">
-                      {isGitRepo ? '初始化协作配置' : '跳过 Git，仅初始化协作'}
-                    </span>
-                    <p className="text-[11px] text-gray-500">
-                      {isGitRepo ? '已检测到 Git，仅需铺设协作规则。' : '不使用版本控制，部分协作功能不可用。'}
-                    </p>
-                  </div>
+            {/* Option 3: Skip git */}
+            <div className="rounded-xl ring-1 ring-cocreator-primary/30 p-4 hover:bg-cocreator-primary/[0.03] transition-colors">
+              <div className="flex items-center gap-3">
+                <span className="text-lg">😺</span>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-cafe-black">
+                    {isGitRepo ? '初始化协作配置' : '跳过 Git，仅初始化协作'}
+                  </span>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    {isGitRepo ? '已检测到 Git，仅需铺设协作规则。' : '无版本控制，时光回溯和代码审查功能将不可用。'}
+                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleSetup('skip')}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 text-xs font-medium hover:bg-gray-50 transition-colors"
+                  className="min-w-[6.5rem] px-4 py-2 rounded-lg bg-cocreator-primary hover:bg-cocreator-dark text-white text-xs font-medium transition-colors"
                 >
-                  {isGitRepo ? '初始化' : '跳过'}
+                  🐾 {isGitRepo ? '初始化' : '跳过'}
                 </button>
               </div>
             </div>
 
-            {/* Explanation of what "初始化" does */}
-            <p className="text-[10px] text-gray-400 px-3 mt-1">
+            {/* Explanation */}
+            <p className="text-[10px] text-gray-400 px-1 mt-1">
               初始化将写入协作规则（CLAUDE.md 等）、Skills 链接和方法论模板。已有文件不会被覆盖。
             </p>
           </div>
