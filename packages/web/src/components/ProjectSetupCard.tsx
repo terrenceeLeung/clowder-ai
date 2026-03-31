@@ -50,11 +50,16 @@ export function ProjectSetupCard({
         const payload: Record<string, string> = { projectPath, mode };
         if (mode === 'clone') payload.gitCloneUrl = cloneUrl.trim();
 
-        const res = await apiFetch('/api/projects/setup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        // Run API call and minimum display time in parallel so fast ops don't flash
+        const MIN_DISPLAY_MS = 1200;
+        const [res] = await Promise.all([
+          apiFetch('/api/projects/setup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }),
+          new Promise((r) => setTimeout(r, MIN_DISPLAY_MS)),
+        ]);
 
         if (!res.ok) {
           const data = await res.json();
@@ -81,7 +86,7 @@ export function ProjectSetupCard({
         <div
           className={`max-w-[85%] w-full rounded-lg border p-4 ${state === 'done' ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}`}
         >
-          <div className="flex items-start gap-4">
+          <div className="flex items-center gap-4">
             <img
               src={state === 'done' ? '/images/setup-cat-done.png' : '/images/setup-cat-working.png'}
               alt={state === 'done' ? '完成' : '工作中'}
@@ -117,7 +122,7 @@ export function ProjectSetupCard({
     <div data-testid="project-setup-card" className="flex justify-center mb-3">
       <div className="max-w-[85%] w-full rounded-lg border border-cocreator-primary/20 bg-cocreator-bg/30 p-5">
         {/* Header */}
-        <div className="flex items-start gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4">
           <img src="/images/setup-cat-idle.png" alt="设置" className="w-20 h-20 flex-shrink-0 object-contain" />
           <div>
             <p className="text-sm font-medium text-cafe-black">发现了一片新大陆！</p>
