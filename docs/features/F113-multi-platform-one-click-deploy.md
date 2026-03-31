@@ -33,13 +33,16 @@ UX 要点：
 3. 手动路径输入 — 底部保留输入框（高级用户 / 系统路径）
 4. 全平台统一体验 — macOS/Windows/Linux 完全一致
 
-### Phase E: 项目初始化引导卡片（PR #299）
+### Phase E: 目录创建 + 项目初始化引导（PR #299）
 
-新项目打开时展示 `ProjectSetupCard`，引导用户选择 clone/init/skip 三种方式初始化治理：
+> **归属拆分**：PR #299 含两个 feature 的改动。ProjectSetupCard + governance 端点归属 **F070**（Portable Governance UX 增强，见 F070 doc Post-Closure Gap Fixes）。DirectoryBrowser 新建文件夹功能归属本 F113。
 
-- **后端**: `POST /api/projects/setup` 路由，支持 clone（含错误分类）、init、skip 三种模式
-- **前端**: `ProjectSetupCard` 三栏卡片设计（暹罗猫"魔法卡片列阵"方案）
-- **治理联动**: `useGovernanceStatus` hook 驱动卡片展示/隐藏
+F113 增量（DirectoryBrowser）：
+- **后端**: `POST /api/projects/mkdir` — 新建子目录端点（path traversal 防护 + disallowed chars 黑名单）
+- **前端**: DirectoryPickerModal 内的"新建文件夹"按钮 + 内联输入
+
+F070 增量（ProjectSetupCard，详见 F070 doc）：
+- `ProjectSetupCard` 三栏卡片设计 + `useGovernanceStatus` hook + `POST /api/projects/setup` + `GET /api/governance/status`
 
 设计决策：
 - **三栏卡片 vs 多步向导**：选择一屏展示三个选项（clone/init/skip）而非多步向导，因为选项少且互斥，一屏更快
