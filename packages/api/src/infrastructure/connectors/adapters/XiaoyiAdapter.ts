@@ -139,6 +139,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   private readonly log: FastifyBaseLogger;
   private readonly opts: XiaoyiAdapterOptions;
   private readonly pendingTasks = new Map<string, TaskRecord[]>();
+  private readonly activeTask = new Map<string, TaskRecord>();
   private readonly dedup = new Map<string, number>();
   private readonly editState = new Map<string, EditRecord>();
   private channels: WsChannel[] = [];
@@ -168,6 +169,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     for (const ch of this.channels) this.disconnect(ch);
     this.channels = [];
     this.pendingTasks.clear();
+    this.activeTask.clear();
     this.dedup.clear();
     this.editState.clear();
   }
@@ -176,11 +178,14 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendReply(externalChatId: string, content: string): Promise<void> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.claimTask(sessionId);
+    // Streaming path: sendPlaceholder already claimed → retrieve from activeTask
+    // Non-streaming path: claim directly from pending queue
+    const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
     }
+    this.activeTask.delete(sessionId);
     const art = artifactUpdate(rec.taskId, content, { append: false, lastChunk: true, final: true });
     this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
     const st = statusUpdate(rec.taskId, 'completed');
@@ -194,6 +199,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
     }
+    // Hold task for sendReply to retrieve later (streaming lifecycle handoff)
+    this.activeTask.set(sessionId, rec);
     const st = statusUpdate(rec.taskId, 'working', '思考中…');
     this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
     this.editState.set(rec.taskId, { sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
@@ -217,16 +224,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   }
 
   async deleteMessage(platformMessageId: string): Promise<void> {
-    const edit = this.editState.get(platformMessageId);
-    if (!edit) return;
+    // Only clean up edit tracking — sendReply is the sole completion path,
+    // so we do not send final artifact or status-update(completed) here.
     this.editState.delete(platformMessageId);
-
-    // Final artifact-update (completion signal)
-    const fin = artifactUpdate(platformMessageId, '', { append: true, lastChunk: true, final: true });
-    this.sendVia(edit.source, agentResponse(this.opts.agentId, edit.sessionId, platformMessageId, fin));
-    // Status completed
-    const st = statusUpdate(platformMessageId, 'completed');
-    this.sendVia(edit.source, agentResponse(this.opts.agentId, edit.sessionId, platformMessageId, st));
   }
 
   // ── Connection ──
@@ -327,7 +327,10 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.handleMessageStream(msg, source);
     } else if (msg.method === 'tasks/cancel' || msg.method === 'clearContext') {
       const sid = msg.params?.sessionId ?? msg.sessionId;
-      if (sid) this.pendingTasks.delete(sid);
+      if (sid) {
+        this.pendingTasks.delete(sid);
+        this.activeTask.delete(sid);
+      }
     }
   }
 
