@@ -3,8 +3,9 @@
  *
  * 连接方向：Cat Cafe 主动连 HAG（类似 DingTalk Stream 模式）
  * 协议：A2A JSON-RPC 2.0，出站需两层信封（WebSocket frame + stringified msgDetail）
- * 流式：status-update(working) → artifact-update 逐帧 → artifact-update(final:true)
- * 注意：不发 status-update(completed)，与 @ynhcj/xiaoyi 参考实现一致
+ * 流式：status-update(working) → artifact-update 逐帧 → artifact-update(lastChunk, final:false)
+ * 多猫：replyParts 聚合 → 3s debounce 后 final:true 关闭 task（sendPlaceholder 取消 timer）
+ * 结束序列：status-update(completed, final:false) → artifact-update(final:true)，与参考实现一致
  *
  * F148 | ADR-014
  */
@@ -26,6 +27,9 @@ const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
 const DEDUP_TTL_MS = 5 * 60_000;
 const EDIT_THROTTLE_MS = 300;
+const DEFERRED_FINAL_MS = 3_000;
+const STATUS_KEEPALIVE_MS = 20_000;
+const TASK_TIMEOUT_MS = 120_000;
 
 // ── Types ──
 
@@ -71,6 +75,8 @@ export interface XiaoyiInboundMessage {
   text: string;
   messageId: string;
   taskId: string;
+  /** ADR-014 decision #2: owner:{agentId} — pseudo-user-id for Principal Link */
+  senderId: string;
 }
 
 export interface XiaoyiAdapterOptions {
@@ -127,7 +133,7 @@ function statusUpdate(
     result: {
       taskId,
       kind: 'status-update',
-      final: state !== 'working',
+      final: false, // status-update never closes a task; only artifact-update(final:true) does
       status: { state, ...(message ? { message: { role: 'agent', parts: [{ kind: 'text', text: message }] } } : {}) },
     },
   };
@@ -145,6 +151,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   private readonly replyParts = new Map<string, string[]>();
   private readonly dedup = new Map<string, number>();
   private readonly editState = new Map<string, EditRecord>();
+  private readonly finalTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly keepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
+  private readonly taskTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private channels: WsChannel[] = [];
   private onMsg: ((msg: XiaoyiInboundMessage) => Promise<void>) | null = null;
   private running = false;
@@ -171,6 +180,12 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.onMsg = null;
     for (const ch of this.channels) this.disconnect(ch);
     this.channels = [];
+    for (const t of this.taskTimeouts.values()) clearTimeout(t);
+    this.taskTimeouts.clear();
+    for (const t of this.finalTimers.values()) clearTimeout(t);
+    this.finalTimers.clear();
+    for (const t of this.keepaliveTimers.values()) clearInterval(t);
+    this.keepaliveTimers.clear();
     this.latestTask.clear();
     this.replyParts.clear();
     this.dedup.clear();
@@ -192,10 +207,12 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     parts.push(content);
     this.replyParts.set(sessionId, parts);
     const fullText = parts.join('\n\n---\n\n');
-    // No status-update(completed) — artifact-update(final:true) is sufficient
-    // (matches @ynhcj/xiaoyi reference implementation)
-    const art = artifactUpdate(rec.taskId, fullText, { append: false, lastChunk: true, final: true });
+    // Send non-final so task stays open for potential multi-cat follow-ups;
+    // deferred timer will send final:true after DEFERRED_FINAL_MS of silence.
+    // lastChunk:false — more cats may append; debounce timer sends lastChunk:true+final:true
+    const art = artifactUpdate(rec.taskId, fullText, { append: false, lastChunk: false, final: false });
     this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
+    this.scheduleFinal(sessionId, rec);
   }
 
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
@@ -205,9 +222,27 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
     }
-    const st = statusUpdate(rec.taskId, 'working', '思考中…');
-    this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
+    // Another cat starting — cancel pending finalization
+    this.cancelFinal(sessionId);
+    // Only send status-update(working) if no prior cat has replied yet,
+    // to avoid resetting display that already shows accumulated content.
+    if (!this.replyParts.has(sessionId)) {
+      const st = statusUpdate(rec.taskId, 'working', '思考中…');
+      this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
+    }
     this.editState.set(rec.taskId, { sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
+    // Start keepalive if not already running — prevents HAG from timing out the task
+    if (!this.keepaliveTimers.has(sessionId)) {
+      this.keepaliveTimers.set(
+        sessionId,
+        setInterval(() => {
+          const r = this.latestTask.get(sessionId);
+          if (!r) return;
+          const ka = statusUpdate(r.taskId, 'working', '处理中…');
+          this.sendVia(r.source, agentResponse(this.opts.agentId, sessionId, r.taskId, ka));
+        }, STATUS_KEEPALIVE_MS),
+      );
+    }
     return rec.taskId;
   }
 
@@ -217,13 +252,18 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     const now = Date.now();
     if (now - edit.lastEditAt < EDIT_THROTTLE_MS) return;
 
+    // Prepend accumulated multi-cat replies so prior content stays visible during streaming
+    const prior = this.replyParts.get(edit.sessionId);
+    const prefix = prior?.length ? prior.join('\n\n---\n\n') + '\n\n---\n\n' : '';
+    const fullText = prefix + text;
+
     const isFirst = edit.sentLen === 0;
-    const delta = isFirst ? text : text.slice(edit.sentLen);
+    const delta = isFirst ? fullText : fullText.slice(edit.sentLen);
     if (!delta) return;
 
     const detail = artifactUpdate(platformMessageId, delta, { append: !isFirst, lastChunk: false, final: false });
     this.sendVia(edit.source, agentResponse(this.opts.agentId, edit.sessionId, platformMessageId, detail));
-    edit.sentLen = text.length;
+    edit.sentLen = fullText.length;
     edit.lastEditAt = now;
   }
 
@@ -332,6 +372,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     } else if (msg.method === 'tasks/cancel' || msg.method === 'clearContext') {
       const sid = msg.params?.sessionId ?? msg.sessionId;
       if (sid) {
+        this.cancelTaskTimeout(sid);
+        this.cancelFinal(sid);
+        this.clearKeepalive(sid);
         this.latestTask.delete(sid);
         this.replyParts.delete(sid);
       }
@@ -348,9 +391,23 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.dedup.set(key, Date.now());
     this.gcDedup();
 
+    // Finalize previous task immediately before accepting new task
+    this.cancelTaskTimeout(sessionId);
+    this.cancelFinal(sessionId);
+    this.clearKeepalive(sessionId);
+    const prevTask = this.latestTask.get(sessionId);
+    const prevParts = this.replyParts.get(sessionId);
+    if (prevTask && prevParts?.length) {
+      const fullText = prevParts.join('\n\n---\n\n');
+      const st = statusUpdate(prevTask.taskId, 'completed');
+      this.sendVia(prevTask.source, agentResponse(this.opts.agentId, sessionId, prevTask.taskId, st));
+      const art = artifactUpdate(prevTask.taskId, fullText, { append: false, lastChunk: true, final: true });
+      this.sendVia(prevTask.source, agentResponse(this.opts.agentId, sessionId, prevTask.taskId, art));
+    }
+
     this.latestTask.set(sessionId, { taskId, source });
-    // New user message resets reply aggregation
     this.replyParts.delete(sessionId);
+    this.startTaskTimeout(sessionId, { taskId, source });
 
     const text = (msg.params?.message?.parts ?? [])
       .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
@@ -359,12 +416,85 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (!text) return;
 
     const chatId = `${this.opts.agentId}:${sessionId}`;
-    this.onMsg?.({ chatId, text, messageId: taskId, taskId }).catch((err: unknown) =>
+    const senderId = `owner:${this.opts.agentId}`;
+    this.onMsg?.({ chatId, text, messageId: taskId, taskId, senderId }).catch((err: unknown) =>
       this.log.error({ err, taskId }, '[XiaoYi] Callback failed'),
     );
   }
 
   // ── Helpers ──
+
+  /** Debounce: send final:true after DEFERRED_FINAL_MS of silence; reschedule if still streaming */
+  private scheduleFinal(sessionId: string, rec: TaskRecord): void {
+    this.cancelFinal(sessionId);
+    this.finalTimers.set(
+      sessionId,
+      setTimeout(() => {
+        this.finalTimers.delete(sessionId);
+        if (this.editState.has(rec.taskId)) {
+          this.scheduleFinal(sessionId, rec); // cat still streaming, retry
+          return;
+        }
+        const parts = this.replyParts.get(sessionId);
+        if (!parts?.length) return;
+        this.cancelTaskTimeout(sessionId);
+        this.clearKeepalive(sessionId);
+        const fullText = parts.join('\n\n---\n\n');
+        // Match reference impl: status-update(completed, final:false) then artifact(final:true)
+        const st = statusUpdate(rec.taskId, 'completed');
+        this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
+        const art = artifactUpdate(rec.taskId, fullText, { append: false, lastChunk: true, final: true });
+        this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
+        this.replyParts.delete(sessionId);
+      }, DEFERRED_FINAL_MS),
+    );
+  }
+
+  private cancelFinal(sessionId: string): void {
+    const t = this.finalTimers.get(sessionId);
+    if (t) {
+      clearTimeout(t);
+      this.finalTimers.delete(sessionId);
+    }
+  }
+
+  /** Hard timeout: force-finalize after TASK_TIMEOUT_MS to prevent zombie tasks */
+  private startTaskTimeout(sessionId: string, rec: TaskRecord): void {
+    this.cancelTaskTimeout(sessionId);
+    this.taskTimeouts.set(
+      sessionId,
+      setTimeout(() => {
+        this.taskTimeouts.delete(sessionId);
+        this.cancelFinal(sessionId);
+        this.clearKeepalive(sessionId);
+        const parts = this.replyParts.get(sessionId);
+        const text = parts?.length ? parts.join('\n\n---\n\n') : '处理超时，请重试';
+        const state = parts?.length ? 'completed' : 'failed';
+        const st = statusUpdate(rec.taskId, state, text);
+        this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
+        const art = artifactUpdate(rec.taskId, text, { append: false, lastChunk: true, final: true });
+        this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
+        this.replyParts.delete(sessionId);
+        this.log.warn({ sessionId, taskId: rec.taskId }, '[XiaoYi] Task timeout — force finalized');
+      }, TASK_TIMEOUT_MS),
+    );
+  }
+
+  private cancelTaskTimeout(sessionId: string): void {
+    const t = this.taskTimeouts.get(sessionId);
+    if (t) {
+      clearTimeout(t);
+      this.taskTimeouts.delete(sessionId);
+    }
+  }
+
+  private clearKeepalive(sessionId: string): void {
+    const t = this.keepaliveTimers.get(sessionId);
+    if (t) {
+      clearInterval(t);
+      this.keepaliveTimers.delete(sessionId);
+    }
+  }
 
   private sendVia(preferred: string, payload: string): void {
     const ch = this.channels.find((c) => c.label === preferred);
