@@ -7,8 +7,10 @@
  * 结束序列：status-update(completed, final:false) → artifact-update(final:true)，与参考实现一致
  *
  * Task isolation: each HAG task is tracked via per-session FIFO queue (taskQueue).
- * sendReply always targets the front-of-queue task, preventing cross-task contamination
- * when a new message/stream arrives while the previous invocation is still running.
+ * sendPlaceholder claims the next unclaimed task (invocation-level binding via claimTask),
+ * and sendReply uses that binding — not queue-head — to route replies to the correct task.
+ * This prevents cross-task contamination even when QueueProcessor starts the next
+ * invocation before the previous task's 3s scheduleFinal timer fires.
  *
  * F148 | ADR-014
  */
@@ -50,8 +52,12 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   readonly connectorId = 'xiaoyi' as const;
   private readonly log: FastifyBaseLogger;
   private readonly opts: XiaoyiAdapterOptions;
-  /** Per-session FIFO queue of HAG tasks — sendReply targets the front task */
+  /** Per-session FIFO queue of HAG tasks */
   private readonly taskQueue = new Map<string, TaskRecord[]>();
+  /** Invocation-level binding: sessionId → task claimed by the current invocation */
+  private readonly activeTask = new Map<string, TaskRecord>();
+  /** Set of taskIds already claimed by an invocation (prevents double-claim) */
+  private readonly claimedTasks = new Set<string>();
   private readonly replyParts = new Map<string, string[]>();
   private readonly dedup = new Map<string, number>();
   private readonly editState = new Map<string, EditRecord>();
@@ -91,6 +97,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     for (const t of this.keepaliveTimers.values()) clearInterval(t);
     this.keepaliveTimers.clear();
     this.taskQueue.clear();
+    this.activeTask.clear();
+    this.claimedTasks.clear();
     this.replyParts.clear();
     this.dedup.clear();
     this.editState.clear();
@@ -100,7 +108,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendReply(externalChatId: string, content: string): Promise<void> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.currentTask(sessionId);
+    const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
@@ -116,7 +124,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.currentTask(sessionId);
+    const rec = this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
@@ -378,23 +386,35 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
         this.clearTimersForTask(t.taskId);
         this.replyParts.delete(t.taskId);
         this.editState.delete(t.taskId);
+        this.claimedTasks.delete(t.taskId);
       }
     }
     this.taskQueue.delete(sid);
+    this.activeTask.delete(sid);
   }
 
-  /** Front-of-queue task for a session — the task being actively served. */
-  private currentTask(sessionId: string): TaskRecord | undefined {
-    return this.taskQueue.get(sessionId)?.[0];
+  /** Claim the next unclaimed task from the queue (invocation-level binding). */
+  private claimTask(sessionId: string): TaskRecord | undefined {
+    const queue = this.taskQueue.get(sessionId);
+    if (!queue) return undefined;
+    const task = queue.find((t) => !this.claimedTasks.has(t.taskId));
+    if (!task) return undefined;
+    this.claimedTasks.add(task.taskId);
+    this.activeTask.set(sessionId, task);
+    return task;
   }
 
-  /** Remove a finalized task from its session queue. */
+  /** Remove a finalized task from its session queue and clean up bindings. */
   private dequeueTask(sessionId: string, taskId: string): void {
     const q = this.taskQueue.get(sessionId);
     if (!q) return;
     const idx = q.findIndex((t) => t.taskId === taskId);
     if (idx >= 0) q.splice(idx, 1);
     if (q.length === 0) this.taskQueue.delete(sessionId);
+    this.claimedTasks.delete(taskId);
+    if (this.activeTask.get(sessionId)?.taskId === taskId) {
+      this.activeTask.delete(sessionId);
+    }
   }
 
   /** Start keepalive interval for a task (idempotent). */
