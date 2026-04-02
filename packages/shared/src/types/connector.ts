@@ -207,7 +207,7 @@ const CONNECTOR_DEFINITIONS: readonly ConnectorDefinition[] = [
   },
   {
     id: 'xiaoyi',
-    displayName: '小艺',
+    displayName: '小艺 APP',
     icon: '/images/connectors/xiaoyi.png',
     color: { primary: '#CF0A2C', secondary: '#FFF0F0' },
     description: '华为小艺 OpenClaw 模式',
