@@ -64,16 +64,16 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 | 层 | 技术 |
 |----|------|
 | 传输 | WebSocket (wss)：主 `wss://hag.cloud.huawei.com/openclaw/v1/ws/link`，备 `wss://116.63.174.231/openclaw/v1/ws/link` |
-| 认证 | HMAC-SHA256: `signature = HMAC-SHA256(SK, "ak={AK}&timestamp={TS}")` |
-| 消息 | A2A JSON-RPC 2.0 |
+| 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 注意：输入只有 timestamp，无 ak 前缀 |
+| 消息 | A2A JSON-RPC 2.0，出站需两层信封（见下文） |
 | 流式 | `status-update(working)` → `artifact-update` 逐帧推送（小艺端先显示「思考中…」再逐字展示） |
-| 保活 | heartbeat 30s ping + 断线指数退避重连 |
+| 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WebSocket ping 每 30s（pong 超时 90s） |
 | HA | 双服务器 active-active + 入站去重 (key: `sessionId+taskId`)，出站 session affinity（记录入站来源服务器，回包走同一通道） |
-| 备链路 TLS | 备 IP `116.63.174.231` 使用华为 CA 签发证书，需显式信任或 SNI 匹配；**禁止 `rejectUnauthorized: false`** |
+| 备链路 TLS | 备 IP `116.63.174.231` — IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致） |
 
 ### 消息格式
 
-入站（小艺→我们）：
+入站（小艺→我们）— A2A JSON-RPC 请求：
 ```json
 {
   "jsonrpc": "2.0",
@@ -90,20 +90,47 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 }
 ```
 
-出站（我们→小艺）：
+出站（我们→小艺）— **两层信封**：
+
+Layer 1（WebSocket 帧）：
 ```json
 {
+  "msgType": "agent_response",
+  "agentId": "your-agent-id",
+  "sessionId": "user-session",
   "taskId": "task-id",
-  "kind": "artifact-update",
-  "append": true,
-  "lastChunk": false,
-  "final": false,
-  "artifact": {
-    "artifactId": "art-1",
-    "parts": [{ "kind": "text", "text": "你好！" }]
+  "msgDetail": "<stringified-json-rpc>"
+}
+```
+
+Layer 2（msgDetail 内，序列化为字符串）：
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "msg_1714600000000",
+  "result": {
+    "taskId": "task-id",
+    "kind": "artifact-update",
+    "append": false,
+    "lastChunk": true,
+    "final": true,
+    "artifact": {
+      "artifactId": "artifact_1714600000000",
+      "parts": [{ "kind": "text", "text": "你好！" }]
+    }
   }
 }
 ```
+
+其它 msgType：`clawd_bot_init`（连接后立即发）、`heartbeat`（每 20s）
+
+**append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加（必须只发 delta）
+
+**流式序列**：
+1. `status-update(working, "思考中…")` — 小艺显示思考指示
+2. `artifact-update(append: false)` — 首个 chunk，替换「思考中」
+3. `artifact-update(append: true)` — 后续 chunk，追加 delta 文本
+4. `artifact-update(append: true, lastChunk: true, final: true, text: "")` — 完成信号
 
 ### Phase A: P0 MVP
 
@@ -147,7 +174,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 
 - [ ] AC-A1: XiaoYiAdapter 通过 WebSocket 连接华为 HAG 并完成 HMAC-SHA256 认证
 - [ ] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
-- [ ] AC-A3: 心跳保活 30s + 断线指数退避重连（max 10 次）
+- [ ] AC-A3: 双机制心跳保活（应用层 20s + WS ping 30s）+ 断线指数退避重连（max 10 次）
 - [ ] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
 - [ ] AC-A5: 流式输出 — 先发 `status-update(working)` 显示「思考中…」，首 token 到达后逐字展示
 - [ ] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`

@@ -47,10 +47,10 @@ Cat Cafe 已通过 F088/F132/F137 接入飞书、Telegram、DingTalk、企业微
 | 层 | 技术 |
 |----|------|
 | 传输 | WebSocket (wss)：主 + 备 active-active |
-| 认证 | HMAC-SHA256: `signature = HMAC-SHA256(SK, "ak={AK}&timestamp={TS}")` |
-| 消息 | A2A JSON-RPC 2.0 |
+| 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 输入只有 timestamp |
+| 消息 | A2A JSON-RPC 2.0，出站需两层信封（WebSocket frame + stringified msgDetail） |
 | 流式 | `status-update(working)` → `artifact-update` 逐帧推送 |
-| 保活 | heartbeat 30s ping + 断线指数退避重连（max 10 次） |
+| 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WS ping 每 30s |
 
 ### 核心 ID
 
@@ -88,7 +88,7 @@ XiaoYiAdapter
 - **active-active 双连接**：同时连两个服务器
 - **入站去重**：`Map<sessionId+taskId, seen>` — 防止同一消息双发
 - **出站 session affinity**：记录入站来源服务器，回包走同一通道
-- **备 IP TLS**：必须信任华为 CA，**禁止 `rejectUnauthorized: false`**
+- **备 IP TLS**：IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致）
 
 ### 流式输出
 
@@ -143,7 +143,10 @@ adapter 内有 `taskId` 状态机（`Map<sessionId, { latestTaskId, sourceServer
 ## 给未来Ragdoll的备忘
 
 1. **OpenClaw 协议限制**：不支持快捷指令、端侧插件、账号绑定、卡片等平台功能。P0 只做文本收发，这些都不在 scope 内。
-2. **sessionId 陷阱**：协议有**两个**叫 sessionId 的字段。`params.sessionId`（params 内）稳定，`msg.sessionId`（顶层）每次打开 app 刷新。实现时必须只用 params 内的。
-3. **双服务器 TLS**：备 IP `116.63.174.231` 没有域名做 SNI，需要显式信任华为 CA 证书。**绝对不能关闭 TLS 校验**（`rejectUnauthorized: false`），否则 TLS negotiation 会失败。
+2. **sessionId 陷阱**：协议有**两个**叫 sessionId 的字段。`params.sessionId`（params 内）稳定，`msg.sessionId`（顶层）每次打开 app 刷新。实现时必须只用 params 内的。但 `tasks/cancel` 和 `clearContext` 的 sessionId 在顶层。
+3. **备 IP TLS**：备 IP `116.63.174.231` 没有域名做 SNI，用 `rejectUnauthorized: false`（与参考实现一致）。
 4. **taskId 状态机**：adapter 内部维护 `Map<sessionId, { latestTaskId, sourceServer }>`。入站写入，出站查询，`tasks/cancel` 清除。
 5. **思考中指示**：先发 `status-update(working)`，小艺端显示「思考中…」，再逐字 `artifact-update` 推送。
+6. **签名算法**：`Base64(HMAC-SHA256(SK, timestamp_string))`。输入**只有 timestamp**，没有 `ak=` 前缀。这跟网上很多示例不同，以 `@ynhcj/xiaoyi` 源码为准。
+7. **出站信封**：必须用两层包装 — `{ msgType: "agent_response", agentId, sessionId, taskId, msgDetail: JSON.stringify(jsonrpc) }`。裸 JSON-RPC 不行。
+8. **append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加。流式必须只发 delta（新增部分），发全量会导致内容翻倍。
