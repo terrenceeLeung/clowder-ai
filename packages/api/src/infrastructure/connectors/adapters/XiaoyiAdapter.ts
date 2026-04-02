@@ -3,7 +3,8 @@
  *
  * 连接方向：Cat Cafe 主动连 HAG（类似 DingTalk Stream 模式）
  * 协议：A2A JSON-RPC 2.0，出站需两层信封（WebSocket frame + stringified msgDetail）
- * 流式：status-update(working) → artifact-update 逐帧 → status-update(completed)
+ * 流式：status-update(working) → artifact-update 逐帧 → artifact-update(final:true)
+ * 注意：不发 status-update(completed)，与 @ynhcj/xiaoyi 参考实现一致
  *
  * F148 | ADR-014
  */
@@ -138,8 +139,10 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   readonly connectorId = 'xiaoyi' as const;
   private readonly log: FastifyBaseLogger;
   private readonly opts: XiaoyiAdapterOptions;
-  private readonly pendingTasks = new Map<string, TaskRecord[]>();
-  private readonly activeTask = new Map<string, TaskRecord>();
+  /** Latest task per session — never consumed, overwritten by new inbound messages */
+  private readonly latestTask = new Map<string, TaskRecord>();
+  /** Accumulated reply parts per session — enables multi-cat aggregation */
+  private readonly replyParts = new Map<string, string[]>();
   private readonly dedup = new Map<string, number>();
   private readonly editState = new Map<string, EditRecord>();
   private channels: WsChannel[] = [];
@@ -168,8 +171,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.onMsg = null;
     for (const ch of this.channels) this.disconnect(ch);
     this.channels = [];
-    this.pendingTasks.clear();
-    this.activeTask.clear();
+    this.latestTask.clear();
+    this.replyParts.clear();
     this.dedup.clear();
     this.editState.clear();
   }
@@ -178,29 +181,30 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendReply(externalChatId: string, content: string): Promise<void> {
     const sessionId = this.sessionFrom(externalChatId);
-    // Streaming path: sendPlaceholder already claimed → retrieve from activeTask
-    // Non-streaming path: claim directly from pending queue
-    const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
+    const rec = this.latestTask.get(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
     }
-    this.activeTask.delete(sessionId);
-    const art = artifactUpdate(rec.taskId, content, { append: false, lastChunk: true, final: true });
+    // Aggregate multi-cat replies: each sendReply appends, then we send the
+    // accumulated text as a single artifact (replace mode, append:false).
+    const parts = this.replyParts.get(sessionId) ?? [];
+    parts.push(content);
+    this.replyParts.set(sessionId, parts);
+    const fullText = parts.join('\n\n---\n\n');
+    // No status-update(completed) — artifact-update(final:true) is sufficient
+    // (matches @ynhcj/xiaoyi reference implementation)
+    const art = artifactUpdate(rec.taskId, fullText, { append: false, lastChunk: true, final: true });
     this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
-    const st = statusUpdate(rec.taskId, 'completed');
-    this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
   }
 
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.claimTask(sessionId);
+    const rec = this.latestTask.get(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
     }
-    // Hold task for sendReply to retrieve later (streaming lifecycle handoff)
-    this.activeTask.set(sessionId, rec);
     const st = statusUpdate(rec.taskId, 'working', '思考中…');
     this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
     this.editState.set(rec.taskId, { sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
@@ -328,8 +332,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     } else if (msg.method === 'tasks/cancel' || msg.method === 'clearContext') {
       const sid = msg.params?.sessionId ?? msg.sessionId;
       if (sid) {
-        this.pendingTasks.delete(sid);
-        this.activeTask.delete(sid);
+        this.latestTask.delete(sid);
+        this.replyParts.delete(sid);
       }
     }
   }
@@ -344,9 +348,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.dedup.set(key, Date.now());
     this.gcDedup();
 
-    const queue = this.pendingTasks.get(sessionId) ?? [];
-    queue.push({ taskId, source });
-    this.pendingTasks.set(sessionId, queue);
+    this.latestTask.set(sessionId, { taskId, source });
+    // New user message resets reply aggregation
+    this.replyParts.delete(sessionId);
 
     const text = (msg.params?.message?.parts ?? [])
       .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
@@ -361,15 +365,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   }
 
   // ── Helpers ──
-
-  /** Consume the oldest pending task for a session (FIFO). */
-  private claimTask(sessionId: string): TaskRecord | undefined {
-    const queue = this.pendingTasks.get(sessionId);
-    if (!queue?.length) return undefined;
-    const rec = queue.shift();
-    if (queue.length === 0) this.pendingTasks.delete(sessionId);
-    return rec;
-  }
 
   private sendVia(preferred: string, payload: string): void {
     const ch = this.channels.find((c) => c.label === preferred);
