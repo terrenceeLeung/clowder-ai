@@ -138,7 +138,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   readonly connectorId = 'xiaoyi' as const;
   private readonly log: FastifyBaseLogger;
   private readonly opts: XiaoyiAdapterOptions;
-  private readonly taskState = new Map<string, TaskRecord>();
+  private readonly pendingTasks = new Map<string, TaskRecord[]>();
   private readonly dedup = new Map<string, number>();
   private readonly editState = new Map<string, EditRecord>();
   private channels: WsChannel[] = [];
@@ -167,7 +167,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.onMsg = null;
     for (const ch of this.channels) this.disconnect(ch);
     this.channels = [];
-    this.taskState.clear();
+    this.pendingTasks.clear();
     this.dedup.clear();
     this.editState.clear();
   }
@@ -176,7 +176,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendReply(externalChatId: string, content: string): Promise<void> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.taskState.get(sessionId);
+    const rec = this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
@@ -189,7 +189,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.taskState.get(sessionId);
+    const rec = this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
@@ -327,7 +327,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.handleMessageStream(msg, source);
     } else if (msg.method === 'tasks/cancel' || msg.method === 'clearContext') {
       const sid = msg.params?.sessionId ?? msg.sessionId;
-      if (sid) this.taskState.delete(sid);
+      if (sid) this.pendingTasks.delete(sid);
     }
   }
 
@@ -341,7 +341,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.dedup.set(key, Date.now());
     this.gcDedup();
 
-    this.taskState.set(sessionId, { taskId, source });
+    const queue = this.pendingTasks.get(sessionId) ?? [];
+    queue.push({ taskId, source });
+    this.pendingTasks.set(sessionId, queue);
 
     const text = (msg.params?.message?.parts ?? [])
       .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
@@ -356,6 +358,15 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   }
 
   // ── Helpers ──
+
+  /** Consume the oldest pending task for a session (FIFO). */
+  private claimTask(sessionId: string): TaskRecord | undefined {
+    const queue = this.pendingTasks.get(sessionId);
+    if (!queue?.length) return undefined;
+    const rec = queue.shift();
+    if (queue.length === 0) this.pendingTasks.delete(sessionId);
+    return rec;
+  }
 
   private sendVia(preferred: string, payload: string): void {
     const ch = this.channels.find((c) => c.label === preferred);

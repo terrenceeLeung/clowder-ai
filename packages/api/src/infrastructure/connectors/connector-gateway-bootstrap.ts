@@ -663,7 +663,7 @@ export async function startConnectorGateway(
     adapters.set('xiaoyi', xiaoyi);
 
     await xiaoyi.startStream(async (msg) => {
-      await connectorRouter.route('xiaoyi', msg.chatId, msg.text, msg.messageId);
+      await connectorRouter.route('xiaoyi', msg.chatId, msg.text, msg.messageId, undefined, { id: `owner:${config.xiaoyiAgentId}` });
     });
 
     stopFns.push(async () => xiaoyi.stopStream());
