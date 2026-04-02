@@ -160,6 +160,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 - **Related**: F132 (DingTalk/WeCom)，DingTalk Stream 模式是最接近的参考实现
 - **Related**: F143 (Hostable Agent Runtime)，统一 adapter 接口
 - **External**: 华为小艺开放平台 OpenClaw 模式、HAG WebSocket 端点
+- **ADR**: [ADR-014](/decisions/014-xiaoyi-connector-gateway.md) — 完整架构设计、核心 ID、双服务器 HA、流式输出
 
 ## Risk
 
