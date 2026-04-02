@@ -95,20 +95,38 @@ XiaoYiAdapter
 ```
 收到消息
   ↓
-status-update { state: "working" }  → 小艺显示「思考中…」
+status-update { state: "working", final: false }  → 小艺显示「思考中…」
   ↓
-artifact-update { append: false }  → 第一个字出现，替换「思考中」
+artifact-update { append: false, final: false }    → 第一个字出现，替换「思考中」
   ↓
-artifact-update { append: true }    → 后续逐字追加
+artifact-update { append: true, final: false }     → 后续逐字追加
   ↓
-artifact-update { final: true }     → 完成
+status-update { state: "completed", final: false } → 标记完成（status-update 永远 final:false）
+  ↓
+artifact-update { lastChunk: true, final: true }   → 关闭 task（只有 artifact-update 能 final:true）
 ```
 
-adapter 内有 `taskId` 状态机（`Map<sessionId, { latestTaskId, sourceServer }>`）：
-- 入站 `message/stream` → 记录 taskId + 来源服务器
-- 出站每一帧 → 查 Map 拿到 taskId 和目标服务器
-- `tasks/cancel` → 清除对应条目
-- 同一 session 并发新消息 → 覆盖为最新 taskId
+**关键协议约束**（`@ynhcj/xiaoyi` 源码 + 真机验证）：
+- `status-update` 的 `final` 永远为 `false` — 它不关闭 task
+- 只有 `artifact-update(final: true)` 关闭 task — 必须在 status-update(completed) 之后发送
+
+**多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本（`---` 分隔）。3s debounce 后发 final:true。
+
+**task 生命周期管理**（已实现，替代早期设计的 session 级单指针）：
+
+```
+taskQueue: Map<sessionId, TaskRecord[]>     — per-session FIFO 队列
+claimedTasks: Set<taskId>                   — 已被 invocation claim 的 task
+activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
+```
+
+- 入站 `message/stream` → push 到 FIFO 队列 + 启动 120s timeout
+- `sendPlaceholder`（= invocation 边界）→ `claimTask` 找第一个未 claim 的 task
+- `sendReply` → 通过 `activeTask` 绑定路由到正确 task
+- 3s debounce (`scheduleFinal`) → `emitFinal` + dequeue
+- `tasks/cancel` / `clearContext` → purge 整个 session
+
+三层 timer 防御：keepalive 20s / debounce 3s / hard timeout 120s
 
 ## 决策
 
@@ -120,6 +138,9 @@ adapter 内有 `taskId` 状态机（`Map<sessionId, { latestTaskId, sourceServer
 | 4 | 双服务器 active-active + 去重 | 入站去重防双发，session affinity 保证响应连续性 | 2026-04-02 |
 | 5 | `status-update(working)` 显思考中 | 对齐 DingTalk adapter 的占位符模式 | 2026-04-02 |
 | 6 | 不做多小艺 agent 接入 | 单账号单 agent，scope 聚焦 | 2026-04-02 |
+| 7 | status-update 永远 final:false | `@ynhcj/xiaoyi` 源码 + 真机验证：只有 artifact-update 能关闭 task | 2026-04-03 |
+| 8 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task = 一个 artifact，多猫必须聚合 | 2026-04-03 |
+| 9 | FIFO queue + invocation 级 claimTask | 替代 session 级单指针，消除 QueueProcessor 立即启动的 3s 竞态 | 2026-04-03 |
 
 ## 放弃的方案
 
@@ -138,15 +159,16 @@ adapter 内有 `taskId` 状态机（`Map<sessionId, { latestTaskId, sourceServer
 | WebSocket 双通道 | 主+备，active-active，独立连接管理 |
 | HMAC-SHA256 认证 | `x-access-key` / `x-sign` / `x-ts` / `x-agent-id` headers |
 | A2A 协议处理 | message/stream 入站，agent_response 出站 | 协议层 |
-| taskId 状态机 | sessionId → { latestTaskId, sourceServer } | 出站路由 |
+| task 生命周期 | FIFO queue + claimTask invocation 级绑定 | 出站路由 |
+| 协议层抽离 | `xiaoyi-protocol.ts` — 常量、类型、auth、builders | 质量门控 |
 
 ## 给未来Ragdoll的备忘
 
 1. **OpenClaw 协议限制**：不支持快捷指令、端侧插件、账号绑定、卡片等平台功能。P0 只做文本收发，这些都不在 scope 内。
 2. **sessionId 陷阱**：协议有**两个**叫 sessionId 的字段。`params.sessionId`（params 内）稳定，`msg.sessionId`（顶层）每次打开 app 刷新。实现时必须只用 params 内的。但 `tasks/cancel` 和 `clearContext` 的 sessionId 在顶层。
 3. **备 IP TLS**：备 IP `116.63.174.231` 没有域名做 SNI，用 `rejectUnauthorized: false`（与参考实现一致）。
-4. **taskId 状态机**：adapter 内部维护 `Map<sessionId, { latestTaskId, sourceServer }>`。入站写入，出站查询，`tasks/cancel` 清除。
-5. **思考中指示**：先发 `status-update(working)`，小艺端显示「思考中…」，再逐字 `artifact-update` 推送。
+4. **task 生命周期**：adapter 用 FIFO queue + `claimTask` 做 invocation 级绑定（不是 session 级单指针）。`sendPlaceholder` = invocation 边界信号，claim 下一个未绑定 task。三层 timer：keepalive 20s / debounce 3s / timeout 120s。
+5. **思考中指示**：先发 `status-update(working, final:false)`，小艺端显示「思考中…」。**status-update 的 final 永远 false**——只有 `artifact-update(final:true)` 关闭 task。这是 `@ynhcj/xiaoyi` 源码验证的硬性约束。
 6. **签名算法**：`Base64(HMAC-SHA256(SK, timestamp_string))`。输入**只有 timestamp**，没有 `ak=` 前缀。这跟网上很多示例不同，以 `@ynhcj/xiaoyi` 源码为准。
 7. **出站信封**：必须用两层包装 — `{ msgType: "agent_response", agentId, sessionId, taskId, msgDetail: JSON.stringify(jsonrpc) }`。裸 JSON-RPC 不行。
 8. **append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加。流式必须只发 delta（新增部分），发全量会导致内容翻倍。

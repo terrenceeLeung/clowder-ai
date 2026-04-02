@@ -126,11 +126,19 @@ Layer 2（msgDetail 内，序列化为字符串）：
 
 **append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加（必须只发 delta）
 
-**流式序列**：
+**流式序列**（单猫）：
 1. `status-update(working, "思考中…")` — 小艺显示思考指示
 2. `artifact-update(append: false)` — 首个 chunk，替换「思考中」
 3. `artifact-update(append: true)` — 后续 chunk，追加 delta 文本
-4. `artifact-update(append: true, lastChunk: true, final: true, text: "")` — 完成信号
+4. `status-update(completed, final: false)` — 标记完成（**status-update 永远 final:false**）
+5. `artifact-update(lastChunk: true, final: true)` — 关闭 task（**只有 artifact-update 能 final:true**）
+
+**多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本，用 `---` 分隔。3s debounce 后发 final:true 关闭 task；新猫的 `sendPlaceholder` 取消 timer 继续等待。
+
+**三层 timer 防御**：
+- `STATUS_KEEPALIVE_MS = 20s` — 周期性 status-update(working) 防止 HAG 超时
+- `DEFERRED_FINAL_MS = 3s` — 最后一次 sendReply 后的 debounce，等待多猫聚合
+- `TASK_TIMEOUT_MS = 120s` — 僵尸任务安全网
 
 ### Phase A: P0 MVP
 
@@ -140,7 +148,8 @@ Layer 2（msgDetail 内，序列化为字符串）：
    - 实现 `IStreamableOutboundAdapter`
    - WebSocket 连接管理（connect / auth / heartbeat / reconnect）
    - 双服务器 active-active + session affinity
-   - **taskId 关联状态机**：`Map<sessionId, { latestTaskId, sourceServer, invocationId }>` — 入站 `message/stream` 写入，出站回包查 taskId + 写回来源服务器；`tasks/cancel` 清除对应条目；并发到达同一 session 时以最新 taskId 为准（旧任务自动 cancel）
+   - **taskId 生命周期**：per-session FIFO 队列 (`taskQueue`) + invocation 级绑定 (`claimTask`)。`sendPlaceholder` claim 队列中第一个未绑定 task，`sendReply` 通过 `activeTask` 绑定路由到正确 task。3s debounce 后 emitFinal + dequeue。
+   - **协议层抽离**：`xiaoyi-protocol.ts` — 常量、类型、auth、message builders（质量门控文件大小合规）
 
 2. **协议层**
    - `clawd_bot_init` 注册
@@ -208,8 +217,11 @@ Layer 2（msgDetail 内，序列化为字符串）：
 | 3 | `externalSenderId` 绑定 `owner:{agentId}` | OpenClaw 无用户级标识，所有对话归属 connector 配置者 | 2026-04-01 |
 | 4 | 使用 `params.sessionId` 而非顶层 `msg.sessionId` | 顶层 sessionId 每次打开 app 刷新；params 内的跨会话稳定（office-claw P1-1 实测验证） | 2026-04-01 |
 | 5 | 不做多小艺 agent 接入 | 单账号单 agent，scope 聚焦 | 2026-04-01 |
-| 6 | adapter 内置 `sessionId→taskId` 状态机 | 流式出站必须带 taskId 回包；现有 `IStreamableOutboundAdapter` 接口不携带此上下文，由 adapter 内部 Map 管理（缅因猫 review） | 2026-04-01 |
+| 6 | adapter 内置 task 生命周期管理 | 流式出站必须带 taskId 回包；现有 `IStreamableOutboundAdapter` 接口不携带此上下文，由 adapter 内部 FIFO 队列 + invocation 级绑定管理（缅因猫 review R4/R5） | 2026-04-01 |
 | 7 | `externalChatId` 带 `agentId:` 前缀 | 隔离命名空间，确保 binding key 全局唯一（缅因猫 review） | 2026-04-01 |
+| 8 | status-update 永远 `final:false` | 参考实现 `@ynhcj/xiaoyi` 源码验证：只有 artifact-update 能 `final:true` 关闭 task（真机调试修正） | 2026-04-03 |
+| 9 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task 生命周期限制（一个 task 只能有一个 artifact），多猫回复必须在同一 artifact 内聚合 | 2026-04-03 |
+| 10 | invocation 级 task 绑定 (claimTask) | 队列头推断在 QueueProcessor 立即启动下一 invocation 时有 3s 竞态窗口；改用 claimTask 跳过已绑定 task（缅因猫 review R5） | 2026-04-03 |
 
 ## Review Gate
 
