@@ -1,0 +1,148 @@
+/**
+ * XiaoYi OpenClaw Protocol — types, constants, auth, message builders
+ *
+ * A2A JSON-RPC 2.0 protocol helpers for HAG communication.
+ * Separated from XiaoyiAdapter to keep file sizes within project limits.
+ *
+ * F148 | ADR-014
+ */
+
+import { createHmac } from 'node:crypto';
+
+// ── Constants ──
+
+export const WS_PRIMARY = 'wss://hag.cloud.huawei.com/openclaw/v1/ws/link';
+export const WS_BACKUP = 'wss://116.63.174.231/openclaw/v1/ws/link';
+export const APP_HEARTBEAT_MS = 20_000;
+export const WS_PING_MS = 30_000;
+export const PONG_TIMEOUT_MS = 90_000;
+export const MAX_RECONNECT = 10;
+export const RECONNECT_BASE_MS = 1_000;
+export const RECONNECT_MAX_MS = 30_000;
+export const DEDUP_TTL_MS = 5 * 60_000;
+export const EDIT_THROTTLE_MS = 300;
+export const DEFERRED_FINAL_MS = 3_000;
+export const STATUS_KEEPALIVE_MS = 20_000;
+export const TASK_TIMEOUT_MS = 120_000;
+
+// ── Types ──
+
+export interface A2AInbound {
+  jsonrpc?: string;
+  method?: string;
+  id?: string;
+  agentId?: string;
+  sessionId?: string;
+  params?: {
+    id?: string;
+    sessionId?: string;
+    agentId?: string;
+    message?: { role?: string; parts?: Array<{ kind?: string; text?: string }> };
+  };
+}
+
+export interface WsChannel {
+  ws: import('ws').default | null;
+  url: string;
+  label: string;
+  appTimer: ReturnType<typeof setInterval> | null;
+  pingTimer: ReturnType<typeof setInterval> | null;
+  lastPong: number;
+  reconnects: number;
+  reconnectTimer: ReturnType<typeof setTimeout> | null;
+}
+
+export interface TaskRecord {
+  taskId: string;
+  source: string;
+}
+
+export interface EditRecord {
+  sessionId: string;
+  source: string;
+  sentLen: number;
+  lastEditAt: number;
+}
+
+export interface XiaoyiInboundMessage {
+  chatId: string;
+  text: string;
+  messageId: string;
+  taskId: string;
+  /** ADR-014 decision #2: owner:{agentId} — pseudo-user-id for Principal Link */
+  senderId: string;
+}
+
+export interface XiaoyiAdapterOptions {
+  agentId: string;
+  ak: string;
+  sk: string;
+  wsUrl1?: string;
+  wsUrl2?: string;
+}
+
+// ── Auth ──
+
+export function generateXiaoyiSignature(sk: string, timestamp: string): string {
+  return createHmac('sha256', sk).update(timestamp).digest('base64');
+}
+
+// ── Protocol Message Builders ──
+
+export function envelope(agentId: string, msgType: string): string {
+  return JSON.stringify({ msgType, agentId });
+}
+
+export function agentResponse(
+  agentId: string,
+  sessionId: string,
+  taskId: string,
+  detail: Record<string, unknown>,
+): string {
+  return JSON.stringify({
+    msgType: 'agent_response',
+    agentId,
+    sessionId,
+    taskId,
+    msgDetail: JSON.stringify(detail),
+  });
+}
+
+export function artifactUpdate(
+  taskId: string,
+  text: string,
+  opts: { append: boolean; lastChunk: boolean; final: boolean },
+): Record<string, unknown> {
+  return {
+    jsonrpc: '2.0',
+    id: `msg_${Date.now()}`,
+    result: {
+      taskId,
+      kind: 'artifact-update',
+      append: opts.append,
+      lastChunk: opts.lastChunk,
+      final: opts.final,
+      artifact: { artifactId: `artifact_${Date.now()}`, parts: [{ kind: 'text', text }] },
+    },
+  };
+}
+
+export function statusUpdate(
+  taskId: string,
+  state: 'working' | 'completed' | 'failed',
+  message?: string,
+): Record<string, unknown> {
+  return {
+    jsonrpc: '2.0',
+    id: `msg_${Date.now()}`,
+    result: {
+      taskId,
+      kind: 'status-update',
+      final: false, // status-update never closes a task; only artifact-update(final:true) does
+      status: {
+        state,
+        ...(message ? { message: { role: 'agent', parts: [{ kind: 'text', text: message }] } } : {}),
+      },
+    },
+  };
+}
