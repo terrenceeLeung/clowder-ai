@@ -157,7 +157,7 @@ export const CONNECTOR_PLATFORMS: PlatformDef[] = [
   {
     id: 'xiaoyi',
     name: '小艺',
-    nameEn: 'XiaoYi (HuaWei)',
+    nameEn: 'XiaoYi (Huawei)',
     fields: [
       { envName: 'XIAOYI_AK', label: 'Access Key', sensitive: false },
       { envName: 'XIAOYI_SK', label: 'Secret Key', sensitive: true },
