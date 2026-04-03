@@ -71,7 +71,7 @@ export interface ConnectorGatewayConfig {
   coCreatorUserId?: string | undefined;
   whisperUrl?: string | undefined;
   connectorMediaDir?: string | undefined;
-  /** F148: XiaoYi OpenClaw 模式 */
+  /** F151: XiaoYi OpenClaw 模式 */
   xiaoyiAk?: string | undefined;
   xiaoyiSk?: string | undefined;
   xiaoyiAgentId?: string | undefined;
@@ -652,7 +652,7 @@ export async function startConnectorGateway(
     log.info('[ConnectorGateway] DingTalk adapter started (Stream mode)');
   }
 
-  // ── XiaoYi (OpenClaw WebSocket mode) — F148 ──
+  // ── XiaoYi (OpenClaw WebSocket mode) — F151 ──
   if (hasXiaoyi) {
     const { XiaoyiAdapter } = await import('./adapters/XiaoyiAdapter.js');
     const xiaoyi = new XiaoyiAdapter(log, {

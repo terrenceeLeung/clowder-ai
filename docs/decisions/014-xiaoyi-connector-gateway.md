@@ -1,5 +1,5 @@
 ---
-feature_ids: [F148]
+feature_ids: [F151]
 topics: [connector, architecture, xiaoyi, websocket]
 doc_kind: decision
 created: 2026-04-02
@@ -10,7 +10,7 @@ created: 2026-04-02
 > **状态**: 已决定
 > **日期**: 2026-04-02
 > **决策者**: 铲屎官 + Ragdoll + 缅因猫（review）
-> **上下文**: F148 Design Gate review + feat-lifecycle 指导
+> **上下文**: F151 Design Gate review + feat-lifecycle 指导
 
 ## 背景
 

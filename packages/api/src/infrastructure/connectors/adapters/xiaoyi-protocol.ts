@@ -4,7 +4,7 @@
  * A2A JSON-RPC 2.0 protocol helpers for HAG communication.
  * Separated from XiaoyiAdapter to keep file sizes within project limits.
  *
- * F148 | ADR-014
+ * F151 | ADR-014
  */
 
 import { createHmac } from 'node:crypto';
