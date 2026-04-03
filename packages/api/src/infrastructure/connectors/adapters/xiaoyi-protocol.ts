@@ -138,7 +138,7 @@ export function statusUpdate(
     result: {
       taskId,
       kind: 'status-update',
-      final: false, // status-update never closes a task; only artifact-update(final:true) does
+      final: state !== 'working',
       status: {
         state,
         ...(message ? { message: { role: 'agent', parts: [{ kind: 'text', text: message }] } } : {}),

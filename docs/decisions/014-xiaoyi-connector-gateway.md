@@ -95,20 +95,21 @@ XiaoYiAdapter
 ```
 收到消息
   ↓
-status-update { state: "working", final: false }  → 小艺显示「思考中…」
+status-update { state: "working", final: false }   → HAG 标记 task 进入 working 状态
+artifact-update { text: "思考中…", append: false, final: false }  → 占位文字（用 artifact 而非 status message）
   ↓
-artifact-update { append: false, final: false }    → 第一个字出现，替换「思考中」
+artifact-update { append: false, final: false }    → 第一个字出现，替换「思考中…」
   ↓
 artifact-update { append: true, final: false }     → 后续逐字追加
   ↓
-status-update { state: "completed", final: false } → 标记完成（status-update 永远 final:false）
+status-update { state: "completed", final: true }  → 标记完成
   ↓
-artifact-update { lastChunk: true, final: true }   → 关闭 task（只有 artifact-update 能 final:true）
+artifact-update { lastChunk: true, final: true }   → 关闭 task
 ```
 
-**关键协议约束**（`@ynhcj/xiaoyi` 源码 + 真机验证）：
-- `status-update` 的 `final` 永远为 `false` — 它不关闭 task
-- 只有 `artifact-update(final: true)` 关闭 task — 必须在 status-update(completed) 之后发送
+**关键协议约束**（真机验证 2026-04-03）：
+- `status-update` 的 `final` 跟随 state：`working` → `false`，`completed`/`failed` → `true`
+- HAG 会把 `status-update` 的 `message` 文字渲染为**持久消息条目**，不会自动清除。所以「思考中…」等占位文字必须放在 `artifact-update` 内容里（`append:false` 会被后续内容替换），不能放 `status-update` 的 `message` 字段
 
 **多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本（`---` 分隔）。3s debounce 后发 final:true。
 
@@ -136,9 +137,9 @@ activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
 | 2 | 用 `owner:{agentId}` 做 senderId | OpenClaw 无用户级标识，所有对话归属 connector 配置者 | 2026-04-02 |
 | 3 | 用 `params.sessionId` 而非顶层 `msg.sessionId` | office-claw P1-1 实测验证：顶层 sessionId 每次打开 app 刷新 | 2026-04-02 |
 | 4 | 双服务器 active-active + 去重 | 入站去重防双发，session affinity 保证响应连续性 | 2026-04-02 |
-| 5 | `status-update(working)` 显思考中 | 对齐 DingTalk adapter 的占位符模式 | 2026-04-02 |
+| 5 | 占位文字用 `artifact-update` 而非 `status-update` message | HAG 把 status message 渲染为持久条目；artifact 内容可被后续 `append:false` 替换（真机验证 2026-04-03） | 2026-04-03 |
 | 6 | 不做多小艺 agent 接入 | 单账号单 agent，scope 聚焦 | 2026-04-02 |
-| 7 | status-update 永远 final:false | `@ynhcj/xiaoyi` 源码 + 真机验证：只有 artifact-update 能关闭 task | 2026-04-03 |
+| 7 | status-update final 跟随 state | `final: state !== 'working'`。working→false，completed/failed→true（真机验证 2026-04-03） | 2026-04-03 |
 | 8 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task = 一个 artifact，多猫必须聚合 | 2026-04-03 |
 | 9 | FIFO queue + invocation 级 claimTask | 替代 session 级单指针，消除 QueueProcessor 立即启动的 3s 竞态 | 2026-04-03 |
 
@@ -168,7 +169,7 @@ activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
 2. **sessionId 陷阱**：协议有**两个**叫 sessionId 的字段。`params.sessionId`（params 内）稳定，`msg.sessionId`（顶层）每次打开 app 刷新。实现时必须只用 params 内的。但 `tasks/cancel` 和 `clearContext` 的 sessionId 在顶层。
 3. **备 IP TLS**：备 IP `116.63.174.231` 没有域名做 SNI，用 `rejectUnauthorized: false`（与参考实现一致）。
 4. **task 生命周期**：adapter 用 FIFO queue + `claimTask` 做 invocation 级绑定（不是 session 级单指针）。`sendPlaceholder` = invocation 边界信号，claim 下一个未绑定 task。三层 timer：keepalive 20s / debounce 3s / timeout 120s。
-5. **思考中指示**：先发 `status-update(working, final:false)`，小艺端显示「思考中…」。**status-update 的 final 永远 false**——只有 `artifact-update(final:true)` 关闭 task。这是 `@ynhcj/xiaoyi` 源码验证的硬性约束。
+5. **思考中指示**：「思考中…」占位文字放在 `artifact-update` 内容里（不是 `status-update` 的 `message`）。HAG 把 status message 文字渲染为持久消息条目，不会自动清除；artifact 内容会被后续 `append:false` 替换。`status-update` 的 `final` 跟随 state：working→false，completed/failed→true。
 6. **签名算法**：`Base64(HMAC-SHA256(SK, timestamp_string))`。输入**只有 timestamp**，没有 `ak=` 前缀。这跟网上很多示例不同，以 `@ynhcj/xiaoyi` 源码为准。
 7. **出站信封**：必须用两层包装 — `{ msgType: "agent_response", agentId, sessionId, taskId, msgDetail: JSON.stringify(jsonrpc) }`。裸 JSON-RPC 不行。
 8. **append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加。流式必须只发 delta（新增部分），发全量会导致内容翻倍。

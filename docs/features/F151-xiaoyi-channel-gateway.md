@@ -66,7 +66,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 | 传输 | WebSocket (wss)：主 `wss://hag.cloud.huawei.com/openclaw/v1/ws/link`，备 `wss://116.63.174.231/openclaw/v1/ws/link` |
 | 认证 | HMAC-SHA256: `signature = HMAC-SHA256(SK, "ak={AK}&timestamp={TS}")` |
 | 消息 | A2A JSON-RPC 2.0 |
-| 流式 | `status-update(working)` → `artifact-update` 逐帧推送（小艺端先显示「思考中…」再逐字展示） |
+| 流式 | `status-update(working)` + `artifact-update('思考中…')` 占位 → `artifact-update` 逐帧推送（占位文字被替换，再逐字展示） |
 | 保活 | heartbeat 30s ping + 断线指数退避重连 |
 | HA | 双服务器 active-active + 入站去重 (key: `sessionId+taskId`)，出站 session affinity（记录入站来源服务器，回包走同一通道） |
 | 备链路 TLS | 备 IP `116.63.174.231` 使用华为 CA 签发证书，需显式信任或 SNI 匹配；**禁止 `rejectUnauthorized: false`** |
@@ -120,7 +120,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
    - `message/stream` 入站解析 → 标准 InboundMessage
    - `agent_response` 出站格式化：`status-update(working)` 占位 → `artifact-update` 逐帧推送 → `status-update(completed)` 收尾
    - `tasks/cancel` / `clearContext` 处理
-   - 流式输出：收到请求立即发 `status-update(working)`（小艺端显示「思考中…」），首 token 到达后切 artifact-update
+   - 流式输出：收到请求立即发 `status-update(working)` + `artifact-update('思考中…')` 占位，首 token 到达后 `artifact-update(append:false)` 替换占位文字
 
 3. **Gateway 集成**
    - Principal Link: `connectorId=xiaoyi`, `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
@@ -149,7 +149,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 - [ ] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
 - [ ] AC-A3: 心跳保活 30s + 断线指数退避重连（max 10 次）
 - [ ] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
-- [ ] AC-A5: 流式输出 — 先发 `status-update(working)` 显示「思考中…」，首 token 到达后逐字展示
+- [ ] AC-A5: 流式输出 — 先发 `status-update(working)` + `artifact-update('思考中…')` 占位，首 token 到达后替换并逐字展示
 - [ ] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
 - [ ] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
 - [ ] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路

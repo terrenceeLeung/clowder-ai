@@ -66,7 +66,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 | 传输 | WebSocket (wss)：主 `wss://hag.cloud.huawei.com/openclaw/v1/ws/link`，备 `wss://116.63.174.231/openclaw/v1/ws/link` |
 | 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 注意：输入只有 timestamp，无 ak 前缀 |
 | 消息 | A2A JSON-RPC 2.0，出站需两层信封（见下文） |
-| 流式 | `status-update(working)` → `artifact-update` 逐帧推送（小艺端先显示「思考中…」再逐字展示） |
+| 流式 | `status-update(working)` + `artifact-update('思考中…')` 占位 → `artifact-update` 逐帧推送（占位文字被替换，再逐字展示） |
 | 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WebSocket ping 每 30s（pong 超时 90s） |
 | HA | 双服务器 active-active + 入站去重 (key: `sessionId+taskId`)，出站 session affinity（记录入站来源服务器，回包走同一通道） |
 | 备链路 TLS | 备 IP `116.63.174.231` — IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致） |
@@ -127,11 +127,12 @@ Layer 2（msgDetail 内，序列化为字符串）：
 **append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加（必须只发 delta）
 
 **流式序列**（单猫）：
-1. `status-update(working, "思考中…")` — 小艺显示思考指示
-2. `artifact-update(append: false)` — 首个 chunk，替换「思考中」
-3. `artifact-update(append: true)` — 后续 chunk，追加 delta 文本
-4. `status-update(completed, final: false)` — 标记完成（**status-update 永远 final:false**）
-5. `artifact-update(lastChunk: true, final: true)` — 关闭 task（**只有 artifact-update 能 final:true**）
+1. `status-update(working)` — 设 task 状态（不带 message 文字！HAG 会把 message 渲染为持久条目）
+2. `artifact-update('思考中…', append: false, final: false)` — 占位文字（后续会被替换）
+3. `artifact-update(append: false)` — 首个 chunk，替换占位文字
+4. `artifact-update(append: true)` — 后续 chunk，追加 delta 文本
+5. `status-update(completed, final: true)` — 标记完成（`final` 跟随 state：working→false，completed/failed→true）
+6. `artifact-update(lastChunk: true, final: true)` — 关闭 task
 
 **多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本，用 `---` 分隔。3s debounce 后发 final:true 关闭 task；新猫的 `sendPlaceholder` 取消 timer 继续等待。
 
@@ -156,7 +157,7 @@ Layer 2（msgDetail 内，序列化为字符串）：
    - `message/stream` 入站解析 → 标准 InboundMessage
    - `agent_response` 出站格式化：`status-update(working)` 占位 → `artifact-update` 逐帧推送 → `status-update(completed)` 收尾
    - `tasks/cancel` / `clearContext` 处理
-   - 流式输出：收到请求立即发 `status-update(working)`（小艺端显示「思考中…」），首 token 到达后切 artifact-update
+   - 流式输出：收到请求立即发 `status-update(working)` + `artifact-update('思考中…')` 占位，首 token 到达后 `artifact-update(append:false)` 替换占位文字
 
 3. **Gateway 集成**
    - Principal Link: `connectorId=xiaoyi`, `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
@@ -185,7 +186,7 @@ Layer 2（msgDetail 内，序列化为字符串）：
 - [ ] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
 - [ ] AC-A3: 双机制心跳保活（应用层 20s + WS ping 30s）+ 断线指数退避重连（max 10 次）
 - [ ] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
-- [ ] AC-A5: 流式输出 — 先发 `status-update(working)` 显示「思考中…」，首 token 到达后逐字展示
+- [ ] AC-A5: 流式输出 — 先发 `status-update(working)` + `artifact-update('思考中…')` 占位，首 token 到达后替换并逐字展示
 - [ ] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
 - [ ] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
 - [ ] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
@@ -219,7 +220,7 @@ Layer 2（msgDetail 内，序列化为字符串）：
 | 5 | 不做多小艺 agent 接入 | 单账号单 agent，scope 聚焦 | 2026-04-01 |
 | 6 | adapter 内置 task 生命周期管理 | 流式出站必须带 taskId 回包；现有 `IStreamableOutboundAdapter` 接口不携带此上下文，由 adapter 内部 FIFO 队列 + invocation 级绑定管理（缅因猫 review R4/R5） | 2026-04-01 |
 | 7 | `externalChatId` 带 `agentId:` 前缀 | 隔离命名空间，确保 binding key 全局唯一（缅因猫 review） | 2026-04-01 |
-| 8 | status-update 永远 `final:false` | 参考实现 `@ynhcj/xiaoyi` 源码验证：只有 artifact-update 能 `final:true` 关闭 task（真机调试修正） | 2026-04-03 |
+| 8 | status-update `final` 跟随 state | `final: state !== 'working'`。working→false，completed/failed→true。占位文字用 artifact-update 而非 status message（HAG 把 message 渲染为持久条目，真机验证 2026-04-03） | 2026-04-03 |
 | 9 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task 生命周期限制（一个 task 只能有一个 artifact），多猫回复必须在同一 artifact 内聚合 | 2026-04-03 |
 | 10 | invocation 级 task 绑定 (claimTask) | 队列头推断在 QueueProcessor 立即启动下一 invocation 时有 3s 竞态窗口；改用 claimTask 跳过已绑定 task（缅因猫 review R5） | 2026-04-03 |
 

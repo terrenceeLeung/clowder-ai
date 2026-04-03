@@ -4,7 +4,7 @@
  * 连接方向：Cat Cafe 主动连 HAG（类似 DingTalk Stream 模式）
  * 流式：status-update(working) → artifact-update 逐帧 → artifact-update(lastChunk, final:false)
  * 多猫：replyParts 聚合 → 3s debounce 后 final:true 关闭 task（sendPlaceholder 取消 timer）
- * 结束序列：status-update(completed, final:false) → artifact-update(final:true)，与参考实现一致
+ * 结束序列：status-update(completed, final:true) → artifact-update(final:true)，与参考实现一致
  *
  * Task isolation: each HAG task is tracked via per-session FIFO queue (taskQueue).
  * sendPlaceholder claims the next unclaimed task (invocation-level binding via claimTask),
@@ -131,8 +131,12 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     }
     this.cancelFinal(rec.taskId);
     if (!this.replyParts.has(rec.taskId)) {
-      const st = statusUpdate(rec.taskId, 'working', '思考中…');
+      // status-update 只设 state，不带 message（HAG 会把 message 文字渲染成持久条目）
+      const st = statusUpdate(rec.taskId, 'working');
       this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
+      // 用 artifact-update 发占位文字，后续 editMessage(append:false) 会替换掉
+      const placeholder = artifactUpdate(rec.taskId, '思考中…', { append: false, lastChunk: false, final: false });
+      this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, placeholder));
     }
     this.editState.set(rec.taskId, { sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
     this.startKeepalive(rec.taskId, sessionId, rec);
@@ -276,7 +280,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
     // If queued behind another task, send keepalive to prevent HAG timeout
     if (queue.length > 1) {
-      const st = statusUpdate(taskId, 'working', '排队中…');
+      const st = statusUpdate(taskId, 'working');
       this.sendVia(source, agentResponse(this.opts.agentId, sessionId, taskId, st));
       this.startKeepalive(taskId, sessionId, rec);
     }
@@ -423,7 +427,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.keepaliveTimers.set(
       taskId,
       setInterval(() => {
-        const ka = statusUpdate(rec.taskId, 'working', '处理中…');
+        const ka = statusUpdate(rec.taskId, 'working');
         this.sendVia(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, ka));
       }, STATUS_KEEPALIVE_MS),
     );
