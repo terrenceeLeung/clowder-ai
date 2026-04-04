@@ -92,8 +92,10 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
     }
+    const cleaned = this.stripMentions(content);
+    if (!cleaned) return;
     const parts = this.replyParts.get(rec.taskId) ?? [];
-    parts.push(content);
+    parts.push(cleaned);
     this.replyParts.set(rec.taskId, parts);
     const fullText = parts.join('\n\n---\n\n');
     const art = artifactUpdate(rec.taskId, fullText, { append: false, lastChunk: false, final: false });
@@ -129,7 +131,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (now - edit.lastEditAt < EDIT_THROTTLE_MS) return;
     const prior = this.replyParts.get(platformMessageId);
     const prefix = prior?.length ? `${prior.join('\n\n---\n\n')}\n\n---\n\n` : '';
-    const fullText = prefix + text;
+    const fullText = this.stripMentions(prefix + text);
     const isFirst = edit.sentLen === 0;
     const delta = isFirst ? fullText : fullText.slice(edit.sentLen);
     if (!delta) return;
@@ -250,12 +252,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
   }
 
-  private clearTimersForTask(taskId: string): void {
-    this.cancelTaskTimeout(taskId);
-    this.cancelFinal(taskId);
-    this.clearKeepalive(taskId);
-  }
-
   private cancelFinal(taskId: string): void {
     const t = this.finalTimers.get(taskId);
     if (t) {
@@ -286,7 +282,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     const queue = this.taskQueue.get(sid);
     if (queue) {
       for (const t of queue) {
-        this.clearTimersForTask(t.taskId);
+        this.cancelTaskTimeout(t.taskId);
+        this.cancelFinal(t.taskId);
+        this.clearKeepalive(t.taskId);
         this.replyParts.delete(t.taskId);
         this.editState.delete(t.taskId);
         this.claimedTasks.delete(t.taskId);
@@ -340,5 +338,10 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     for (const [k, ts] of this.dedup) {
       if (ts < cutoff) this.dedup.delete(k);
     }
+  }
+
+  /** Strip trailing @catId mentions — internal routing signals, not user-facing content. */
+  private stripMentions(text: string): string {
+    return text.replace(/(\s*@\w+)+\s*$/, '').trimEnd();
   }
 }
