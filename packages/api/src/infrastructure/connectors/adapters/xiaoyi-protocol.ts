@@ -26,7 +26,7 @@ export const RECONNECT_BASE_MS = 1_000;
 export const RECONNECT_MAX_MS = 30_000;
 export const DEDUP_TTL_MS = 5 * 60_000;
 export const EDIT_THROTTLE_MS = 300;
-export const DEFERRED_FINAL_MS = 3_000;
+export const DEFERRED_FINAL_MS = 10_000;
 export const STATUS_KEEPALIVE_MS = 20_000;
 export const TASK_TIMEOUT_MS = 120_000;
 

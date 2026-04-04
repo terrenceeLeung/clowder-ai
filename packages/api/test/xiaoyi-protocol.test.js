@@ -249,6 +249,116 @@ describe('XiaoyiAdapter: task lifecycle', () => {
     await adapter.stopStream();
   });
 
+  it('multi-cat: second cat reuses task via activeTask fallback', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    const sent = [];
+    adapter.ws.send = (_p, payload) => sent.push(JSON.parse(payload));
+    adapter.onMsg = async () => {};
+
+    // HAG sends one task
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'hello'), 'primary');
+
+    // Cat A claims and replies
+    const idA = await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    assert.equal(idA, 'task-1');
+    await adapter.sendReply('agent-1:sess-1', 'Cat A says hi');
+
+    // Cat B: sendPlaceholder should reuse task-1 (not return empty)
+    const idB = await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    assert.equal(idB, 'task-1', 'Cat B must reuse same taskId');
+
+    // Cat B: finalTimer should be cancelled (cancelFinal called)
+    assert.equal(adapter.finalTimers.has('task-1'), false, 'cancelFinal should clear timer');
+
+    // Cat B: sendReply should append to replyParts
+    sent.length = 0;
+    await adapter.sendReply('agent-1:sess-1', 'Cat B says world');
+    const parts = adapter.replyParts.get('task-1');
+    assert.deepEqual(parts, ['Cat A says hi', 'Cat B says world'], 'replyParts should aggregate both cats');
+
+    // Verify the artifact sent contains both parts joined
+    const replyArt = sent.find((m) => {
+      const d = JSON.parse(m.msgDetail);
+      return d?.result?.kind === 'artifact-update' && d?.result?.artifact?.parts?.[0]?.text?.includes('Cat A');
+    });
+    assert.ok(replyArt, 'aggregated artifact should contain Cat A text');
+    const artText = JSON.parse(replyArt.msgDetail).result.artifact.parts[0].text;
+    assert.ok(artText.includes('Cat B says world'), 'aggregated artifact should contain Cat B text');
+
+    await adapter.stopStream();
+  });
+
+  it('serial dispatch: task B waits until task A dequeues', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+
+    const dispatched = [];
+    adapter.onMsg = async (msg) => dispatched.push(msg.taskId);
+
+    // Two tasks arrive for the same session
+    adapter.handleInbound(mkInbound('task-A', 'sess-1', 'msg1'), 'primary');
+    adapter.handleInbound(mkInbound('task-B', 'sess-1', 'msg2'), 'primary');
+
+    // Only task-A should be dispatched (queue head)
+    assert.deepEqual(dispatched, ['task-A'], 'task-B must NOT dispatch while A is active');
+
+    // Cat 1 of chain A: claims task-A
+    const idA1 = await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    assert.equal(idA1, 'task-A');
+
+    // Cat 2 of chain A: must reuse task-A (not claim task-B)
+    await adapter.sendReply('agent-1:sess-1', 'A1 done');
+    const idA2 = await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    assert.equal(idA2, 'task-A', 'chain A cat 2 must reuse task-A');
+
+    // task-B still not dispatched
+    assert.deepEqual(dispatched, ['task-A'], 'task-B still pending');
+
+    // Simulate chain A finalization (scheduleFinal would call emitFinal → dequeueTask)
+    // Directly call dequeueTask to simulate
+    adapter.dequeueTask('sess-1', 'task-A');
+    assert.deepEqual(dispatched, ['task-A', 'task-B'], 'task-B dispatched after A dequeues');
+
+    // Now task-B can be claimed
+    const idB = await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    assert.equal(idB, 'task-B', 'task-B is now claimable');
+
+    await adapter.stopStream();
+  });
+
+  it('multi-cat: sendPlaceholder skips duplicate status/placeholder after first cat', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    const sent = [];
+    adapter.ws.send = (_p, payload) => sent.push(JSON.parse(payload));
+    adapter.onMsg = async () => {};
+
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'go'), 'primary');
+
+    // Cat A: sendPlaceholder sends status(working) + artifact(placeholder)
+    await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    const countAfterA = sent.length;
+    assert.ok(countAfterA >= 2, 'Cat A placeholder should send status + artifact');
+
+    // Cat A replies (replyParts now has content)
+    await adapter.sendReply('agent-1:sess-1', 'A done');
+
+    // Cat B: sendPlaceholder should NOT re-send status(working)/placeholder
+    // because replyParts already has content
+    const countBeforeB = sent.length;
+    await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    const newMsgs = sent.slice(countBeforeB);
+    const hasNewPlaceholder = newMsgs.some((m) => {
+      const d = JSON.parse(m.msgDetail);
+      return d?.result?.artifact?.parts?.[0]?.text === '思考中…';
+    });
+    assert.equal(hasNewPlaceholder, false, 'should not re-send placeholder after replyParts exist');
+
+    await adapter.stopStream();
+  });
+
   it('HAG JSON-RPC error is logged', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const warnings = [];

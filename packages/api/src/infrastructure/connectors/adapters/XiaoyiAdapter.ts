@@ -1,12 +1,6 @@
 /**
- * XiaoYi (小艺) Connector Adapter — OpenClaw 模式对接华为 HAG
- *
- * 流式：status-update(working) → artifact-update 逐帧 → artifact-update(lastChunk, final:true)
- * 多猫：replyParts 聚合 → 3s debounce 后 final:true 关闭 task
- * 结束序列：status-update(completed, final:true) → artifact-update(final:true)
- *
- * Task isolation: per-session FIFO queue; sendPlaceholder claims via claimTask (invocation-level).
- *
+ * XiaoYi (小艺) Connector Adapter — OpenClaw A2A over dual-WS.
+ * Per-session FIFO queue with serial dispatch; multi-cat reuse via activeTask.
  * F151 | ADR-014
  */
 
@@ -50,6 +44,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   private readonly finalTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly keepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
   private readonly taskTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Deferred inbound payloads for tasks queued behind the active head */
+  private readonly pendingDispatch = new Map<string, XiaoyiInboundMessage>();
 
   constructor(log: FastifyBaseLogger, opts: XiaoyiAdapterOptions) {
     this.log = log;
@@ -79,6 +75,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.replyParts.clear();
     this.dedup.clear();
     this.editState.clear();
+    this.pendingDispatch.clear();
   }
 
   private onMsg: ((msg: XiaoyiInboundMessage) => Promise<void>) | null = null;
@@ -103,7 +100,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.claimTask(sessionId);
+    // Multi-cat: reuse active task first; only claim a new task for the first cat in a chain
+    const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
@@ -179,13 +177,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.taskQueue.set(sessionId, queue);
     this.startTaskTimeout(taskId, sessionId, rec);
 
-    // If queued behind another task, send keepalive to prevent HAG timeout
-    if (queue.length > 1) {
-      const st = statusUpdate(taskId, 'working');
-      this.ws.send(source, agentResponse(this.opts.agentId, sessionId, taskId, st));
-      this.startKeepalive(taskId, sessionId, rec);
-    }
-
     const text = (msg.params?.message?.parts ?? [])
       .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
       .map((p) => p.text)
@@ -193,9 +184,17 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (!text) return;
     const chatId = `${this.opts.agentId}:${sessionId}`;
     const senderId = `owner:${this.opts.agentId}`;
-    this.onMsg?.({ chatId, text, messageId: taskId, taskId, senderId }).catch((err: unknown) =>
-      this.log.error({ err, taskId }, '[XiaoYi] Callback failed'),
-    );
+    const payload: XiaoyiInboundMessage = { chatId, text, messageId: taskId, taskId, senderId };
+
+    // Serial dispatch: only process queue head; park others until dequeueTask
+    if (queue.length > 1) {
+      const st = statusUpdate(taskId, 'working');
+      this.ws.send(source, agentResponse(this.opts.agentId, sessionId, taskId, st));
+      this.startKeepalive(taskId, sessionId, rec);
+      this.pendingDispatch.set(taskId, payload);
+      return;
+    }
+    this.onMsg?.(payload).catch((err: unknown) => this.log.error({ err, taskId }, '[XiaoYi] Callback failed'));
   }
 
   // ── Task Timers ──
@@ -250,12 +249,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
   }
 
-  private clearTimersForTask(taskId: string): void {
-    this.cancelTaskTimeout(taskId);
-    this.cancelFinal(taskId);
-    this.clearKeepalive(taskId);
-  }
-
   private cancelFinal(taskId: string): void {
     const t = this.finalTimers.get(taskId);
     if (t) {
@@ -286,10 +279,13 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     const queue = this.taskQueue.get(sid);
     if (queue) {
       for (const t of queue) {
-        this.clearTimersForTask(t.taskId);
+        this.cancelTaskTimeout(t.taskId);
+        this.cancelFinal(t.taskId);
+        this.clearKeepalive(t.taskId);
         this.replyParts.delete(t.taskId);
         this.editState.delete(t.taskId);
         this.claimedTasks.delete(t.taskId);
+        this.pendingDispatch.delete(t.taskId);
       }
     }
     this.taskQueue.delete(sid);
@@ -316,6 +312,12 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.editState.delete(taskId);
     if (this.activeTask.get(sessionId)?.taskId === taskId) {
       this.activeTask.delete(sessionId);
+    }
+    // Serial dispatch: trigger next queued task now that head is cleared
+    const pending = q[0] && this.pendingDispatch.get(q[0].taskId);
+    if (pending) {
+      this.pendingDispatch.delete(q[0].taskId);
+      this.onMsg?.(pending).catch((e: unknown) => this.log.error({ err: e }, '[XiaoYi] Dispatch failed'));
     }
   }
 
