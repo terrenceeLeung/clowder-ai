@@ -142,7 +142,7 @@ export function ConnectorBubble({ message }: ConnectorBubbleProps) {
           <span className="text-xs text-cafe-muted">{formatTime(message.timestamp)}</span>
         </div>
         <div
-          className={`${theme.bubble} rounded-2xl rounded-bl-sm px-4 py-3 transition-transform hover:-translate-y-0.5 overflow-hidden w-fit`}
+          className={`${theme.bubble} rounded-2xl rounded-bl-sm px-4 py-3 transition-transform hover:-translate-y-0.5 overflow-hidden`}
         >
           {hasBlocks ? renderContentBlocks(message.contentBlocks!) : <MarkdownContent content={message.content} />}
           {richBlocks && richBlocks.length > 0 && <RichBlocks blocks={richBlocks} />}

@@ -9,6 +9,11 @@
 
 import { createHmac } from 'node:crypto';
 
+let msgSeq = 0;
+function nextMsgId(): string {
+  return `msg_${Date.now()}_${++msgSeq}`;
+}
+
 // ── Constants ──
 
 export const WS_PRIMARY = 'wss://hag.cloud.huawei.com/openclaw/v1/ws/link';
@@ -115,14 +120,14 @@ export function artifactUpdate(
 ): Record<string, unknown> {
   return {
     jsonrpc: '2.0',
-    id: `msg_${Date.now()}`,
+    id: nextMsgId(),
     result: {
       taskId,
       kind: 'artifact-update',
       append: opts.append,
       lastChunk: opts.lastChunk,
       final: opts.final,
-      artifact: { artifactId: `artifact_${Date.now()}`, parts: [{ kind: 'text', text }] },
+      artifact: { artifactId: `art_${Date.now()}_${msgSeq}`, parts: [{ kind: 'text', text }] },
     },
   };
 }
@@ -134,7 +139,7 @@ export function statusUpdate(
 ): Record<string, unknown> {
   return {
     jsonrpc: '2.0',
-    id: `msg_${Date.now()}`,
+    id: nextMsgId(),
     result: {
       taskId,
       kind: 'status-update',
