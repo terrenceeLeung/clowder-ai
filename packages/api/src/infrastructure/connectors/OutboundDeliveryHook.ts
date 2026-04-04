@@ -38,6 +38,8 @@ export interface IStreamableOutboundAdapter extends IOutboundAdapter {
   editMessage(externalChatId: string, platformMessageId: string, text: string): Promise<void>;
   /** Delete a message by platform message ID (cleanup after streaming). */
   deleteMessage?(platformMessageId: string): Promise<void>;
+  /** F151: Invocation delivery batch complete. `chainDone=true` means no more cats for this thread. */
+  onDeliveryBatchDone?(externalChatId: string, chainDone: boolean): Promise<void>;
 }
 
 export interface ThreadMeta {

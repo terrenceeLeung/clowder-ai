@@ -98,9 +98,23 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.scheduleFinal(rec.taskId, sessionId, rec);
   }
 
+  async onDeliveryBatchDone(externalChatId: string, chainDone: boolean): Promise<void> {
+    const sessionId = this.sessionFrom(externalChatId);
+    const rec = this.activeTask.get(sessionId);
+    if (!rec) return;
+    this.cancelFinal(rec.taskId);
+    if (chainDone) {
+      this.cancelTaskTimeout(rec.taskId);
+      this.clearKeepalive(rec.taskId);
+      const parts = this.replyParts.get(rec.taskId);
+      if (parts?.length) this.emitFinal(sessionId, rec, parts.join('\n\n---\n\n'));
+      this.replyParts.delete(rec.taskId);
+      this.dequeueTask(sessionId, rec.taskId);
+    }
+  }
+
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
     const sessionId = this.sessionFrom(externalChatId);
-    // Multi-cat: reuse active task first; only claim a new task for the first cat in a chain
     const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
@@ -140,8 +154,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   async deleteMessage(platformMessageId: string): Promise<void> {
     this.editState.delete(platformMessageId);
   }
-
-  // ── Inbound ──
 
   private handleInbound(raw: string, source: string): void {
     let msg: A2AInbound;
@@ -186,7 +198,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     const senderId = `owner:${this.opts.agentId}`;
     const payload: XiaoyiInboundMessage = { chatId, text, messageId: taskId, taskId, senderId };
 
-    // Serial dispatch: only process queue head; park others until dequeueTask
     if (queue.length > 1) {
       const st = statusUpdate(taskId, 'working');
       this.ws.send(source, agentResponse(this.opts.agentId, sessionId, taskId, st));
@@ -196,8 +207,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     }
     this.onMsg?.(payload).catch((err: unknown) => this.log.error({ err, taskId }, '[XiaoYi] Callback failed'));
   }
-
-  // ── Task Timers ──
 
   private scheduleFinal(taskId: string, sessionId: string, rec: TaskRecord): void {
     this.cancelFinal(taskId);
@@ -273,29 +282,22 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     }
   }
 
-  // ── Helpers ──
-
   private purgeSession(sid: string): void {
-    const queue = this.taskQueue.get(sid);
-    if (queue) {
-      for (const t of queue) {
-        this.cancelTaskTimeout(t.taskId);
-        this.cancelFinal(t.taskId);
-        this.clearKeepalive(t.taskId);
-        this.replyParts.delete(t.taskId);
-        this.editState.delete(t.taskId);
-        this.claimedTasks.delete(t.taskId);
-        this.pendingDispatch.delete(t.taskId);
-      }
+    for (const t of this.taskQueue.get(sid) ?? []) {
+      this.cancelTaskTimeout(t.taskId);
+      this.cancelFinal(t.taskId);
+      this.clearKeepalive(t.taskId);
+      this.replyParts.delete(t.taskId);
+      this.editState.delete(t.taskId);
+      this.claimedTasks.delete(t.taskId);
+      this.pendingDispatch.delete(t.taskId);
     }
     this.taskQueue.delete(sid);
     this.activeTask.delete(sid);
   }
 
   private claimTask(sessionId: string): TaskRecord | undefined {
-    const queue = this.taskQueue.get(sessionId);
-    if (!queue) return undefined;
-    const task = queue.find((t) => !this.claimedTasks.has(t.taskId));
+    const task = this.taskQueue.get(sessionId)?.find((t) => !this.claimedTasks.has(t.taskId));
     if (!task) return undefined;
     this.claimedTasks.add(task.taskId);
     this.activeTask.set(sessionId, task);
@@ -313,7 +315,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (this.activeTask.get(sessionId)?.taskId === taskId) {
       this.activeTask.delete(sessionId);
     }
-    // Serial dispatch: trigger next queued task now that head is cleared
     const pending = q[0] && this.pendingDispatch.get(q[0].taskId);
     if (pending) {
       this.pendingDispatch.delete(q[0].taskId);

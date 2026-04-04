@@ -359,6 +359,46 @@ describe('XiaoyiAdapter: task lifecycle', () => {
     await adapter.stopStream();
   });
 
+  it('onDeliveryBatchDone(chainDone=true) emits final immediately', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    const sent = [];
+    adapter.ws.send = (_p, payload) => sent.push(JSON.parse(payload));
+    adapter.onMsg = async () => {};
+
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'hello'), 'primary');
+    await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    await adapter.sendReply('agent-1:sess-1', 'done');
+
+    sent.length = 0;
+    await adapter.onDeliveryBatchDone('agent-1:sess-1', true);
+
+    const finals = sent.filter((m) => {
+      const d = JSON.parse(m.msgDetail);
+      return d?.result?.kind === 'artifact-update' && d?.result?.lastChunk === true && d?.result?.final === true;
+    });
+    assert.equal(finals.length, 1, 'should emit final artifact');
+    assert.equal(adapter.activeTask.has('sess-1'), false, 'task should be dequeued');
+    await adapter.stopStream();
+  });
+
+  it('onDeliveryBatchDone(chainDone=false) cancels timer without emitting final', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    adapter.onMsg = async () => {};
+
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'hello'), 'primary');
+    await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    await adapter.sendReply('agent-1:sess-1', 'cat A done');
+
+    assert.ok(adapter.finalTimers.has('task-1'), 'timer should exist after sendReply');
+    await adapter.onDeliveryBatchDone('agent-1:sess-1', false);
+    assert.equal(adapter.finalTimers.has('task-1'), false, 'timer should be cancelled');
+    assert.ok(adapter.activeTask.has('sess-1'), 'task should remain active for next cat');
+    await adapter.stopStream();
+  });
+
   it('HAG JSON-RPC error is logged', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const warnings = [];
