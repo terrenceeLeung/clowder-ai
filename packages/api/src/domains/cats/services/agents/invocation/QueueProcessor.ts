@@ -667,10 +667,13 @@ export class QueueProcessor {
                     setTimeout(() => reject(new Error('deliver timeout')), DELIVER_TIMEOUT_MS),
                   ),
                 ]);
+                deliveredTurnIndices.add(i);
               } catch (err) {
-                log.error({ err, threadId, catId: turn.catId }, '[QueueProcessor] Mid-loop outbound delivery error');
+                log.error(
+                  { err, threadId, catId: turn.catId },
+                  '[QueueProcessor] Mid-loop delivery failed, will retry in final phase',
+                );
               }
-              deliveredTurnIndices.add(i);
             }
           }
         }
