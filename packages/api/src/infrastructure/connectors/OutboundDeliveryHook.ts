@@ -28,6 +28,8 @@ export interface IOutboundAdapter {
     externalChatId: string,
     payload: { type: 'image' | 'file' | 'audio'; [key: string]: unknown },
   ): Promise<void>;
+  /** F151: Delivery batch complete. `chainDone=true` = no more output for this task; send close frame. */
+  onDeliveryBatchDone?(externalChatId: string, chainDone: boolean): Promise<void>;
 }
 
 /** Adapter that supports edit-in-place streaming (placeholder → progressive edits). */
@@ -38,8 +40,6 @@ export interface IStreamableOutboundAdapter extends IOutboundAdapter {
   editMessage(externalChatId: string, platformMessageId: string, text: string): Promise<void>;
   /** Delete a message by platform message ID (cleanup after streaming). */
   deleteMessage?(platformMessageId: string): Promise<void>;
-  /** F151: Invocation delivery batch complete. `chainDone=true` means no more cats for this thread. */
-  onDeliveryBatchDone?(externalChatId: string, chainDone: boolean): Promise<void>;
 }
 
 export interface ThreadMeta {
