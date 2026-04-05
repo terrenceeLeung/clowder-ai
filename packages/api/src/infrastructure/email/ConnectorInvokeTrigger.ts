@@ -459,13 +459,13 @@ export class ConnectorInvokeTrigger {
                     setTimeout(() => reject(new Error('deliver timeout')), DELIVER_TIMEOUT_MS),
                   ),
                 ]);
+                deliveredTurnIndices.add(i);
               } catch (err) {
                 log.error(
                   { err, threadId, catId: turn.catId },
-                  '[ConnectorInvokeTrigger] Mid-loop outbound delivery error',
+                  '[ConnectorInvokeTrigger] Mid-loop delivery failed, will retry in final phase',
                 );
               }
-              deliveredTurnIndices.add(i);
             }
           }
         }
