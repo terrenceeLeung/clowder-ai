@@ -137,7 +137,7 @@ Layer 2（msgDetail 内，序列化为字符串）：
 **多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本，用 `---` 分隔。关闭 task 由 `onDeliveryBatchDone(chainDone)` 信号驱动（见下文）。
 
 **Task 关闭机制 — 信号驱动 + timer 安全网**：
-- **主机制** — `onDeliveryBatchDone(chainDone)` 信号：每次 invocation 的 `deliverOutboundFromWeb` 完成后，检查 `invocationTracker.has(tid) || queueProcessor.isThreadBusy(tid)` 判断链条是否结束。`chainDone=true` → 立即 `emitFinal` 关闭 task；`chainDone=false` → 取消 timer 等待下一只猫。
+- **主机制** — `onDeliveryBatchDone(chainDone)` 信号：每次 invocation 完成 delivery 后发出。三条管线均已覆盖：`deliverOutboundFromWeb`（Web UI）、`ConnectorInvokeTrigger`（飞书/小艺等 connector）、`QueueProcessor`（自动出队链）。检查 `invocationTracker.has(tid) || queueProcessor.isThreadBusy(tid)` 判断链条是否结束。`chainDone=true` → 立即 `emitFinal` 关闭 task；`chainDone=false` → 取消 timer 等待下一只猫。
 - **安全网** — `DEFERRED_FINAL_MS = 10s`：`sendReply` 后启动，防止信号丢失时 task 泄漏。`scheduleFinal` 内部会检查 `editState` 存在时自动重调度（streaming 未结束不会误关）。
 - `STATUS_KEEPALIVE_MS = 20s` — 周期性 status-update(working) 防止 HAG 超时
 - `TASK_TIMEOUT_MS = 120s` — 僵尸任务安全网
@@ -225,7 +225,7 @@ Layer 2（msgDetail 内，序列化为字符串）：
 | 8 | status-update `final` 跟随 state | `final: state !== 'working'`。working→false，completed/failed→true。占位文字用 artifact-update 而非 status message（HAG 把 message 渲染为持久条目，真机验证 2026-04-03） | 2026-04-03 |
 | 9 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task 生命周期限制（一个 task 只能有一个 artifact），多猫回复必须在同一 artifact 内聚合 | 2026-04-03 |
 | 10 | invocation 级 task 绑定 (claimTask) | 队列头推断在 QueueProcessor 立即启动下一 invocation 时有 3s 竞态窗口；改用 claimTask 跳过已绑定 task（缅因猫 review R5） | 2026-04-03 |
-| 11 | 信号驱动 task 关闭 (onDeliveryBatchDone) | 纯 timer 在 post_message + 多猫场景下因 TTFT 不可预测而过早关闭 task；改用 `deliverOutboundFromWeb` 完成后精确判断 `chainDone`，timer 降级为安全网 | 2026-04-05 |
+| 11 | 信号驱动 task 关闭 (onDeliveryBatchDone) | 纯 timer 在 post_message + 多猫场景下因 TTFT 不可预测而过早关闭 task；改用 delivery 完成后精确判断 `chainDone`，timer 降级为安全网。三条 delivery 管线均已覆盖（messages.ts / ConnectorInvokeTrigger / QueueProcessor） | 2026-04-05 |
 
 ## Review Gate
 

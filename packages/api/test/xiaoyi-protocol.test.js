@@ -399,6 +399,41 @@ describe('XiaoyiAdapter: task lifecycle', () => {
     await adapter.stopStream();
   });
 
+  it('multi-cat connector delivery accumulates replyParts and emits final with both', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    const sent = [];
+    adapter.ws.send = (_p, payload) => sent.push(JSON.parse(payload));
+    adapter.onMsg = async () => {};
+
+    // Simulate HAG task + streaming start
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'hello'), 'primary');
+    await adapter.sendPlaceholder('agent-1:sess-1', '...');
+
+    // Cat A delivery via OutboundDeliveryHook.deliver → sendReply
+    await adapter.sendReply('agent-1:sess-1', 'Cat A response');
+    // Cat B delivery
+    await adapter.sendReply('agent-1:sess-1', 'Cat B response');
+
+    // Simulate deleteMessage (cleanupPlaceholders)
+    await adapter.deleteMessage('task-1');
+
+    // Signal: chain done
+    sent.length = 0;
+    await adapter.onDeliveryBatchDone('agent-1:sess-1', true);
+
+    const finals = sent.filter((m) => {
+      const d = JSON.parse(m.msgDetail);
+      return d?.result?.kind === 'artifact-update' && d?.result?.lastChunk === true && d?.result?.final === true;
+    });
+    assert.equal(finals.length, 1, 'should emit one final artifact');
+    const finalText = JSON.parse(finals[0].msgDetail)?.result?.artifact?.parts?.[0]?.text ?? '';
+    assert.ok(finalText.includes('Cat A response'), 'final should contain Cat A text');
+    assert.ok(finalText.includes('Cat B response'), 'final should contain Cat B text');
+    assert.equal(adapter.activeTask.has('sess-1'), false, 'task should be dequeued');
+    await adapter.stopStream();
+  });
+
   it('HAG JSON-RPC error is logged', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const warnings = [];

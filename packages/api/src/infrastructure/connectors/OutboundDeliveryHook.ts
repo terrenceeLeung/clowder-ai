@@ -63,6 +63,13 @@ export interface OutboundDeliveryHookOptions {
 
 export class OutboundDeliveryHook {
   private readonly formatter = new ConnectorMessageFormatter();
+  /**
+   * F151: Per-thread promise chain that serializes deliver() calls.
+   * Without this, fire-and-forget post_message callbacks can complete out of
+   * order because each deliver() has internal async steps (binding lookup,
+   * message formatting) that may resolve in different order than they started.
+   */
+  private readonly deliveryChains = new Map<string, Promise<void>>();
 
   constructor(private readonly opts: OutboundDeliveryHookOptions) {}
 
@@ -77,6 +84,23 @@ export class OutboundDeliveryHook {
   }
 
   async deliver(
+    threadId: string,
+    content: string,
+    catId?: CatId,
+    richBlocks?: RichBlock[],
+    threadMeta?: ThreadMeta,
+    origin?: MessageOrigin,
+    triggerMessageId?: string,
+  ): Promise<void> {
+    const exec = () => this.executeDelivery(threadId, content, catId, richBlocks, threadMeta, origin, triggerMessageId);
+    const prev = this.deliveryChains.get(threadId) ?? Promise.resolve();
+    const next = prev.then(exec, exec);
+    // Store the chain with swallowed errors so a single failure doesn't block subsequent deliveries
+    this.deliveryChains.set(threadId, next.catch(() => {}));
+    return next;
+  }
+
+  private async executeDelivery(
     threadId: string,
     content: string,
     catId?: CatId,

@@ -637,4 +637,88 @@ describe('OutboundDeliveryHook', () => {
       assert.equal(feishuMock.sent[0].metadata, undefined, 'failed lookup should not produce replyToSender');
     });
   });
+
+  // F151: delivery serialization — fire-and-forget calls must preserve chronological order
+  describe('per-thread delivery serialization', () => {
+    it('concurrent fire-and-forget delivers arrive in call order', async () => {
+      const order = [];
+      const slowAdapter = {
+        connectorId: 'feishu',
+        async sendReply(_chatId, content) {
+          // Simulate variable async delay — earlier calls are slower
+          const delay = content === 'first' ? 50 : content === 'second' ? 30 : 10;
+          await new Promise((r) => setTimeout(r, delay));
+          order.push(content);
+        },
+      };
+      hook = new OutboundDeliveryHook({
+        bindingStore,
+        adapters: new Map([['feishu', slowAdapter]]),
+        log: noopLog(),
+      });
+      bindingStore.bind('feishu', 'chat-1', 'thread-1', 'user-1');
+
+      // Fire-and-forget: call deliver() without awaiting (like callbacks.ts does)
+      const p1 = hook.deliver('thread-1', 'first');
+      const p2 = hook.deliver('thread-1', 'second');
+      const p3 = hook.deliver('thread-1', 'third');
+      await Promise.all([p1, p2, p3]);
+
+      assert.deepEqual(order, ['first', 'second', 'third'], 'deliveries must complete in call order');
+    });
+
+    it('different threads are not serialized against each other', async () => {
+      const order = [];
+      const trackAdapter = {
+        connectorId: 'feishu',
+        async sendReply(_chatId, content) {
+          order.push(content);
+        },
+      };
+      hook = new OutboundDeliveryHook({
+        bindingStore,
+        adapters: new Map([['feishu', trackAdapter]]),
+        log: noopLog(),
+      });
+      bindingStore.bind('feishu', 'chat-1', 'thread-A', 'user-1');
+      bindingStore.bind('feishu', 'chat-2', 'thread-B', 'user-1');
+
+      await Promise.all([
+        hook.deliver('thread-A', 'A1'),
+        hook.deliver('thread-B', 'B1'),
+        hook.deliver('thread-A', 'A2'),
+      ]);
+
+      // A1 before A2 guaranteed; B1 can be anywhere
+      const aOrder = order.filter((x) => x.startsWith('A'));
+      assert.deepEqual(aOrder, ['A1', 'A2']);
+    });
+
+    it('a failed delivery does not block subsequent deliveries', async () => {
+      let callCount = 0;
+      const failOnceAdapter = {
+        connectorId: 'feishu',
+        async sendReply(_chatId, content) {
+          callCount++;
+          if (content === 'fail') throw new Error('boom');
+          feishuMock.sent.push({ content });
+        },
+      };
+      hook = new OutboundDeliveryHook({
+        bindingStore,
+        adapters: new Map([['feishu', failOnceAdapter]]),
+        log: noopLog(),
+      });
+      bindingStore.bind('feishu', 'chat-1', 'thread-1', 'user-1');
+
+      // First delivery fails, second should still succeed
+      const p1 = hook.deliver('thread-1', 'fail').catch(() => {});
+      const p2 = hook.deliver('thread-1', 'success');
+      await Promise.all([p1, p2]);
+
+      assert.equal(callCount, 2, 'both deliveries should have been attempted');
+      assert.equal(feishuMock.sent.length, 1);
+      assert.equal(feishuMock.sent[0].content, 'success');
+    });
+  });
 });

@@ -664,6 +664,15 @@ export class ConnectorInvokeTrigger {
       this.opts.queueProcessor?.onInvocationComplete(threadId, catId, finalStatus).catch(() => {
         /* best-effort, don't crash background task */
       });
+      // F151: Signal adapters that this invocation's delivery batch is complete.
+      // Must run after tracker.complete + onInvocationComplete so chainDone reflects queued work.
+      if (finalStatus === 'succeeded' && this.opts.streamingHook?.notifyDeliveryBatchDone) {
+        const threadStillBusy =
+          invocationTracker.has(threadId) || (this.opts.queueProcessor?.isThreadBusy(threadId) ?? false);
+        this.opts.streamingHook.notifyDeliveryBatchDone(threadId, !threadStillBusy).catch((err) => {
+          log.warn({ err, threadId }, '[ConnectorInvokeTrigger] notifyDeliveryBatchDone failed');
+        });
+      }
     }
   }
 }

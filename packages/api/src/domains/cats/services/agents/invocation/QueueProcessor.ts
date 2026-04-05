@@ -67,6 +67,8 @@ export interface StreamingOutboundHookLike {
   onStreamChunk(threadId: string, accumulatedText: string, invocationId: string): Promise<void>;
   onStreamEnd(threadId: string, finalText: string, invocationId: string): Promise<void>;
   cleanupPlaceholders?(threadId: string, invocationId: string): Promise<void>;
+  /** F151: Signal adapters that delivery batch is complete for a thread. */
+  notifyDeliveryBatchDone?(threadId: string, chainDone: boolean): Promise<void>;
 }
 
 /** Thread metadata for outbound delivery (deep link, title, etc.) */
@@ -190,6 +192,16 @@ export class QueueProcessor {
       if (key.startsWith(prefix)) return true;
     }
     return false;
+  }
+
+  /** F151: Signal streaming adapters that delivery is done for this thread invocation. */
+  private signalDeliveryBatchDone(threadId: string, status: string): void {
+    if (status !== 'succeeded') return;
+    if (!this.deps.streamingHook?.notifyDeliveryBatchDone) return;
+    const threadStillBusy = this.deps.invocationTracker.has(threadId) || this.isThreadBusy(threadId);
+    this.deps.streamingHook.notifyDeliveryBatchDone(threadId, !threadStillBusy).catch((err) => {
+      this.deps.log.warn({ err, threadId }, '[QueueProcessor] notifyDeliveryBatchDone failed');
+    });
   }
 
   /** Returns pause reason when paused; otherwise undefined. */
@@ -321,6 +333,7 @@ export class QueueProcessor {
         (status) => {
           this.processingSlots.delete(sk);
           this.onInvocationComplete(threadId, entryCat, status).catch(() => {});
+          this.signalDeliveryBatchDone(threadId, status);
         },
         () => {
           this.processingSlots.delete(sk);
@@ -369,6 +382,7 @@ export class QueueProcessor {
       (status) => {
         this.processingSlots.delete(entrySk);
         this.onInvocationComplete(threadId, entryCat, status).catch(() => {});
+        this.signalDeliveryBatchDone(threadId, status);
       },
       () => {
         this.processingSlots.delete(entrySk);
@@ -410,6 +424,7 @@ export class QueueProcessor {
       (status) => {
         this.processingSlots.delete(sk);
         this.onInvocationComplete(threadId, entryCat, status).catch(() => {});
+        this.signalDeliveryBatchDone(threadId, status);
       },
       () => {
         this.processingSlots.delete(sk);
