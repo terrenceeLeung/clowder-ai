@@ -96,7 +96,10 @@ export class OutboundDeliveryHook {
     const prev = this.deliveryChains.get(threadId) ?? Promise.resolve();
     const next = prev.then(exec, exec);
     // Store the chain with swallowed errors so a single failure doesn't block subsequent deliveries
-    this.deliveryChains.set(threadId, next.catch(() => {}));
+    this.deliveryChains.set(
+      threadId,
+      next.catch(() => {}),
+    );
     return next;
   }
 
