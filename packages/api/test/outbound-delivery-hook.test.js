@@ -720,5 +720,59 @@ describe('OutboundDeliveryHook', () => {
       assert.equal(feishuMock.sent.length, 1);
       assert.equal(feishuMock.sent[0].content, 'success');
     });
+
+    it('hung adapter does not block subsequent deliveries (HOL timeout)', async () => {
+      const order = [];
+      let releaseHang;
+      const hangAdapter = {
+        connectorId: 'feishu',
+        async sendReply(_chatId, content) {
+          if (content === 'hang') {
+            await new Promise((r) => {
+              releaseHang = r;
+            });
+            return; // don't push to order after release
+          }
+          order.push(content);
+        },
+      };
+      // Use a short chainTimeoutMs for fast test execution
+      hook = new OutboundDeliveryHook({
+        bindingStore,
+        adapters: new Map([['feishu', hangAdapter]]),
+        log: noopLog(),
+        chainTimeoutMs: 200,
+      });
+      bindingStore.bind('feishu', 'chat-1', 'thread-1', 'user-1');
+
+      const p1 = hook.deliver('thread-1', 'hang').catch(() => {});
+      const p2 = hook.deliver('thread-1', 'after-hang').catch(() => {});
+      await Promise.all([p1, p2]);
+
+      assert.deepEqual(order, ['after-hang'], 'delivery after hung adapter should proceed');
+      // Release the hung promise so the test process exits cleanly
+      releaseHang?.();
+    });
+
+    it('chain entry is cleaned up after last delivery settles (CAS)', async () => {
+      const trackAdapter = {
+        connectorId: 'feishu',
+        async sendReply() {},
+      };
+      hook = new OutboundDeliveryHook({
+        bindingStore,
+        adapters: new Map([['feishu', trackAdapter]]),
+        log: noopLog(),
+      });
+      bindingStore.bind('feishu', 'chat-1', 'thread-1', 'user-1');
+
+      await hook.deliver('thread-1', 'msg');
+      // After delivery settles, the CAS cleanup microtask should have run
+      await new Promise((r) => setTimeout(r, 10));
+
+      // Access private Map via bracket notation for test verification
+      const chains = hook['deliveryChains'];
+      assert.equal(chains.has('thread-1'), false, 'chain entry should be cleaned up after settling');
+    });
   });
 });

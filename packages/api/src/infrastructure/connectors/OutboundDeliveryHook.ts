@@ -59,7 +59,11 @@ export interface OutboundDeliveryHookOptions {
   readonly messageLookup?:
     | ((messageId: string) => Promise<{ source?: { sender?: { id: string; name?: string } } } | null>)
     | undefined;
+  /** Hard timeout (ms) per chained delivery — prevents HOL blocking if an adapter hangs. Default 30s. */
+  readonly chainTimeoutMs?: number;
 }
+
+const DEFAULT_CHAIN_TIMEOUT_MS = 30_000;
 
 export class OutboundDeliveryHook {
   private readonly formatter = new ConnectorMessageFormatter();
@@ -70,8 +74,11 @@ export class OutboundDeliveryHook {
    * message formatting) that may resolve in different order than they started.
    */
   private readonly deliveryChains = new Map<string, Promise<void>>();
+  private readonly chainTimeoutMs: number;
 
-  constructor(private readonly opts: OutboundDeliveryHookOptions) {}
+  constructor(private readonly opts: OutboundDeliveryHookOptions) {
+    this.chainTimeoutMs = opts.chainTimeoutMs ?? DEFAULT_CHAIN_TIMEOUT_MS;
+  }
 
   /**
    * Return the set of connectorIds bound to a thread.
@@ -92,14 +99,29 @@ export class OutboundDeliveryHook {
     origin?: MessageOrigin,
     triggerMessageId?: string,
   ): Promise<void> {
-    const exec = () => this.executeDelivery(threadId, content, catId, richBlocks, threadMeta, origin, triggerMessageId);
+    // P1 fix: wrap executeDelivery with a hard timeout so a hung adapter
+    // cannot block the entire thread's delivery chain (HOL blocking).
+    const exec = () => {
+      let tid: ReturnType<typeof setTimeout>;
+      return Promise.race([
+        this.executeDelivery(threadId, content, catId, richBlocks, threadMeta, origin, triggerMessageId),
+        new Promise<never>((_, reject) => {
+          tid = setTimeout(() => reject(new Error('OutboundDeliveryHook chain timeout')), this.chainTimeoutMs);
+        }),
+      ]).finally(() => clearTimeout(tid));
+    };
     const prev = this.deliveryChains.get(threadId) ?? Promise.resolve();
     const next = prev.then(exec, exec);
     // Store the chain with swallowed errors so a single failure doesn't block subsequent deliveries
-    this.deliveryChains.set(
-      threadId,
-      next.catch(() => {}),
-    );
+    const stored = next.catch(() => {});
+    this.deliveryChains.set(threadId, stored);
+    // P2 fix: CAS cleanup — remove Map entry when chain settles if no new
+    // deliveries have been queued (prevents unbounded Map growth).
+    stored.then(() => {
+      if (this.deliveryChains.get(threadId) === stored) {
+        this.deliveryChains.delete(threadId);
+      }
+    });
     return next;
   }
 
