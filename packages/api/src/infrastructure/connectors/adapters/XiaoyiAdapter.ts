@@ -1,6 +1,10 @@
 /**
  * XiaoYi (小艺) Connector Adapter — OpenClaw A2A over dual-WS.
- * Per-session FIFO queue with serial dispatch; multi-cat reuse via activeTask.
+ *
+ * Per-delivery artifact model: each sendReply / streaming session produces
+ * an independent artifact (unique artifactId). Task closure via close frame
+ * (status-update completed, final=true) driven by onDeliveryBatchDone signal.
+ *
  * F151 | ADR-014
  */
 
@@ -11,7 +15,6 @@ import {
   agentResponse,
   artifactUpdate,
   DEDUP_TTL_MS,
-  DEFERRED_FINAL_MS,
   EDIT_THROTTLE_MS,
   type EditRecord,
   generateXiaoyiSignature,
@@ -34,18 +37,17 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   private readonly ws: XiaoyiWsManager;
   /** Per-session FIFO queue of HAG tasks */
   private readonly taskQueue = new Map<string, TaskRecord[]>();
-  /** Invocation-level binding: sessionId → task claimed by the current invocation */
-  private readonly activeTask = new Map<string, TaskRecord>();
-  /** Set of taskIds already claimed by an invocation (prevents double-claim) */
-  private readonly claimedTasks = new Set<string>();
-  private readonly replyParts = new Map<string, string[]>();
   private readonly dedup = new Map<string, number>();
+  /** Per-task artifact sequence counter for artifactId generation */
+  private readonly seqCounters = new Map<string, number>();
+  /** Streaming edit state keyed by artifactId (= platformMessageId) */
   private readonly editState = new Map<string, EditRecord>();
-  private readonly finalTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly keepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
   private readonly taskTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   /** Deferred inbound payloads for tasks queued behind the active head */
   private readonly pendingDispatch = new Map<string, XiaoyiInboundMessage>();
+  /** Track whether a task has sent at least one artifact (for close frame) */
+  private readonly hasArtifact = new Set<string>();
 
   constructor(log: FastifyBaseLogger, opts: XiaoyiAdapterOptions) {
     this.log = log;
@@ -65,17 +67,14 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.ws.stop();
     for (const t of this.taskTimeouts.values()) clearTimeout(t);
     this.taskTimeouts.clear();
-    for (const t of this.finalTimers.values()) clearTimeout(t);
-    this.finalTimers.clear();
     for (const t of this.keepaliveTimers.values()) clearInterval(t);
     this.keepaliveTimers.clear();
     this.taskQueue.clear();
-    this.activeTask.clear();
-    this.claimedTasks.clear();
-    this.replyParts.clear();
+    this.seqCounters.clear();
     this.dedup.clear();
     this.editState.clear();
     this.pendingDispatch.clear();
+    this.hasArtifact.clear();
   }
 
   private onMsg: ((msg: XiaoyiInboundMessage) => Promise<void>) | null = null;
@@ -84,54 +83,48 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
 
   async sendReply(externalChatId: string, content: string): Promise<void> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
+    const rec = this.currentTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
     }
-    const parts = this.replyParts.get(rec.taskId) ?? [];
-    parts.push(content);
-    this.replyParts.set(rec.taskId, parts);
-    const fullText = parts.join('\n\n---\n\n');
-    const art = artifactUpdate(rec.taskId, fullText, { append: false, lastChunk: false, final: false });
+    const artId = this.nextArtifactId(rec.taskId);
+    const art = artifactUpdate(rec.taskId, artId, content, { append: false, lastChunk: true });
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
-    this.scheduleFinal(rec.taskId, sessionId, rec);
+    this.hasArtifact.add(rec.taskId);
   }
 
   async onDeliveryBatchDone(externalChatId: string, chainDone: boolean): Promise<void> {
+    if (!chainDone) return;
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.activeTask.get(sessionId);
+    const rec = this.currentTask(sessionId);
     if (!rec) return;
-    this.cancelFinal(rec.taskId);
-    if (chainDone) {
-      this.cancelTaskTimeout(rec.taskId);
-      this.clearKeepalive(rec.taskId);
-      const parts = this.replyParts.get(rec.taskId);
-      if (parts?.length) this.emitFinal(sessionId, rec, parts.join('\n\n---\n\n'));
-      this.replyParts.delete(rec.taskId);
-      this.dequeueTask(sessionId, rec.taskId);
-    }
+    this.cancelTaskTimeout(rec.taskId);
+    this.clearKeepalive(rec.taskId);
+    // Close frame: status-update(completed, final=true) — D12
+    const close = statusUpdate(rec.taskId, 'completed');
+    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, close));
+    this.dequeueTask(sessionId, rec.taskId);
   }
 
   async sendPlaceholder(externalChatId: string, _text: string): Promise<string> {
     const sessionId = this.sessionFrom(externalChatId);
-    const rec = this.activeTask.get(sessionId) ?? this.claimTask(sessionId);
+    const rec = this.currentTask(sessionId);
     if (!rec) {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
     }
-    this.cancelFinal(rec.taskId);
-    if (!this.replyParts.has(rec.taskId)) {
-      // status-update 只设 state，不带 message（HAG 会把 message 文字渲染成持久条目）
-      const st = statusUpdate(rec.taskId, 'working');
-      this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
-      // 用 artifact-update 发占位文字，后续 editMessage(append:false) 会替换掉
-      const placeholder = artifactUpdate(rec.taskId, '思考中…', { append: false, lastChunk: false, final: false });
-      this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, placeholder));
-    }
-    this.editState.set(rec.taskId, { sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
+    // Status-update: set state to working, no message text (D8)
+    const st = statusUpdate(rec.taskId, 'working');
+    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
+    // Placeholder artifact
+    const artId = this.nextArtifactId(rec.taskId);
+    const placeholder = artifactUpdate(rec.taskId, artId, '思考中…', { append: false, lastChunk: false });
+    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, placeholder));
+    this.editState.set(artId, { taskId: rec.taskId, sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
     this.startKeepalive(rec.taskId, sessionId, rec);
-    return rec.taskId;
+    this.hasArtifact.add(rec.taskId);
+    return artId;
   }
 
   async editMessage(_externalChatId: string, platformMessageId: string, text: string): Promise<void> {
@@ -139,21 +132,25 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (!edit) return;
     const now = Date.now();
     if (now - edit.lastEditAt < EDIT_THROTTLE_MS) return;
-    const prior = this.replyParts.get(platformMessageId);
-    const prefix = prior?.length ? `${prior.join('\n\n---\n\n')}\n\n---\n\n` : '';
-    const fullText = prefix + text;
     const isFirst = edit.sentLen === 0;
-    const delta = isFirst ? fullText : fullText.slice(edit.sentLen);
+    const delta = isFirst ? text : text.slice(edit.sentLen);
     if (!delta) return;
-    const detail = artifactUpdate(platformMessageId, delta, { append: !isFirst, lastChunk: false, final: false });
-    this.ws.send(edit.source, agentResponse(this.opts.agentId, edit.sessionId, platformMessageId, detail));
-    edit.sentLen = fullText.length;
+    const detail = artifactUpdate(edit.taskId, platformMessageId, delta, { append: !isFirst, lastChunk: false });
+    this.ws.send(edit.source, agentResponse(this.opts.agentId, edit.sessionId, edit.taskId, detail));
+    edit.sentLen = text.length;
     edit.lastEditAt = now;
   }
 
   async deleteMessage(platformMessageId: string): Promise<void> {
+    const edit = this.editState.get(platformMessageId);
+    if (!edit) return;
+    // Send lastChunk=true to finalize this streaming output
+    const finalize = artifactUpdate(edit.taskId, platformMessageId, '', { append: true, lastChunk: true });
+    this.ws.send(edit.source, agentResponse(this.opts.agentId, edit.sessionId, edit.taskId, finalize));
     this.editState.delete(platformMessageId);
   }
+
+  // ── Inbound ──
 
   private handleInbound(raw: string, source: string): void {
     let msg: A2AInbound;
@@ -208,26 +205,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.onMsg?.(payload).catch((err: unknown) => this.log.error({ err, taskId }, '[XiaoYi] Callback failed'));
   }
 
-  private scheduleFinal(taskId: string, sessionId: string, rec: TaskRecord): void {
-    this.cancelFinal(taskId);
-    this.finalTimers.set(
-      taskId,
-      setTimeout(() => {
-        this.finalTimers.delete(taskId);
-        if (this.editState.has(taskId)) {
-          this.scheduleFinal(taskId, sessionId, rec);
-          return;
-        }
-        const parts = this.replyParts.get(taskId);
-        if (!parts?.length) return;
-        this.cancelTaskTimeout(taskId);
-        this.clearKeepalive(taskId);
-        this.emitFinal(sessionId, rec, parts.join('\n\n---\n\n'));
-        this.replyParts.delete(taskId);
-        this.dequeueTask(sessionId, taskId);
-      }, DEFERRED_FINAL_MS),
-    );
-  }
+  // ── Task Timeout (safety net) ──
 
   private startTaskTimeout(taskId: string, sessionId: string, rec: TaskRecord): void {
     this.cancelTaskTimeout(taskId);
@@ -235,35 +213,15 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       taskId,
       setTimeout(() => {
         this.taskTimeouts.delete(taskId);
-        this.cancelFinal(taskId);
         this.clearKeepalive(taskId);
-        const parts = this.replyParts.get(taskId);
-        const text = parts?.length ? parts.join('\n\n---\n\n') : '处理超时，请重试';
-        this.emitFinal(sessionId, rec, text, parts?.length ? 'completed' : 'failed');
-        this.replyParts.delete(taskId);
+        // Close frame with failed state if no artifact, completed if has artifact
+        const state = this.hasArtifact.has(taskId) ? 'completed' : 'failed';
+        const close = statusUpdate(rec.taskId, state);
+        this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, close));
         this.dequeueTask(sessionId, taskId);
-        this.log.warn({ sessionId, taskId }, '[XiaoYi] Task timeout — force finalized');
+        this.log.warn({ sessionId, taskId }, '[XiaoYi] Task timeout — force closed');
       }, TASK_TIMEOUT_MS),
     );
-  }
-
-  private emitFinal(
-    sessionId: string,
-    rec: TaskRecord,
-    text: string,
-    state: 'completed' | 'failed' = 'completed',
-  ): void {
-    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, statusUpdate(rec.taskId, state)));
-    const art = artifactUpdate(rec.taskId, text, { append: false, lastChunk: true, final: true });
-    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
-  }
-
-  private cancelFinal(taskId: string): void {
-    const t = this.finalTimers.get(taskId);
-    if (t) {
-      clearTimeout(t);
-      this.finalTimers.delete(taskId);
-    }
   }
 
   private cancelTaskTimeout(taskId: string): void {
@@ -274,53 +232,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     }
   }
 
-  private clearKeepalive(taskId: string): void {
-    const t = this.keepaliveTimers.get(taskId);
-    if (t) {
-      clearInterval(t);
-      this.keepaliveTimers.delete(taskId);
-    }
-  }
-
-  private purgeSession(sid: string): void {
-    for (const t of this.taskQueue.get(sid) ?? []) {
-      this.cancelTaskTimeout(t.taskId);
-      this.cancelFinal(t.taskId);
-      this.clearKeepalive(t.taskId);
-      this.replyParts.delete(t.taskId);
-      this.editState.delete(t.taskId);
-      this.claimedTasks.delete(t.taskId);
-      this.pendingDispatch.delete(t.taskId);
-    }
-    this.taskQueue.delete(sid);
-    this.activeTask.delete(sid);
-  }
-
-  private claimTask(sessionId: string): TaskRecord | undefined {
-    const task = this.taskQueue.get(sessionId)?.find((t) => !this.claimedTasks.has(t.taskId));
-    if (!task) return undefined;
-    this.claimedTasks.add(task.taskId);
-    this.activeTask.set(sessionId, task);
-    return task;
-  }
-
-  private dequeueTask(sessionId: string, taskId: string): void {
-    const q = this.taskQueue.get(sessionId);
-    if (!q) return;
-    const idx = q.findIndex((t) => t.taskId === taskId);
-    if (idx >= 0) q.splice(idx, 1);
-    if (q.length === 0) this.taskQueue.delete(sessionId);
-    this.claimedTasks.delete(taskId);
-    this.editState.delete(taskId);
-    if (this.activeTask.get(sessionId)?.taskId === taskId) {
-      this.activeTask.delete(sessionId);
-    }
-    const pending = q[0] && this.pendingDispatch.get(q[0].taskId);
-    if (pending) {
-      this.pendingDispatch.delete(q[0].taskId);
-      this.onMsg?.(pending).catch((e: unknown) => this.log.error({ err: e }, '[XiaoYi] Dispatch failed'));
-    }
-  }
+  // ── Keepalive ──
 
   private startKeepalive(taskId: string, sessionId: string, rec: TaskRecord): void {
     if (this.keepaliveTimers.has(taskId)) return;
@@ -331,6 +243,62 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
         this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, ka));
       }, STATUS_KEEPALIVE_MS),
     );
+  }
+
+  private clearKeepalive(taskId: string): void {
+    const t = this.keepaliveTimers.get(taskId);
+    if (t) {
+      clearInterval(t);
+      this.keepaliveTimers.delete(taskId);
+    }
+  }
+
+  // ── Queue Management ──
+
+  private currentTask(sessionId: string): TaskRecord | undefined {
+    return this.taskQueue.get(sessionId)?.[0];
+  }
+
+  private nextArtifactId(taskId: string): string {
+    const seq = (this.seqCounters.get(taskId) ?? 0) + 1;
+    this.seqCounters.set(taskId, seq);
+    return `${taskId}:${seq}`;
+  }
+
+  private dequeueTask(sessionId: string, taskId: string): void {
+    const q = this.taskQueue.get(sessionId);
+    if (!q) return;
+    const idx = q.findIndex((t) => t.taskId === taskId);
+    if (idx >= 0) q.splice(idx, 1);
+    if (q.length === 0) this.taskQueue.delete(sessionId);
+    this.seqCounters.delete(taskId);
+    this.hasArtifact.delete(taskId);
+    // Clean up any lingering edit states for this task
+    for (const [artId, edit] of this.editState) {
+      if (edit.taskId === taskId) this.editState.delete(artId);
+    }
+    // Dispatch next queued task
+    const next = q?.[0];
+    const pending = next && this.pendingDispatch.get(next.taskId);
+    if (pending) {
+      this.pendingDispatch.delete(next.taskId);
+      this.onMsg?.(pending).catch((e: unknown) => this.log.error({ err: e }, '[XiaoYi] Dispatch failed'));
+    }
+  }
+
+  private purgeSession(sid: string): void {
+    for (const t of this.taskQueue.get(sid) ?? []) {
+      this.cancelTaskTimeout(t.taskId);
+      this.clearKeepalive(t.taskId);
+      this.seqCounters.delete(t.taskId);
+      this.hasArtifact.delete(t.taskId);
+      this.pendingDispatch.delete(t.taskId);
+    }
+    this.taskQueue.delete(sid);
+    // Clean edit states for this session
+    for (const [artId, edit] of this.editState) {
+      if (edit.sessionId === sid) this.editState.delete(artId);
+    }
   }
 
   private sessionFrom(externalChatId: string): string {

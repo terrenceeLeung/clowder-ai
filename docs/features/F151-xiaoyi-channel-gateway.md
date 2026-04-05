@@ -28,7 +28,7 @@ Cat Cafe 已通过 F088/F132/F137 接入飞书、Telegram、DingTalk、WeCom、W
 
 选择对接 OpenClaw 模式的理由：
 1. 直连华为 HAG，无 LLM 中间层 → 低延迟、完全可控
-2. 协议已知（`@ynhcj/xiaoyi` npm 包已公开源码）
+2. 协议已知 — 华为开发者文档 + `@ynhcj/xiaoyi` npm 参考实现
 3. Cat Cafe 直接作为 WebSocket 客户端连接 HAG，用户无需额外部署
 
 **trade-off**：OpenClaw 模式不支持快捷指令、端侧插件、账号绑定、卡片等平台侧高级功能。
@@ -66,7 +66,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 | 传输 | WebSocket (wss)：主 `wss://hag.cloud.huawei.com/openclaw/v1/ws/link`，备 `wss://116.63.174.231/openclaw/v1/ws/link` |
 | 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 注意：输入只有 timestamp，无 ak 前缀 |
 | 消息 | A2A JSON-RPC 2.0，出站需两层信封（见下文） |
-| 流式 | `status-update(working)` + `artifact-update('思考中…')` 占位 → `artifact-update` 逐帧推送（占位文字被替换，再逐字展示） |
+| 流式 | `status-update(working)` → `artifact-update(占位, lastChunk=false)` → `artifact-update(append)` 逐帧推送 → `artifact-update(lastChunk=true)` 结束输出 → close frame `status-update(completed, final=true)` 关闭 task |
 | 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WebSocket ping 每 30s（pong 超时 90s） |
 | HA | 双服务器 active-active + 入站去重 (key: `sessionId+taskId`)，出站 session affinity（记录入站来源服务器，回包走同一通道） |
 | 备链路 TLS | 备 IP `116.63.174.231` — IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致） |
@@ -103,7 +103,7 @@ Layer 1（WebSocket 帧）：
 }
 ```
 
-Layer 2（msgDetail 内，序列化为字符串）：
+Layer 2（msgDetail 内，序列化为字符串）— artifact-update 示例：
 ```json
 {
   "jsonrpc": "2.0",
@@ -113,10 +113,26 @@ Layer 2（msgDetail 内，序列化为字符串）：
     "kind": "artifact-update",
     "append": false,
     "lastChunk": true,
-    "final": true,
+    "final": false,
     "artifact": {
-      "artifactId": "artifact_1714600000000",
+      "artifactId": "cat-ragdoll-1714600000000",
       "parts": [{ "kind": "text", "text": "你好！" }]
+    }
+  }
+}
+```
+
+Layer 2 — status-update 示例：
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "msg_1714600000001",
+  "result": {
+    "taskId": "task-id",
+    "kind": "status-update",
+    "final": false,
+    "status": {
+      "state": "working"
     }
   }
 }
@@ -124,23 +140,67 @@ Layer 2（msgDetail 内，序列化为字符串）：
 
 其它 msgType：`clawd_bot_init`（连接后立即发）、`heartbeat`（每 20s）
 
-**append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加（必须只发 delta）
+**核心协议语义**（来自华为官方文档）：
+- `append`：`false` = 替换整个 artifact 内容（默认），`true` = 追加 delta
+- `lastChunk`：标记一次流式输出结束（默认 `true`）。**一个 task 允许若干次流式输出**，每次以 `lastChunk: true` 结束
+- `final`：断开 task 通道（默认 `false`）。**设为 `true` 后云侧不能再推送**，task 结束必须设为 `true`
+- `artifactId`：每个 artifact 的唯一 ID。不同 `artifactId` = 不同 artifact
 
-**流式序列**（单猫）：
-1. `status-update(working)` — 设 task 状态（不带 message 文字！HAG 会把 message 渲染为持久条目）
-2. `artifact-update('思考中…', append: false, final: false)` — 占位文字（后续会被替换）
-3. `artifact-update(append: false)` — 首个 chunk，替换占位文字
-4. `artifact-update(append: true)` — 后续 chunk，追加 delta 文本
-5. `status-update(completed, final: true)` — 标记完成（`final` 跟随 state：working→false，completed/failed→true）
-6. `artifact-update(lastChunk: true, final: true)` — 关闭 task
+**关键设计依据**：协议明确支持一个 task 内多次流式输出（各自 `lastChunk=true`），最终由一个 `final=true` 关闭 task。
 
-**多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本，用 `---` 分隔。关闭 task 由 `onDeliveryBatchDone(chainDone)` 信号驱动（见下文）。
+**artifactId 生命周期规则**：
+- `artifactId` 格式：`${taskId}:${seqCounter}` — `seqCounter` 是 adapter 内 per-task 递增序号
+- **非 streaming**（`sendReply`）：每次调用生成新 `artifactId`（`seqCounter++`），发一帧 `append=false, lastChunk=true`。同一猫多次 `sendReply` = 多个独立 artifact
+- **streaming**（`sendPlaceholder` → `editMessage`）：`sendPlaceholder` 生成新 `artifactId`，后续 `editMessage` 复用该 `artifactId`（`append=true`），`onStreamEnd` 发 `lastChunk=true` 结束
+- adapter 不需要感知 catId — 每次 delivery hook 调用 = 一次 `sendReply` 或一轮 streaming，自然隔离
 
-**Task 关闭机制 — 信号驱动 + timer 安全网**：
-- **主机制** — `onDeliveryBatchDone(chainDone)` 信号：每次 invocation 完成 delivery 后发出。三条管线均已覆盖：`deliverOutboundFromWeb`（Web UI）、`ConnectorInvokeTrigger`（飞书/小艺等 connector）、`QueueProcessor`（自动出队链）。检查 `invocationTracker.has(tid) || queueProcessor.isThreadBusy(tid)` 判断链条是否结束。`chainDone=true` → 立即 `emitFinal` 关闭 task；`chainDone=false` → 取消 timer 等待下一只猫。
-- **安全网** — `DEFERRED_FINAL_MS = 10s`：`sendReply` 后启动，防止信号丢失时 task 泄漏。`scheduleFinal` 内部会检查 `editState` 存在时自动重调度（streaming 未结束不会误关）。
-- `STATUS_KEEPALIVE_MS = 20s` — 周期性 status-update(working) 防止 HAG 超时
-- `TASK_TIMEOUT_MS = 120s` — 僵尸任务安全网
+**流式序列**（单猫 — 多猫的 N=1 特例，规则相同）：
+1. `status-update(working)` — 设 task 状态（不带 message 文字！HAG 会把 message 渲染为持久条目，真机验证 2026-04-03）
+2. `artifact-update(artifactId, '思考中…', append: false, lastChunk: false, final: false)` — 占位文字
+3. `artifact-update(artifactId, firstChunk, append: false, lastChunk: false, final: false)` — 首 chunk，替换占位
+4. `artifact-update(artifactId, delta, append: true, lastChunk: false, final: false)` — 追加 delta
+5. `artifact-update(artifactId, lastDelta, append: true, lastChunk: true, final: false)` — 末 chunk，结束本次流式输出
+6. `onDeliveryBatchDone(chainDone=true)` → `status-update(completed, final: true)` — **close frame**（见下文）
+
+**铁律：artifact-update 永不携带 `final: true`。`final` 仅通过 close frame 发出。**
+
+**多猫投递**（per-delivery artifact — 每次 `sendReply` / streaming 会话 = 独立 artifact）：
+```
+用户发送消息 → HAG 下发 message/stream (taskId=T1)
+Cat Cafe 路由给猫 A + 猫 B:
+
+猫 A (streaming):
+  → status-update(working)
+  → artifact-update(artifactId="a-001", 占位, append=false, lastChunk=false, final=false)
+  → artifact-update(artifactId="a-001", chunk, append=true, lastChunk=true, final=false)
+      ↑ lastChunk=true 结束本次流式输出；final=false 因为猫 B 还没完成
+
+猫 B (非 streaming):
+  → artifact-update(artifactId="b-001", 完整文本, append=false, lastChunk=true, final=false)
+
+onDeliveryBatchDone(chainDone=true):
+  → status-update(state=completed, final=true) ← close frame，关闭 task
+```
+
+每次 delivery 调用用不同 `artifactId`，各自独立输出。`final=true` 仅通过 **close frame** 发出。
+
+**Close frame 契约**：
+```json
+{
+  "taskId": "<当前 taskId>",
+  "kind": "status-update",
+  "final": true,
+  "status": { "state": "completed" }
+}
+```
+- 不带 `message` 字段（响应内容已在 artifact 中，不重复）
+- `final: true` 断开 task 通道
+- 失败场景用 `state: "failed"`
+
+**Task 关闭机制 — 信号驱动**：
+- **主机制** — `onDeliveryBatchDone(chainDone)` 信号：每次 invocation 完成 delivery 后发出。三条管线覆盖：`deliverOutboundFromWeb`（Web UI）、`ConnectorInvokeTrigger`（connector）、`QueueProcessor`（出队链）。检查 `invocationTracker.has(tid) || queueProcessor.isThreadBusy(tid)` 判断链条是否结束。`chainDone=true` → 发 close frame 关闭 task
+- `STATUS_KEEPALIVE_MS = 20s` — 周期性 `status-update(working)` 防止 HAG 超时
+- `TASK_TIMEOUT_MS = 120s` — 僵尸任务安全网（信号丢失时的最后兜底）
 
 ### Phase A: P0 MVP
 
@@ -150,15 +210,15 @@ Layer 2（msgDetail 内，序列化为字符串）：
    - 实现 `IStreamableOutboundAdapter`
    - WebSocket 连接管理（connect / auth / heartbeat / reconnect）
    - 双服务器 active-active + session affinity
-   - **taskId 生命周期**：per-session FIFO 队列 (`taskQueue`) + invocation 级绑定 (`claimTask`)。`sendPlaceholder` claim 队列中第一个未绑定 task，`sendReply` 通过 `activeTask` 绑定路由到正确 task。3s debounce 后 emitFinal + dequeue。
+   - **per-delivery artifact 模型**：每次 `sendReply` / streaming 会话用独立 `artifactId`（adapter 不感知 catId）。per-session FIFO 队列 (`taskQueue`) 管理用户连续消息。`onDeliveryBatchDone(chainDone=true)` 信号触发 close frame 关闭 task
    - **协议层抽离**：`xiaoyi-protocol.ts` — 常量、类型、auth、message builders（质量门控文件大小合规）
 
 2. **协议层**
    - `clawd_bot_init` 注册
    - `message/stream` 入站解析 → 标准 InboundMessage
-   - `agent_response` 出站格式化：`status-update(working)` 占位 → `artifact-update` 逐帧推送 → `status-update(completed)` 收尾
-   - `tasks/cancel` / `clearContext` 处理
-   - 流式输出：收到请求立即发 `status-update(working)` + `artifact-update('思考中…')` 占位，首 token 到达后 `artifact-update(append:false)` 替换占位文字
+   - `agent_response` 出站格式化：`status-update(working)` → `artifact-update` 逐帧推送 → close frame `status-update(completed, final: true)` 关闭
+   - `tasks/cancel`（取消当前 task）/ `clearContext`（清理 session 上下文，state=`cleared|failed|unknown`）处理
+   - 流式输出：收到请求发 `status-update(working)` + `artifact-update(占位, lastChunk=false)` → 首 token `artifact-update(append=false)` 替换 → 增量 `artifact-update(append=true)` → 末 chunk `lastChunk=true`
 
 3. **Gateway 集成**
    - Principal Link: `connectorId=xiaoyi`, `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
@@ -187,11 +247,11 @@ Layer 2（msgDetail 内，序列化为字符串）：
 - [ ] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
 - [ ] AC-A3: 双机制心跳保活（应用层 20s + WS ping 30s）+ 断线指数退避重连（max 10 次）
 - [ ] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
-- [ ] AC-A5: 流式输出 — 先发 `status-update(working)` + `artifact-update('思考中…')` 占位，首 token 到达后替换并逐字展示
+- [ ] AC-A5: 流式输出 — `status-update(working)` + `artifact-update(占位, lastChunk=false)` → 首 token 替换 → 增量 append → `lastChunk=true` 结束本次输出
 - [ ] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
 - [ ] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
 - [ ] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
-- [ ] AC-A9: 多猫投递完整性 — 多猫回复（含 post_message MCP 工具）全部投递到小艺端，task 仅在链条完成后关闭
+- [ ] AC-A9: 多猫投递完整性 — per-delivery artifact（每次 `sendReply`/streaming = 独立 artifactId），close frame (`status-update(completed, final=true)`) 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
 
 ## Dependencies
 
@@ -222,10 +282,11 @@ Layer 2（msgDetail 内，序列化为字符串）：
 | 5 | 不做多小艺 agent 接入 | 单账号单 agent，scope 聚焦 | 2026-04-01 |
 | 6 | adapter 内置 task 生命周期管理 | 流式出站必须带 taskId 回包；现有 `IStreamableOutboundAdapter` 接口不携带此上下文，由 adapter 内部 FIFO 队列 + invocation 级绑定管理（缅因猫 review R4/R5） | 2026-04-01 |
 | 7 | `externalChatId` 带 `agentId:` 前缀 | 隔离命名空间，确保 binding key 全局唯一（缅因猫 review） | 2026-04-01 |
-| 8 | status-update `final` 跟随 state | `final: state !== 'working'`。working→false，completed/failed→true。占位文字用 artifact-update 而非 status message（HAG 把 message 渲染为持久条目，真机验证 2026-04-03） | 2026-04-03 |
-| 9 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task 生命周期限制（一个 task 只能有一个 artifact），多猫回复必须在同一 artifact 内聚合 | 2026-04-03 |
-| 10 | invocation 级 task 绑定 (claimTask) | 队列头推断在 QueueProcessor 立即启动下一 invocation 时有 3s 竞态窗口；改用 claimTask 跳过已绑定 task（缅因猫 review R5） | 2026-04-03 |
-| 11 | 信号驱动 task 关闭 (onDeliveryBatchDone) | 纯 timer 在 post_message + 多猫场景下因 TTFT 不可预测而过早关闭 task；改用 delivery 完成后精确判断 `chainDone`，timer 降级为安全网。三条 delivery 管线均已覆盖（messages.ts / ConnectorInvokeTrigger / QueueProcessor） | 2026-04-05 |
+| 8 | status-update 不带 message 文字 | HAG 把 status-update 的 message 渲染为持久条目（真机验证 2026-04-03），因此占位文字用 artifact-update。status-update 仅用于状态信号：`working`（保活）、`completed/failed`（close frame，见 D12）。所有 status-update 均不带 message 字段 | 2026-04-03 |
+| 9 | ~~多猫 replyParts 聚合~~ → per-delivery artifact | **D9-v1 已废弃**。原以为"一个 task 只能有一个 artifact"，但华为官方文档明确："一次会话请求(final为True结束)，允许若干流式输出"。每次 `sendReply` / streaming 会话用独立 `artifactId`（adapter 不感知 catId），无需合并。删除 `replyParts` / `claimedTasks` / `activeTask` | 2026-04-05 |
+| 10 | ~~invocation 级 task 绑定 (claimTask)~~ → 删除 | D9 改为 per-delivery artifact 后，不再需要 invocation 级绑定。每次 `sendReply` 调用生成新 artifactId | 2026-04-05 |
+| 11 | 信号驱动 task 关闭 (onDeliveryBatchDone) | `chainDone=true` → 发 close frame `status-update(completed, final=true)` 关闭 task。三条 delivery 管线覆盖（messages.ts / ConnectorInvokeTrigger / QueueProcessor）。`TASK_TIMEOUT_MS=120s` 作为僵尸任务兜底。删除 `DEFERRED_FINAL_MS` 定时器 | 2026-04-05 |
+| 12 | close frame = `status-update(completed, final=true)` 不带 message | 华为文档 "不用 completed 返回" 指不要把响应内容放在 status-update 的 message 字段里返回（内容应在 artifact 中）。`status-update(completed, final=true)` 作为纯状态信号关闭 task 通道是合规的。artifact-update 永不携带 `final=true` — 避免 adapter 需要区分 "哪个 artifact 是最后一个" | 2026-04-05 |
 
 ## Review Gate
 

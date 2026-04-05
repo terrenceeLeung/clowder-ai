@@ -26,7 +26,6 @@ export const RECONNECT_BASE_MS = 1_000;
 export const RECONNECT_MAX_MS = 30_000;
 export const DEDUP_TTL_MS = 5 * 60_000;
 export const EDIT_THROTTLE_MS = 300;
-export const DEFERRED_FINAL_MS = 10_000;
 export const STATUS_KEEPALIVE_MS = 20_000;
 export const TASK_TIMEOUT_MS = 120_000;
 
@@ -63,6 +62,7 @@ export interface TaskRecord {
 }
 
 export interface EditRecord {
+  taskId: string;
   sessionId: string;
   source: string;
   sentLen: number;
@@ -115,8 +115,9 @@ export function agentResponse(
 
 export function artifactUpdate(
   taskId: string,
+  artifactId: string,
   text: string,
-  opts: { append: boolean; lastChunk: boolean; final: boolean },
+  opts: { append: boolean; lastChunk: boolean },
 ): Record<string, unknown> {
   return {
     jsonrpc: '2.0',
@@ -126,17 +127,14 @@ export function artifactUpdate(
       kind: 'artifact-update',
       append: opts.append,
       lastChunk: opts.lastChunk,
-      final: opts.final,
-      artifact: { artifactId: `art_${Date.now()}_${msgSeq}`, parts: [{ kind: 'text', text }] },
+      final: false, // Iron rule: artifact-update never carries final=true (D12)
+      artifact: { artifactId, parts: [{ kind: 'text', text }] },
     },
   };
 }
 
-export function statusUpdate(
-  taskId: string,
-  state: 'working' | 'completed' | 'failed',
-  message?: string,
-): Record<string, unknown> {
+/** Close frame or keepalive. final derived from state: working→false, completed/failed→true (D8/D12). */
+export function statusUpdate(taskId: string, state: 'working' | 'completed' | 'failed'): Record<string, unknown> {
   return {
     jsonrpc: '2.0',
     id: nextMsgId(),
@@ -144,10 +142,7 @@ export function statusUpdate(
       taskId,
       kind: 'status-update',
       final: state !== 'working',
-      status: {
-        state,
-        ...(message ? { message: { role: 'agent', parts: [{ kind: 'text', text: message }] } } : {}),
-      },
+      status: { state },
     },
   };
 }
