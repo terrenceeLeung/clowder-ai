@@ -30,6 +30,12 @@ export const TASK_TIMEOUT_MS = 120_000;
 
 // ── Types ──
 
+export interface A2AFilePart {
+  name: string;
+  mimeType: string;
+  uri: string;
+}
+
 export interface A2AInbound {
   jsonrpc?: string;
   method?: string;
@@ -40,7 +46,10 @@ export interface A2AInbound {
     id?: string;
     sessionId?: string;
     agentId?: string;
-    message?: { role?: string; parts?: Array<{ kind?: string; text?: string }> };
+    message?: {
+      role?: string;
+      parts?: Array<{ kind?: string; text?: string; file?: A2AFilePart }>;
+    };
   };
 }
 
@@ -60,6 +69,14 @@ export interface TaskRecord {
   source: string;
 }
 
+export interface XiaoyiAttachment {
+  type: 'image' | 'file';
+  /** URI from HAG — direct download URL (maps to platformKey in ConnectorRouter) */
+  xiaoyiUri: string;
+  fileName?: string;
+  mimeType?: string;
+}
+
 export interface XiaoyiInboundMessage {
   chatId: string;
   text: string;
@@ -67,6 +84,17 @@ export interface XiaoyiInboundMessage {
   taskId: string;
   /** ADR-014 decision #2: owner:{agentId} — pseudo-user-id for Principal Link */
   senderId: string;
+  attachments?: XiaoyiAttachment[];
+}
+
+/** Extract file parts from A2A inbound message parts. */
+export function extractFileParts(parts: Array<{ kind?: string; text?: string; file?: A2AFilePart }>): A2AFilePart[] {
+  return parts
+    .filter(
+      (p): p is { kind: 'file'; file: A2AFilePart } =>
+        p.kind === 'file' && p.file != null && typeof p.file.uri === 'string',
+    )
+    .map((p) => p.file);
 }
 
 export interface XiaoyiAdapterOptions {

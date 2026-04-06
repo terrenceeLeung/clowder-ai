@@ -16,12 +16,14 @@ import {
   agentResponse,
   artifactUpdate,
   DEDUP_TTL_MS,
+  extractFileParts,
   generateXiaoyiSignature,
   STATUS_KEEPALIVE_MS,
   statusUpdate,
   TASK_TIMEOUT_MS,
   type TaskRecord,
   type XiaoyiAdapterOptions,
+  type XiaoyiAttachment,
   type XiaoyiInboundMessage,
 } from './xiaoyi-protocol.js';
 import { XiaoyiWsManager } from './xiaoyi-ws.js';
@@ -173,14 +175,32 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.taskQueue.set(sessionId, queue);
     this.startTaskTimeout(taskId, sessionId, rec);
 
-    const text = (msg.params?.message?.parts ?? [])
+    const parts = msg.params?.message?.parts ?? [];
+    const text = parts
       .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
       .map((p) => p.text)
       .join('');
-    if (!text) return;
+
+    // Extract file/image attachments (Phase B — F151)
+    const fileParts = extractFileParts(parts);
+    const attachments: XiaoyiAttachment[] = fileParts.map((fp) => ({
+      type: fp.mimeType.startsWith('image/') ? ('image' as const) : ('file' as const),
+      xiaoyiUri: fp.uri,
+      fileName: fp.name,
+      mimeType: fp.mimeType,
+    }));
+
+    if (!text && attachments.length === 0) return;
     const chatId = `${this.opts.agentId}:${sessionId}`;
     const senderId = `owner:${this.opts.agentId}`;
-    const payload: XiaoyiInboundMessage = { chatId, text, messageId: taskId, taskId, senderId };
+    const payload: XiaoyiInboundMessage = {
+      chatId,
+      text: text || (attachments.length > 0 ? `[${attachments.map((a) => a.fileName ?? a.type).join(', ')}]` : ''),
+      messageId: taskId,
+      taskId,
+      senderId,
+      ...(attachments.length > 0 ? { attachments } : {}),
+    };
 
     if (queue.length > 1) {
       const st = statusUpdate(taskId, 'working');

@@ -26,6 +26,7 @@ export interface ConnectorMediaServiceOptions {
   weixinDownloadFn?: (platformKey: string) => Promise<Buffer>;
   wecomBotDownloadFn?: (url: string, aesKey?: string) => Promise<Buffer>;
   wecomAgentDownloadFn?: (mediaId: string) => Promise<Buffer>;
+  xiaoyiDownloadFn?: (uri: string) => Promise<Buffer>;
 }
 
 const TYPE_TO_EXT: Record<string, string> = {
@@ -41,6 +42,7 @@ export class ConnectorMediaService {
   private weixinDl: ConnectorMediaServiceOptions['weixinDownloadFn'];
   private wecomBotDl: ConnectorMediaServiceOptions['wecomBotDownloadFn'];
   private wecomAgentDl: ConnectorMediaServiceOptions['wecomAgentDownloadFn'];
+  private xiaoyiDl: ConnectorMediaServiceOptions['xiaoyiDownloadFn'];
 
   constructor(private readonly opts: ConnectorMediaServiceOptions) {
     this.feishuDl = opts.feishuDownloadFn;
@@ -49,6 +51,7 @@ export class ConnectorMediaService {
     this.weixinDl = opts.weixinDownloadFn;
     this.wecomBotDl = opts.wecomBotDownloadFn;
     this.wecomAgentDl = opts.wecomAgentDownloadFn;
+    this.xiaoyiDl = opts.xiaoyiDownloadFn;
   }
 
   setFeishuDownloadFn(fn: (key: string, type: string, messageId?: string) => Promise<Buffer>): void {
@@ -75,6 +78,10 @@ export class ConnectorMediaService {
     this.wecomAgentDl = fn;
   }
 
+  setXiaoyiDownloadFn(fn: (uri: string) => Promise<Buffer>): void {
+    this.xiaoyiDl = fn;
+  }
+
   async download(connectorId: string, attachment: MediaAttachment): Promise<DownloadedMedia> {
     await mkdir(this.opts.mediaDir, { recursive: true });
 
@@ -92,6 +99,8 @@ export class ConnectorMediaService {
       buffer = await this.wecomBotDl(url, aesKey);
     } else if (connectorId === 'wecom-agent' && this.wecomAgentDl) {
       buffer = await this.wecomAgentDl(attachment.platformKey);
+    } else if (connectorId === 'xiaoyi' && this.xiaoyiDl) {
+      buffer = await this.xiaoyiDl(attachment.platformKey);
     } else {
       throw new Error(`No download function for connector: ${connectorId}`);
     }
