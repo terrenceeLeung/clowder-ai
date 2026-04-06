@@ -232,17 +232,35 @@ onDeliveryBatchDone(chainDone=true):
    - .env 中添加 `XIAOYI_AK` / `XIAOYI_SK` / `XIAOYI_AGENT_ID` 后自动检测并连接
    - 集成点：`connector-secrets-allowlist` 注册 env key → `connector-reload-subscriber` 监听变更 → `connector-gateway-bootstrap` 初始化/销毁 adapter → `connector-hub` 注册平台配置项 + 状态页
 
-### Phase B: P1 增强（后续）
+### Phase B: P1 入站媒体
 
-| 能力 | 说明 |
-|------|------|
-| 图片/文件收发 | `kind: "file"` parts 解析 + 发送 |
-| ~~推理过程展示~~ | ~~`kind: "reasoningText"` 透传~~ — 已在 Phase A 用于"思考中…"即时反馈（D16） |
-| Push 通知 | 异步长耗时任务完成回调 |
+**目标**：用户在小艺 APP 发送图片/文件，猫猫能看到并处理。
+
+1. **协议层** — `xiaoyi-protocol.ts` 新增 `A2AFilePart` 类型 + `extractFileParts()` 函数
+2. **入站解析** — `XiaoyiAdapter.ts` 解析 `kind: "file"` parts，提取 `{ uri, name, mimeType }`
+3. **文件下载** — 从 `uri` 下载到本地临时目录（30MB 上限、60s 超时），文本文件额外提取内容 inline
+4. **Attachment 传递** — `XiaoyiInboundMessage` 新增 `attachments` 字段，对齐飞书/钉钉模式，通过 ConnectorRouter 传递给猫
+5. **临时文件清理** — 下载文件 TTL 管理，防止磁盘泄漏
+
+协议格式（`@ynhcj/xiaoyi-channel` + jiuwenclaw 双重验证）：
+```json
+{ "kind": "file", "file": { "name": "photo.jpg", "mimeType": "image/jpeg", "uri": "https://..." } }
+```
+
+### Phase C: P1 出站媒体（需华为上传凭证）
+
+**目标**：猫猫生成的图片/文件能发回小艺 APP 展示。
+
+**前置**：需配置 `XIAOYI_UID` / `XIAOYI_API_KEY` / `XIAOYI_FILE_UPLOAD_URL`（华为 OSMS 上传服务凭证，与 AK/SK 是不同的凭证体系）。
+
+1. **OSMS 上传服务** — 三阶段上传（prepare → upload → complete）→ 获取 `fileId`
+2. **sendMedia()** — 实现 `IStreamableOutboundAdapter.sendMedia`，上传后发 `kind: "file"` artifact
+3. **优雅降级** — 未配上传凭证时 → 文本 URL fallback
+4. **热加载** — `XIAOYI_UID/API_KEY/FILE_UPLOAD_URL` 加入 allowlist + hub 状态页
 
 ## Acceptance Criteria
 
-### Phase A (P0 MVP)
+### Phase A (P0 MVP) ✅
 
 - [x] AC-A1: XiaoYiAdapter 通过 WebSocket 连接华为 HAG 并完成 HMAC-SHA256 认证
 - [x] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
@@ -253,6 +271,20 @@ onDeliveryBatchDone(chainDone=true):
 - [x] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
 - [x] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
 - [x] AC-A9: 多猫投递完整性 — 首只猫 `append=false`，后续猫 `append=true` 追加（`---` 分隔线），close frame 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
+
+### Phase B (P1 入站媒体)
+
+- [ ] AC-B1: 用户在小艺 APP 发送图片，猫猫收到并能看到图片内容（入站 `kind: "file"` 解析 + 下载）
+- [ ] AC-B2: 用户发送文本文件（txt/json/md），内容 inline 提取并追加到消息文本中
+- [ ] AC-B3: `XiaoyiInboundMessage.attachments` 字段正确传递到 ConnectorRouter，猫可通过 attachment 访问原始文件
+- [ ] AC-B4: 文件下载有大小限制（30MB）和超时（60s），异常不阻塞文本消息处理
+- [ ] AC-B5: 下载的临时文件有 TTL 清理机制，不泄漏磁盘空间
+
+### Phase C (P1 出站媒体)
+
+- [ ] AC-C1: 配置 `XIAOYI_UID/API_KEY/FILE_UPLOAD_URL` 后，猫猫生成的图片能通过 OSMS 上传并发送到小艺 APP
+- [ ] AC-C2: 未配上传凭证时，优雅降级为文本 URL fallback
+- [ ] AC-C3: 上传凭证热加载 — 写入 .env 后自动生效
 
 ## Dependencies
 
