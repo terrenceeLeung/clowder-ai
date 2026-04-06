@@ -3,13 +3,13 @@ feature_ids: [F151]
 related_features: [F088, F132, F137, F143, F146]
 topics: [connector, channel, xiaoyi, huawei, a2a, websocket]
 doc_kind: spec
-status: spec
+status: in-progress
 created: 2026-04-01
 ---
 
 # F151: XiaoYi Channel Gateway — 小艺渠道接入
 
-> **Status**: spec | **Owner**: Ragdoll | **Priority**: P1
+> **Status**: in-progress | **Owner**: Ragdoll | **Priority**: P1
 >
 > 在小艺开放平台创建 OpenClaw 模式智能体，由 Cat Cafe 通过 WebSocket 对接华为 HAG，
 > 用户在华为手机上通过小艺 APP 即可与猫猫对话。
@@ -204,7 +204,7 @@ onDeliveryBatchDone(chainDone=true):
 - `STATUS_KEEPALIVE_MS = 20s` — 周期性 `status-update(working)` 防止 HAG 超时
 - `TASK_TIMEOUT_MS = 120s` — 僵尸任务安全网（信号丢失时的最后兜底）
 
-### Phase A: P0 MVP
+### Phase A: P0 MVP ✅
 
 **目标**：跑通小艺↔Cat Cafe 文本对话链路。
 
@@ -293,6 +293,13 @@ onDeliveryBatchDone(chainDone=true):
 | 15 | `status-update` 的 `message` 字段不可用于暂态提示 | 补充 D8：真机验证发现 `message` 渲染为永久气泡，即使后续发 `completed + final=true` 也不会清除。空字符串 `message: { parts: [{ kind: 'text', text: '' }] }` 同样无法清除。`status-update` 的 `message` 只适合需要永久展示的信息 | 2026-04-06 |
 | 16 | `reasoningText` 作为即时反馈 | 收到用户消息后立即发 `artifact-update(reasoningText='', lastChunk=true)`。空字符串→HAG app 显示三点动画。注意协议字段形状：`{ kind: 'reasoningText', reasoningText: text }`（不是 `text` 字段），已从 `@ynhcj/xiaoyi-channel` 源码确认。`reasoningText` 在 HAG app 中渲染为独立思考气泡，回复出现后自动折叠 | 2026-04-06 |
 
+## Timeline
+
+| Date | Event |
+|------|-------|
+| 2026-04-01 | Kickoff — spec + ADR-014 |
+| 2026-04-06 | Phase A merged (PR #354) — 真机验证通过 |
+
 ## Review Gate
 
-- Phase A: 缅因猫 review + 铲屎官真机验证
+- Phase A: 缅因猫 review + 铲屎官真机验证 ✅
