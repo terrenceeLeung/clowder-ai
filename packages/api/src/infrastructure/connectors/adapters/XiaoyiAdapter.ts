@@ -16,12 +16,14 @@ import {
   agentResponse,
   artifactUpdate,
   DEDUP_TTL_MS,
+  extractFileParts,
   generateXiaoyiSignature,
   STATUS_KEEPALIVE_MS,
   statusUpdate,
   TASK_TIMEOUT_MS,
   type TaskRecord,
   type XiaoyiAdapterOptions,
+  type XiaoyiAttachment,
   type XiaoyiInboundMessage,
 } from './xiaoyi-protocol.js';
 import { XiaoyiWsManager } from './xiaoyi-ws.js';
@@ -149,7 +151,11 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     const inboundAgentId = msg.agentId ?? msg.params?.agentId;
     if (inboundAgentId && inboundAgentId !== this.opts.agentId) return;
     if (msg.method === 'message/stream' && msg.params) {
-      this.handleMessageStream(msg, source);
+      try {
+        this.handleMessageStream(msg, source);
+      } catch (err) {
+        this.log.error({ err, source }, '[XiaoYi] handleMessageStream failed — message dropped');
+      }
     } else if (msg.method === 'tasks/cancel' || msg.method === 'clearContext') {
       const sid = msg.params?.sessionId ?? msg.sessionId;
       if (sid) this.purgeSession(sid);
@@ -167,20 +173,39 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.dedup.set(key, Date.now());
     this.gcDedup();
 
+    // Parse content BEFORE enqueueing — empty messages must not enter the queue (P2 review fix)
+    const parts = msg.params?.message?.parts ?? [];
+    const text = parts
+      .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
+      .map((p) => p.text)
+      .join('');
+
+    // Extract file/image attachments (Phase B — F151)
+    const fileParts = extractFileParts(parts);
+    const attachments: XiaoyiAttachment[] = fileParts.map((fp) => ({
+      type: fp.mimeType.startsWith('image/') ? ('image' as const) : ('file' as const),
+      xiaoyiUri: fp.uri,
+      fileName: fp.name,
+      mimeType: fp.mimeType,
+    }));
+
+    if (!text && attachments.length === 0) return;
+
     const rec: TaskRecord = { taskId, source };
     const queue = this.taskQueue.get(sessionId) ?? [];
     queue.push(rec);
     this.taskQueue.set(sessionId, queue);
     this.startTaskTimeout(taskId, sessionId, rec);
-
-    const text = (msg.params?.message?.parts ?? [])
-      .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
-      .map((p) => p.text)
-      .join('');
-    if (!text) return;
     const chatId = `${this.opts.agentId}:${sessionId}`;
     const senderId = `owner:${this.opts.agentId}`;
-    const payload: XiaoyiInboundMessage = { chatId, text, messageId: taskId, taskId, senderId };
+    const payload: XiaoyiInboundMessage = {
+      chatId,
+      text: text || (attachments.length > 0 ? `[${attachments.map((a) => a.fileName ?? a.type).join(', ')}]` : ''),
+      messageId: taskId,
+      taskId,
+      senderId,
+      ...(attachments.length > 0 ? { attachments } : {}),
+    };
 
     if (queue.length > 1) {
       const st = statusUpdate(taskId, 'working');

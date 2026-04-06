@@ -115,6 +115,89 @@ describe('xiaoyi-protocol: statusUpdate', () => {
   });
 });
 
+describe('xiaoyi-protocol: extractFileParts', () => {
+  it('extracts valid file parts from mixed parts array', async () => {
+    const { extractFileParts } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    const parts = [
+      { kind: 'text', text: 'hello' },
+      { kind: 'file', file: { name: 'photo.jpg', mimeType: 'image/jpeg', uri: 'https://hag.example.com/a' } },
+      { kind: 'text', text: 'world' },
+      { kind: 'file', file: { name: 'doc.pdf', mimeType: 'application/pdf', uri: 'https://hag.example.com/b' } },
+    ];
+    const files = extractFileParts(parts);
+    assert.equal(files.length, 2);
+    assert.equal(files[0].name, 'photo.jpg');
+    assert.equal(files[0].uri, 'https://hag.example.com/a');
+    assert.equal(files[1].name, 'doc.pdf');
+  });
+
+  it('returns empty array when no file parts present', async () => {
+    const { extractFileParts } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    const parts = [{ kind: 'text', text: 'just text' }];
+    assert.deepEqual(extractFileParts(parts), []);
+    assert.deepEqual(extractFileParts([]), []);
+  });
+
+  it('filters out file parts with missing uri or null file', async () => {
+    const { extractFileParts } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    const parts = [
+      { kind: 'file', file: { name: 'no-uri.jpg', mimeType: 'image/jpeg' } },
+      { kind: 'file', file: null },
+      { kind: 'file' },
+      { kind: 'file', file: { name: 'ok.png', mimeType: 'image/png', uri: 'https://hag.example.com/ok' } },
+    ];
+    const files = extractFileParts(parts);
+    assert.equal(files.length, 1);
+    assert.equal(files[0].name, 'ok.png');
+  });
+
+  it('filters out file parts with non-string mimeType (P1-2 review fix)', async () => {
+    const { extractFileParts } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    const parts = [
+      { kind: 'file', file: { name: 'bad.jpg', mimeType: 123, uri: 'https://hag.example.com/a' } },
+      { kind: 'file', file: { name: 'undef.jpg', mimeType: undefined, uri: 'https://hag.example.com/b' } },
+      { kind: 'file', file: { name: 'ok.png', mimeType: 'image/png', uri: 'https://hag.example.com/c' } },
+    ];
+    const files = extractFileParts(parts);
+    assert.equal(files.length, 1, 'only valid mimeType survives');
+    assert.equal(files[0].name, 'ok.png');
+  });
+});
+
+describe('xiaoyi-protocol: assertSafeXiaoyiUri', () => {
+  it('accepts valid HAG https URI', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.doesNotThrow(() => assertSafeXiaoyiUri('https://hag.cloud.huawei.com/files/abc123'));
+    assert.doesNotThrow(() => assertSafeXiaoyiUri('https://obs.huaweicloud.com/bucket/file.jpg'));
+  });
+
+  it('rejects non-https scheme', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('http://hag.cloud.huawei.com/files/abc'), /must be https/);
+    assert.throws(() => assertSafeXiaoyiUri('ftp://hag.cloud.huawei.com/files/abc'), /must be https/);
+  });
+
+  it('rejects localhost and private IPs', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('https://localhost/file'), /private network/);
+    assert.throws(() => assertSafeXiaoyiUri('https://127.0.0.1/file'), /private network/);
+    assert.throws(() => assertSafeXiaoyiUri('https://10.0.0.1/file'), /private network/);
+    assert.throws(() => assertSafeXiaoyiUri('https://192.168.1.1/file'), /private network/);
+  });
+
+  it('rejects non-huawei domains', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('https://evil.com/file'), /not in allowlist/);
+    assert.throws(() => assertSafeXiaoyiUri('https://not-huawei.com/file'), /not in allowlist/);
+  });
+
+  it('rejects invalid URLs', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('not-a-url'), /not a valid URL/);
+    assert.throws(() => assertSafeXiaoyiUri(''), /not a valid URL/);
+  });
+});
+
 describe('xiaoyi-protocol: message ID uniqueness', () => {
   it('consecutive calls produce unique IDs', async () => {
     const { artifactUpdate, statusUpdate } = await import(
@@ -456,6 +539,196 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
 
     await adapter.deleteMessage('any-id');
     assert.equal(sent.length, 0, 'deleteMessage is no-op');
+
+    await adapter.stopStream();
+  });
+
+  // ── Phase B: Inbound media attachment tests ──
+
+  function mkInboundWithFiles(taskId, sessionId, textParts, fileParts) {
+    const parts = [
+      ...textParts.map((t) => ({ kind: 'text', text: t })),
+      ...fileParts.map((f) => ({ kind: 'file', file: f })),
+    ];
+    return JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'message/stream',
+      id: `msg-${taskId}`,
+      params: { id: taskId, sessionId, message: { role: 'user', parts } },
+    });
+  }
+
+  it('inbound message with image attachment builds correct payload', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    adapter.handleInbound(
+      mkInboundWithFiles(
+        'task-1',
+        'sess-1',
+        ['check this'],
+        [{ name: 'photo.jpg', mimeType: 'image/jpeg', uri: 'https://hag.example.com/files/abc123' }],
+      ),
+      'primary',
+    );
+
+    assert.equal(received.length, 1);
+    assert.equal(received[0].text, 'check this');
+    assert.ok(received[0].attachments);
+    assert.equal(received[0].attachments.length, 1);
+    assert.equal(received[0].attachments[0].type, 'image');
+    assert.equal(received[0].attachments[0].xiaoyiUri, 'https://hag.example.com/files/abc123');
+    assert.equal(received[0].attachments[0].fileName, 'photo.jpg');
+    assert.equal(received[0].attachments[0].mimeType, 'image/jpeg');
+
+    await adapter.stopStream();
+  });
+
+  it('inbound message with file attachment (non-image) uses type=file', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    adapter.handleInbound(
+      mkInboundWithFiles(
+        'task-1',
+        'sess-1',
+        ['see doc'],
+        [{ name: 'report.pdf', mimeType: 'application/pdf', uri: 'https://hag.example.com/files/pdf456' }],
+      ),
+      'primary',
+    );
+
+    assert.equal(received[0].attachments[0].type, 'file');
+    assert.equal(received[0].attachments[0].mimeType, 'application/pdf');
+
+    await adapter.stopStream();
+  });
+
+  it('image-only message (no text) gets fallback text from filenames', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    adapter.handleInbound(
+      mkInboundWithFiles(
+        'task-1',
+        'sess-1',
+        [],
+        [
+          { name: 'sunset.png', mimeType: 'image/png', uri: 'https://hag.example.com/a' },
+          { name: 'doc.pdf', mimeType: 'application/pdf', uri: 'https://hag.example.com/b' },
+        ],
+      ),
+      'primary',
+    );
+
+    assert.equal(received.length, 1);
+    assert.equal(received[0].text, '[sunset.png, doc.pdf]', 'fallback text from filenames');
+    assert.equal(received[0].attachments.length, 2);
+
+    await adapter.stopStream();
+  });
+
+  it('mixed text + multiple files builds combined payload', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    adapter.handleInbound(
+      mkInboundWithFiles(
+        'task-1',
+        'sess-1',
+        ['analyze these'],
+        [
+          { name: 'a.jpg', mimeType: 'image/jpeg', uri: 'https://hag.example.com/1' },
+          { name: 'b.csv', mimeType: 'text/csv', uri: 'https://hag.example.com/2' },
+        ],
+      ),
+      'primary',
+    );
+
+    assert.equal(received[0].text, 'analyze these');
+    assert.equal(received[0].attachments.length, 2);
+    assert.equal(received[0].attachments[0].type, 'image');
+    assert.equal(received[0].attachments[1].type, 'file');
+
+    await adapter.stopStream();
+  });
+
+  it('inbound with no text and no files is dropped', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    adapter.handleInbound(mkInboundWithFiles('task-1', 'sess-1', [], []), 'primary');
+    assert.equal(received.length, 0, 'empty message should be dropped');
+
+    await adapter.stopStream();
+  });
+
+  it('empty message does not block subsequent messages on same session (P2 review fix)', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    // Send empty message first — should NOT enter queue
+    adapter.handleInbound(mkInboundWithFiles('task-empty', 'sess-1', [], []), 'primary');
+    assert.equal(received.length, 0);
+
+    // Subsequent valid message on same session should dispatch immediately
+    adapter.handleInbound(mkInbound('task-real', 'sess-1', 'hello'), 'primary');
+    assert.equal(received.length, 1, 'valid message must dispatch without waiting for empty task timeout');
+    assert.equal(received[0].taskId, 'task-real');
+
+    await adapter.stopStream();
+  });
+
+  it('file parts with missing uri are filtered out', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    // Craft raw message with a malformed file part (no uri)
+    adapter.handleInbound(
+      JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'message/stream',
+        id: 'msg-t1',
+        params: {
+          id: 'task-1',
+          sessionId: 'sess-1',
+          message: {
+            role: 'user',
+            parts: [
+              { kind: 'text', text: 'hi' },
+              { kind: 'file', file: { name: 'bad.jpg', mimeType: 'image/jpeg' } },
+              { kind: 'file', file: { name: 'good.png', mimeType: 'image/png', uri: 'https://hag.example.com/ok' } },
+            ],
+          },
+        },
+      }),
+      'primary',
+    );
+
+    assert.equal(received.length, 1);
+    assert.equal(received[0].attachments.length, 1, 'only valid file part kept');
+    assert.equal(received[0].attachments[0].fileName, 'good.png');
 
     await adapter.stopStream();
   });
