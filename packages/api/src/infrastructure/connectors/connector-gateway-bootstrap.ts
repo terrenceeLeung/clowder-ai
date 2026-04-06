@@ -667,6 +667,7 @@ export async function startConnectorGateway(
   // ── XiaoYi (OpenClaw WebSocket mode) — F151 ──
   if (hasXiaoyi) {
     const { XiaoyiAdapter } = await import('./adapters/XiaoyiAdapter.js');
+    const { assertSafeXiaoyiUri } = await import('./adapters/xiaoyi-protocol.js');
     const xiaoyi = new XiaoyiAdapter(log, {
       agentId: config.xiaoyiAgentId!,
       ak: config.xiaoyiAk!,
@@ -674,8 +675,27 @@ export async function startConnectorGateway(
     });
     adapters.set('xiaoyi', xiaoyi);
 
+    // Phase B — F151: XiaoYi URI-based media download (HAG provides direct download URLs)
+    mediaService.setXiaoyiDownloadFn(async (uri: string) => {
+      assertSafeXiaoyiUri(uri);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60_000);
+      try {
+        const res = await fetch(uri, { signal: controller.signal });
+        if (!res.ok) throw new Error(`XiaoYi media fetch failed: ${res.status}`);
+        return Buffer.from(await res.arrayBuffer());
+      } finally {
+        clearTimeout(timeout);
+      }
+    });
+
     await xiaoyi.startStream(async (msg) => {
-      await connectorRouter.route('xiaoyi', msg.chatId, msg.text, msg.messageId, undefined, { id: msg.senderId });
+      const attachments = msg.attachments?.map((a) => ({
+        type: a.type,
+        platformKey: a.xiaoyiUri,
+        ...(a.fileName ? { fileName: a.fileName } : {}),
+      }));
+      await connectorRouter.route('xiaoyi', msg.chatId, msg.text, msg.messageId, attachments, { id: msg.senderId });
     });
 
     stopFns.push(async () => xiaoyi.stopStream());

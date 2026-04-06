@@ -236,16 +236,18 @@ onDeliveryBatchDone(chainDone=true):
 
 **目标**：用户在小艺 APP 发送图片/文件，猫猫能看到并处理。
 
-1. **协议层** — `xiaoyi-protocol.ts` 新增 `A2AFilePart` 类型 + `extractFileParts()` 函数
-2. **入站解析** — `XiaoyiAdapter.ts` 解析 `kind: "file"` parts，提取 `{ uri, name, mimeType }`
-3. **文件下载** — 从 `uri` 下载到本地临时目录（30MB 上限、60s 超时），文本文件额外提取内容 inline
-4. **Attachment 传递** — `XiaoyiInboundMessage` 新增 `attachments` 字段，对齐飞书/钉钉模式，通过 ConnectorRouter 传递给猫
-5. **临时文件清理** — 下载文件 TTL 管理，防止磁盘泄漏
-
-协议格式（`@ynhcj/xiaoyi-channel` + jiuwenclaw 双重验证）：
+入站文件协议格式（`@ynhcj/xiaoyi-channel` + jiuwenclaw 双重验证）：
 ```json
 { "kind": "file", "file": { "name": "photo.jpg", "mimeType": "image/jpeg", "uri": "https://..." } }
 ```
+
+`uri` 是 HAG 提供的直接下载链接，无需额外鉴权（与 Telegram fileId 需 Bot API 转换、飞书需 tenant_access_token 不同）。
+
+1. **协议层** — `xiaoyi-protocol.ts` 新增 `A2AFilePart` 类型 + `extractFileParts()` 函数，过滤缺失 `uri` 的畸形 file part
+2. **入站解析** — `XiaoyiAdapter.handleMessageStream` 解析 `kind: "file"` parts → `XiaoyiAttachment[]`（`type` 按 mimeType 自动判 image/file）
+3. **Attachment 传递** — `XiaoyiInboundMessage` 新增 `attachments` 字段，bootstrap 层映射 `xiaoyiUri → platformKey`，通过 `ConnectorRouter.route()` 传递给猫（对齐飞书/钉钉/Telegram 模式）
+4. **文件下载** — `ConnectorMediaService` 注册 `xiaoyiDownloadFn`：直接 `fetch(uri)` + 60s AbortController 超时。下载时机由 mediaService 控制（lazy，收到猫请求时才下载）
+5. **无文本 fallback** — 纯图片/文件消息（无 text part）自动生成 `[filename1, filename2]` 作为消息文本，确保不丢弃
 
 ### Phase C: P1 出站媒体（需华为上传凭证）
 
@@ -274,11 +276,12 @@ onDeliveryBatchDone(chainDone=true):
 
 ### Phase B (P1 入站媒体)
 
-- [ ] AC-B1: 用户在小艺 APP 发送图片，猫猫收到并能看到图片内容（入站 `kind: "file"` 解析 + 下载）
-- [ ] AC-B2: 用户发送文本文件（txt/json/md），内容 inline 提取并追加到消息文本中
-- [ ] AC-B3: `XiaoyiInboundMessage.attachments` 字段正确传递到 ConnectorRouter，猫可通过 attachment 访问原始文件
-- [ ] AC-B4: 文件下载有大小限制（30MB）和超时（60s），异常不阻塞文本消息处理
-- [ ] AC-B5: 下载的临时文件有 TTL 清理机制，不泄漏磁盘空间
+- [ ] AC-B1: 用户在小艺 APP 发送图片，猫猫收到并能看到图片内容（入站 `kind: "file"` 解析 + `mediaService` 下载）
+- [ ] AC-B2: 用户发送非图片文件（pdf/doc 等），猫猫收到 attachment 并能通过 `mediaService` 下载原始文件
+- [ ] AC-B3: `XiaoyiInboundMessage.attachments` 字段正确传递到 `ConnectorRouter.route()`，`platformKey` 为 HAG URI
+- [ ] AC-B4: 文件下载有 60s 超时（AbortController），异常不阻塞文本消息处理
+- [ ] AC-B5: 纯文件消息（无 text part）自动生成 `[filename]` fallback 文本，不被丢弃
+- [ ] AC-B6: `extractFileParts` 过滤缺失 `uri` 的畸形 file part，不因协议脏数据崩溃
 
 ### Phase C (P1 出站媒体)
 
@@ -324,6 +327,8 @@ onDeliveryBatchDone(chainDone=true):
 | 14 | ~~per-artifact 流式推送（editMessage delta）~~ → 非流式 | 真机验证发现两个问题：① 同一 `artifactId` 内 `append=true` 发 delta，HAG app 显示前一个 chunk 被覆盖而非追加；② 改为 `append=false` 每次发全量文本，单猫可行但多猫场景下与 D13 的 `append=true` 累积冲突（首只猫流式用 `append=false` 会覆盖后续猫的累积内容）。放弃 intra-artifact 流式，`sendPlaceholder`/`editMessage`/`deleteMessage` 均为 no-op | 2026-04-06 |
 | 15 | `status-update` 的 `message` 字段不可用于暂态提示 | 补充 D8：真机验证发现 `message` 渲染为永久气泡，即使后续发 `completed + final=true` 也不会清除。空字符串 `message: { parts: [{ kind: 'text', text: '' }] }` 同样无法清除。`status-update` 的 `message` 只适合需要永久展示的信息 | 2026-04-06 |
 | 16 | `reasoningText` 作为即时反馈 | 收到用户消息后立即发 `artifact-update(reasoningText='', lastChunk=true)`。空字符串→HAG app 显示三点动画。注意协议字段形状：`{ kind: 'reasoningText', reasoningText: text }`（不是 `text` 字段），已从 `@ynhcj/xiaoyi-channel` 源码确认。`reasoningText` 在 HAG app 中渲染为独立思考气泡，回复出现后自动折叠 | 2026-04-06 |
+| 17 | 入站媒体拆为 Phase B，出站媒体拆为 Phase C | 入站只需 fetch URI（零额外凭证）；出站需 OSMS 三阶段上传 + 独立 uid/apiKey 凭证。拆分降低配置门槛——Phase B 零配置增量 | 2026-04-06 |
+| 18 | XiaoYi 入站文件 URI 直接 fetch，无需鉴权 | HAG 下发的 `file.uri` 是预签名直下链接（类似 S3 presigned URL），与飞书/Telegram 需额外凭证不同。`@ynhcj/xiaoyi-channel` 和 jiuwenclaw 均直接 `fetch(uri)` 下载 | 2026-04-06 |
 
 ## Timeline
 
@@ -331,6 +336,7 @@ onDeliveryBatchDone(chainDone=true):
 |------|-------|
 | 2026-04-01 | Kickoff — spec + ADR-014 |
 | 2026-04-06 | Phase A merged (PR #354) — 真机验证通过 |
+| 2026-04-06 | Phase B dev — 入站媒体解析 + mediaService 下载 + 9 tests |
 
 ## Review Gate
 
