@@ -117,7 +117,7 @@ export function artifactUpdate(
   taskId: string,
   artifactId: string,
   text: string,
-  opts: { append: boolean; lastChunk: boolean },
+  opts: { append: boolean; lastChunk: boolean; partKind?: 'text' | 'reasoningText' },
 ): Record<string, unknown> {
   return {
     jsonrpc: '2.0',
@@ -127,14 +127,22 @@ export function artifactUpdate(
       kind: 'artifact-update',
       append: opts.append,
       lastChunk: opts.lastChunk,
-      final: false, // Iron rule: artifact-update never carries final=true (D12)
-      artifact: { artifactId, parts: [{ kind: 'text', text }] },
+      final: false,
+      artifact: { artifactId, parts: [{ kind: opts.partKind ?? 'text', text }] },
     },
   };
 }
 
-/** Close frame or keepalive. final derived from state: working→false, completed/failed→true (D8/D12). */
-export function statusUpdate(taskId: string, state: 'working' | 'completed' | 'failed'): Record<string, unknown> {
+/** Close frame or keepalive. final derived from state: working→false, completed/failed→true. */
+export function statusUpdate(
+  taskId: string,
+  state: 'working' | 'completed' | 'failed',
+  message?: string,
+): Record<string, unknown> {
+  const status: Record<string, unknown> = { state };
+  if (message !== undefined) {
+    status.message = { parts: [{ kind: 'text', text: message }] };
+  }
   return {
     jsonrpc: '2.0',
     id: nextMsgId(),
@@ -142,7 +150,7 @@ export function statusUpdate(taskId: string, state: 'working' | 'completed' | 'f
       taskId,
       kind: 'status-update',
       final: state !== 'working',
-      status: { state },
+      status,
     },
   };
 }

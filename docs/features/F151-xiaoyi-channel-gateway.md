@@ -66,7 +66,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 | 传输 | WebSocket (wss)：主 `wss://hag.cloud.huawei.com/openclaw/v1/ws/link`，备 `wss://116.63.174.231/openclaw/v1/ws/link` |
 | 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 注意：输入只有 timestamp，无 ak 前缀 |
 | 消息 | A2A JSON-RPC 2.0，出站需两层信封（见下文） |
-| 流式 | `status-update(working)` → `artifact-update(占位, lastChunk=false)` → `artifact-update(append)` 逐帧推送 → `artifact-update(lastChunk=true)` 结束输出 → close frame `status-update(completed, final=true)` 关闭 task |
+| 投递 | 非流式 — 每只猫完成后 `artifact-update(text, lastChunk=true)` 一次性推送，首只 `append=false`，后续 `append=true` 累积。首次触发前发 `reasoningText` 思考气泡。close frame `status-update(completed, final=true)` 关闭 task |
 | 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WebSocket ping 每 30s（pong 超时 90s） |
 | HA | 双服务器 active-active + 入站去重 (key: `sessionId+taskId`)，出站 session affinity（记录入站来源服务器，回包走同一通道） |
 | 备链路 TLS | 备 IP `116.63.174.231` — IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致） |
@@ -148,41 +148,43 @@ Layer 2 — status-update 示例：
 
 **关键设计依据**：协议明确支持一个 task 内多次流式输出（各自 `lastChunk=true`），最终由一个 `final=true` 关闭 task。
 
-**artifactId 生命周期规则**：
-- `artifactId` 格式：`${taskId}:${seqCounter}` — `seqCounter` 是 adapter 内 per-task 递增序号
-- **非 streaming**（`sendReply`）：每次调用生成新 `artifactId`（`seqCounter++`），发一帧 `append=false, lastChunk=true`。同一猫多次 `sendReply` = 多个独立 artifact
-- **streaming**（`sendPlaceholder` → `editMessage`）：`sendPlaceholder` 生成新 `artifactId`，后续 `editMessage` 复用该 `artifactId`（`append=true`），`onStreamEnd` 发 `lastChunk=true` 结束
-- adapter 不需要感知 catId — 每次 delivery hook 调用 = 一次 `sendReply` 或一轮 streaming，自然隔离
+**非流式投递模型**（2026-04-06 真机验证确认）：
 
-**流式序列**（单猫 — 多猫的 N=1 特例，规则相同）：
-1. `status-update(working)` — 设 task 状态（不带 message 文字！HAG 会把 message 渲染为持久条目，真机验证 2026-04-03）
-2. `artifact-update(artifactId, '思考中…', append: false, lastChunk: false, final: false)` — 占位文字
-3. `artifact-update(artifactId, firstChunk, append: false, lastChunk: false, final: false)` — 首 chunk，替换占位
-4. `artifact-update(artifactId, delta, append: true, lastChunk: false, final: false)` — 追加 delta
-5. `artifact-update(artifactId, lastDelta, append: true, lastChunk: true, final: false)` — 末 chunk，结束本次流式输出
-6. `onDeliveryBatchDone(chainDone=true)` → `status-update(completed, final: true)` — **close frame**（见下文）
+HAG app 对 artifact 的 `append` 和同一 artifactId 多次更新的处理存在多个问题（详见 D13-D15），
+**放弃 per-artifact 流式推送**，改为每只猫完成后一次性投递完整文本。
+
+**投递序列**：
+1. `status-update(working)` — 设 task 状态（不带 message！D8）
+2. `artifact-update(reasoningText, '思考中…', lastChunk: true)` — 思考气泡，立即反馈用户（D16）
+3. 猫处理中 → `status-update(working)` 每 20s keepalive
+4. 猫完成 → `artifact-update(text, 完整回复, append: false, lastChunk: true)` — 首只猫
+5. 下一只猫完成 → `artifact-update(text, \n\n---\n\n+完整回复, append: true, lastChunk: true)` — 追加
+6. `onDeliveryBatchDone(chainDone=true)` → `status-update(completed, final: true)` — **close frame**
 
 **铁律：artifact-update 永不携带 `final: true`。`final` 仅通过 close frame 发出。**
 
-**多猫投递**（per-delivery artifact — 每次 `sendReply` / streaming 会话 = 独立 artifact）：
+**多猫投递**（append 累积模型）：
 ```
-用户发送消息 → HAG 下发 message/stream (taskId=T1)
+用户发消息 → HAG 下发 message/stream (taskId=T1)
 Cat Cafe 路由给猫 A + 猫 B:
 
-猫 A (streaming):
+立即响应:
   → status-update(working)
-  → artifact-update(artifactId="a-001", 占位, append=false, lastChunk=false, final=false)
-  → artifact-update(artifactId="a-001", chunk, append=true, lastChunk=true, final=false)
-      ↑ lastChunk=true 结束本次流式输出；final=false 因为猫 B 还没完成
+  → artifact-update(reasoningText, '思考中…', lastChunk=true)  ← 思考气泡
 
-猫 B (非 streaming):
-  → artifact-update(artifactId="b-001", 完整文本, append=false, lastChunk=true, final=false)
+猫 A 完成:
+  → artifact-update(text, "猫A回复", append=false, lastChunk=true)
+      ↑ 首只猫: append=false
+
+猫 B 完成:
+  → artifact-update(text, "\n\n---\n\n猫B回复", append=true, lastChunk=true)
+      ↑ 后续猫: append=true 追加到猫 A 后面
 
 onDeliveryBatchDone(chainDone=true):
-  → status-update(state=completed, final=true) ← close frame，关闭 task
+  → status-update(completed, final=true) ← close frame
 ```
 
-每次 delivery 调用用不同 `artifactId`，各自独立输出。`final=true` 仅通过 **close frame** 发出。
+`hasArtifact` Set 追踪 task 是否已发过 text artifact，决定首只猫 `append=false` vs 后续猫 `append=true`。
 
 **Close frame 契约**：
 ```json
@@ -207,18 +209,17 @@ onDeliveryBatchDone(chainDone=true):
 **目标**：跑通小艺↔Cat Cafe 文本对话链路。
 
 1. **XiaoYiAdapter** — 新增 connector adapter
-   - 实现 `IStreamableOutboundAdapter`
+   - 实现 `IStreamableOutboundAdapter`（`sendPlaceholder`/`editMessage`/`deleteMessage` 为 no-op，仅 `sendReply` 投递内容）
    - WebSocket 连接管理（connect / auth / heartbeat / reconnect）
    - 双服务器 active-active + session affinity
-   - **per-delivery artifact 模型**：每次 `sendReply` / streaming 会话用独立 `artifactId`（adapter 不感知 catId）。per-session FIFO 队列 (`taskQueue`) 管理用户连续消息。`onDeliveryBatchDone(chainDone=true)` 信号触发 close frame 关闭 task
+   - **非流式 append 累积模型**：首只猫 `append=false`，后续猫 `append=true` 追加。`reasoningText` 思考气泡立即反馈。per-session FIFO 队列 (`taskQueue`) 管理用户连续消息。`onDeliveryBatchDone(chainDone=true)` 信号触发 close frame 关闭 task
    - **协议层抽离**：`xiaoyi-protocol.ts` — 常量、类型、auth、message builders（质量门控文件大小合规）
 
 2. **协议层**
    - `clawd_bot_init` 注册
    - `message/stream` 入站解析 → 标准 InboundMessage
-   - `agent_response` 出站格式化：`status-update(working)` → `artifact-update` 逐帧推送 → close frame `status-update(completed, final: true)` 关闭
+   - `agent_response` 出站格式化：`status-update(working)` → `reasoningText` 思考气泡 → 猫完成后 `artifact-update(text)` 逐猫投递 → close frame `status-update(completed, final: true)` 关闭
    - `tasks/cancel`（取消当前 task）/ `clearContext`（清理 session 上下文，state=`cleared|failed|unknown`）处理
-   - 流式输出：收到请求发 `status-update(working)` + `artifact-update(占位, lastChunk=false)` → 首 token `artifact-update(append=false)` 替换 → 增量 `artifact-update(append=true)` → 末 chunk `lastChunk=true`
 
 3. **Gateway 集成**
    - Principal Link: `connectorId=xiaoyi`, `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
@@ -236,7 +237,7 @@ onDeliveryBatchDone(chainDone=true):
 | 能力 | 说明 |
 |------|------|
 | 图片/文件收发 | `kind: "file"` parts 解析 + 发送 |
-| 推理过程展示 | `kind: "reasoningText"` 透传 |
+| ~~推理过程展示~~ | ~~`kind: "reasoningText"` 透传~~ — 已在 Phase A 用于"思考中…"即时反馈（D16） |
 | Push 通知 | 异步长耗时任务完成回调 |
 
 ## Acceptance Criteria
@@ -247,11 +248,11 @@ onDeliveryBatchDone(chainDone=true):
 - [ ] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
 - [ ] AC-A3: 双机制心跳保活（应用层 20s + WS ping 30s）+ 断线指数退避重连（max 10 次）
 - [ ] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
-- [ ] AC-A5: 流式输出 — `status-update(working)` + `artifact-update(占位, lastChunk=false)` → 首 token 替换 → 增量 append → `lastChunk=true` 结束本次输出
+- [ ] AC-A5: 非流式投递 — `reasoningText` 思考气泡即时反馈 + 每只猫完成后 `artifact-update(text)` 一次性投递（首只 `append=false`，后续 `append=true` 分隔线累积）
 - [ ] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
 - [ ] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
 - [ ] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
-- [ ] AC-A9: 多猫投递完整性 — per-delivery artifact（每次 `sendReply`/streaming = 独立 artifactId），close frame (`status-update(completed, final=true)`) 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
+- [ ] AC-A9: 多猫投递完整性 — 首只猫 `append=false`，后续猫 `append=true` 追加（`---` 分隔线），close frame 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
 
 ## Dependencies
 
@@ -287,6 +288,10 @@ onDeliveryBatchDone(chainDone=true):
 | 10 | ~~invocation 级 task 绑定 (claimTask)~~ → 删除 | D9 改为 per-delivery artifact 后，不再需要 invocation 级绑定。每次 `sendReply` 调用生成新 artifactId | 2026-04-05 |
 | 11 | 信号驱动 task 关闭 (onDeliveryBatchDone) | `chainDone=true` → 发 close frame `status-update(completed, final=true)` 关闭 task。三条 delivery 管线覆盖（messages.ts / ConnectorInvokeTrigger / QueueProcessor）。`TASK_TIMEOUT_MS=120s` 作为僵尸任务兜底。删除 `DEFERRED_FINAL_MS` 定时器 | 2026-04-05 |
 | 12 | close frame = `status-update(completed, final=true)` 不带 message | 华为文档 "不用 completed 返回" 指不要把响应内容放在 status-update 的 message 字段里返回（内容应在 artifact 中）。`status-update(completed, final=true)` 作为纯状态信号关闭 task 通道是合规的。artifact-update 永不携带 `final=true` — 避免 adapter 需要区分 "哪个 artifact 是最后一个" | 2026-04-05 |
+| 13 | ~~per-delivery artifact（多 artifactId 独立输出）~~ → append 累积 | **D9-v2 已废弃**。真机验证发现：HAG app 对 `text` 类型 artifact，无论 `artifactId` 是否不同，`append=false` 时只渲染最后一个 — 后面猫的回复覆盖前面的。协议结构上多 artifact 合法，但 app 渲染行为是"最后一个 wins"。改为 append 累积模型：首只猫 `append=false`，后续猫 `append=true`（2026-04-06 真机验证 append=true 跨 artifactId 累积有效） | 2026-04-06 |
+| 14 | ~~per-artifact 流式推送（editMessage delta）~~ → 非流式 | 真机验证发现两个问题：① 同一 `artifactId` 内 `append=true` 发 delta，HAG app 显示前一个 chunk 被覆盖而非追加；② 改为 `append=false` 每次发全量文本，单猫可行但多猫场景下与 D13 的 `append=true` 累积冲突（首只猫流式用 `append=false` 会覆盖后续猫的累积内容）。放弃 intra-artifact 流式，`sendPlaceholder`/`editMessage`/`deleteMessage` 均为 no-op | 2026-04-06 |
+| 15 | `status-update` 的 `message` 字段不可用于暂态提示 | 补充 D8：真机验证发现 `message` 渲染为永久气泡，即使后续发 `completed + final=true` 也不会清除。空字符串 `message: { parts: [{ kind: 'text', text: '' }] }` 同样无法清除。`status-update` 的 `message` 只适合需要永久展示的信息 | 2026-04-06 |
+| 16 | `reasoningText` 作为"思考中"即时反馈 | 收到用户消息后立即发 `artifact-update(partKind='reasoningText', '思考中…', lastChunk=true)`。`reasoningText` 在 HAG app 中渲染为独立的思考气泡，与 `text` 类型不互相覆盖，且在最终回复出现后自动折叠。解决了"用户发消息后无任何反馈"的体验问题 | 2026-04-06 |
 
 ## Review Gate
 

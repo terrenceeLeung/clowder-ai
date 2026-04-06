@@ -1,9 +1,10 @@
 /**
  * XiaoYi (小艺) Connector Adapter — OpenClaw A2A over dual-WS.
  *
- * Per-delivery artifact model: each sendReply / streaming session produces
- * an independent artifact (unique artifactId). Task closure via close frame
- * (status-update completed, final=true) driven by onDeliveryBatchDone signal.
+ * Non-streaming delivery: each cat's complete reply sent via sendReply with
+ * append accumulation (first=false, rest=true). No intra-artifact streaming
+ * — HAG app breaks with append:true delta updates within the same artifact.
+ * Task closure via close frame driven by onDeliveryBatchDone signal.
  *
  * F151 | ADR-014
  */
@@ -15,8 +16,6 @@ import {
   agentResponse,
   artifactUpdate,
   DEDUP_TTL_MS,
-  EDIT_THROTTLE_MS,
-  type EditRecord,
   generateXiaoyiSignature,
   STATUS_KEEPALIVE_MS,
   statusUpdate,
@@ -40,8 +39,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   private readonly dedup = new Map<string, number>();
   /** Per-task artifact sequence counter for artifactId generation */
   private readonly seqCounters = new Map<string, number>();
-  /** Streaming edit state keyed by artifactId (= platformMessageId) */
-  private readonly editState = new Map<string, EditRecord>();
   private readonly keepaliveTimers = new Map<string, ReturnType<typeof setInterval>>();
   private readonly taskTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   /** Deferred inbound payloads for tasks queued behind the active head */
@@ -72,7 +69,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.taskQueue.clear();
     this.seqCounters.clear();
     this.dedup.clear();
-    this.editState.clear();
     this.pendingDispatch.clear();
     this.hasArtifact.clear();
   }
@@ -88,8 +84,10 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendReply');
       return;
     }
+    const isFirst = !this.hasArtifact.has(rec.taskId);
     const artId = this.nextArtifactId(rec.taskId);
-    const art = artifactUpdate(rec.taskId, artId, content, { append: false, lastChunk: true });
+    const text = isFirst ? content : `\n\n---\n\n${content}`;
+    const art = artifactUpdate(rec.taskId, artId, text, { append: !isFirst, lastChunk: true });
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
     this.hasArtifact.add(rec.taskId);
   }
@@ -101,7 +99,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (!rec) return;
     this.cancelTaskTimeout(rec.taskId);
     this.clearKeepalive(rec.taskId);
-    // Close frame: status-update(completed, final=true) — D12
+    // Close frame: status-update(completed, final=true)
     const close = statusUpdate(rec.taskId, 'completed');
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, close));
     this.dequeueTask(sessionId, rec.taskId);
@@ -114,40 +112,25 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.log.warn({ sessionId }, '[XiaoYi] No task for sendPlaceholder');
       return '';
     }
-    // Status-update: set state to working, no message text (D8)
+    // Content delivered via sendReply only (no intra-artifact streaming).
     const st = statusUpdate(rec.taskId, 'working');
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, st));
-    // Placeholder artifact
-    const artId = this.nextArtifactId(rec.taskId);
-    const placeholder = artifactUpdate(rec.taskId, artId, '思考中…', { append: false, lastChunk: false });
-    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, placeholder));
-    this.editState.set(artId, { taskId: rec.taskId, sessionId, source: rec.source, sentLen: 0, lastEditAt: 0 });
+    // Thinking bubble — reasoningText renders separately and collapses on reply
+    const thinkId = this.nextArtifactId(rec.taskId);
+    const thinking = artifactUpdate(rec.taskId, thinkId, '思考中…', {
+      append: false, lastChunk: true, partKind: 'reasoningText',
+    });
+    this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, thinking));
     this.startKeepalive(rec.taskId, sessionId, rec);
-    this.hasArtifact.add(rec.taskId);
-    return artId;
+    return '';
   }
 
-  async editMessage(_externalChatId: string, platformMessageId: string, text: string): Promise<void> {
-    const edit = this.editState.get(platformMessageId);
-    if (!edit) return;
-    const now = Date.now();
-    if (now - edit.lastEditAt < EDIT_THROTTLE_MS) return;
-    const isFirst = edit.sentLen === 0;
-    const delta = isFirst ? text : text.slice(edit.sentLen);
-    if (!delta) return;
-    const detail = artifactUpdate(edit.taskId, platformMessageId, delta, { append: !isFirst, lastChunk: false });
-    this.ws.send(edit.source, agentResponse(this.opts.agentId, edit.sessionId, edit.taskId, detail));
-    edit.sentLen = text.length;
-    edit.lastEditAt = now;
+  async editMessage(): Promise<void> {
+    // No-op: XiaoYi delivers final text only via sendReply
   }
 
-  async deleteMessage(platformMessageId: string): Promise<void> {
-    const edit = this.editState.get(platformMessageId);
-    if (!edit) return;
-    // Send lastChunk=true to finalize this streaming output
-    const finalize = artifactUpdate(edit.taskId, platformMessageId, '', { append: true, lastChunk: true });
-    this.ws.send(edit.source, agentResponse(this.opts.agentId, edit.sessionId, edit.taskId, finalize));
-    this.editState.delete(platformMessageId);
+  async deleteMessage(): Promise<void> {
+    // No-op: no streaming artifacts to finalize
   }
 
   // ── Inbound ──
@@ -273,10 +256,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (q.length === 0) this.taskQueue.delete(sessionId);
     this.seqCounters.delete(taskId);
     this.hasArtifact.delete(taskId);
-    // Clean up any lingering edit states for this task
-    for (const [artId, edit] of this.editState) {
-      if (edit.taskId === taskId) this.editState.delete(artId);
-    }
     // Dispatch next queued task
     const next = q?.[0];
     const pending = next && this.pendingDispatch.get(next.taskId);
@@ -295,10 +274,6 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.pendingDispatch.delete(t.taskId);
     }
     this.taskQueue.delete(sid);
-    // Clean edit states for this session
-    for (const [artId, edit] of this.editState) {
-      if (edit.sessionId === sid) this.editState.delete(artId);
-    }
   }
 
   private sessionFrom(externalChatId: string): string {
