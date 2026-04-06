@@ -74,7 +74,11 @@ describe('xiaoyi-protocol: artifactUpdate', () => {
     assert.equal(defaultArt.result.artifact.parts[0].kind, 'text', 'default is text');
     assert.equal(defaultArt.result.artifact.parts[0].text, 'hi');
 
-    const thinkArt = artifactUpdate('t', 'a2', 'thinking', { append: false, lastChunk: true, partKind: 'reasoningText' });
+    const thinkArt = artifactUpdate('t', 'a2', 'thinking', {
+      append: false,
+      lastChunk: true,
+      partKind: 'reasoningText',
+    });
     assert.equal(thinkArt.result.artifact.parts[0].kind, 'reasoningText');
     assert.equal(thinkArt.result.artifact.parts[0].reasoningText, 'thinking', 'uses reasoningText field, not text');
     assert.equal(thinkArt.result.artifact.parts[0].text, undefined, 'no text field on reasoningText part');

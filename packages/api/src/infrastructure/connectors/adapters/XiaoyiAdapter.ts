@@ -118,7 +118,9 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     // Thinking bubble — reasoningText renders separately and collapses on reply
     const thinkId = this.nextArtifactId(rec.taskId);
     const thinking = artifactUpdate(rec.taskId, thinkId, '', {
-      append: false, lastChunk: true, partKind: 'reasoningText',
+      append: false,
+      lastChunk: true,
+      partKind: 'reasoningText',
     });
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, thinking));
     this.startKeepalive(rec.taskId, sessionId, rec);

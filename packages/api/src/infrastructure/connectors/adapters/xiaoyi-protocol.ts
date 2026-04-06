@@ -131,9 +131,7 @@ export function artifactUpdate(
       artifact: {
         artifactId,
         parts: [
-          opts.partKind === 'reasoningText'
-            ? { kind: 'reasoningText', reasoningText: text }
-            : { kind: 'text', text },
+          opts.partKind === 'reasoningText' ? { kind: 'reasoningText', reasoningText: text } : { kind: 'text', text },
         ],
       },
     },
