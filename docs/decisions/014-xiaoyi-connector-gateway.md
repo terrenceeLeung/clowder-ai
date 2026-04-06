@@ -49,7 +49,7 @@ Cat Cafe 已通过 F088/F132/F137 接入飞书、Telegram、DingTalk、企业微
 | 传输 | WebSocket (wss)：主 + 备 active-active |
 | 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 输入只有 timestamp |
 | 消息 | A2A JSON-RPC 2.0，出站需两层信封（WebSocket frame + stringified msgDetail） |
-| 流式 | `status-update(working)` → `artifact-update` 逐帧推送 |
+| 投递 | 非流式 — `reasoningText` 思考气泡 → 每猫完成后 `artifact-update(text)` append 累积 |
 | 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WS ping 每 30s |
 
 ### 核心 ID
@@ -90,44 +90,50 @@ XiaoYiAdapter
 - **出站 session affinity**：记录入站来源服务器，回包走同一通道
 - **备 IP TLS**：IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致）
 
-### 流式输出
+### 投递模型（非流式 append 累积，2026-04-06 真机验证）
 
 ```
 收到消息
   ↓
-status-update { state: "working", final: false }   → HAG 标记 task 进入 working 状态
-artifact-update { text: "思考中…", append: false, final: false }  → 占位文字（用 artifact 而非 status message）
+status-update { state: "working", final: false }          → HAG 标记 task 进入 working
+artifact-update { reasoningText: '', lastChunk: true }    → 思考气泡（三点动画）
+  ↓  keepalive: status-update(working) 每 20s
+猫 A 完成
   ↓
-artifact-update { append: false, final: false }    → 第一个字出现，替换「思考中…」
+artifact-update { text: "猫A回复", append: false }        → 首只猫，替换
   ↓
-artifact-update { append: true, final: false }     → 后续逐字追加
+猫 B 完成
   ↓
-status-update { state: "completed", final: true }  → 标记完成
+artifact-update { text: "\n\n---\n\n猫B回复", append: true }  → 追加（分隔线）
   ↓
-artifact-update { lastChunk: true, final: true }   → 关闭 task
+status-update { state: "completed", final: true }         → close frame
 ```
 
-**关键协议约束**（真机验证 2026-04-03）：
-- `status-update` 的 `final` 跟随 state：`working` → `false`，`completed`/`failed` → `true`
-- HAG 会把 `status-update` 的 `message` 文字渲染为**持久消息条目**，不会自动清除。所以「思考中…」等占位文字必须放在 `artifact-update` 内容里（`append:false` 会被后续内容替换），不能放 `status-update` 的 `message` 字段
+**为什么不流式推送**（真机验证 2026-04-06）：
+- 同一 `artifactId` 内 `append:true` 发 delta → HAG app 前一个 chunk 被覆盖（非追加）
+- `append:false` 发全量文本单猫可行，但多猫场景覆盖其他猫的累积内容
+- `status-update` 的 `message` 字段渲染为**永久气泡**，completed+final:true 也不清除
+- 因此放弃 intra-artifact 流式，`sendPlaceholder`/`editMessage`/`deleteMessage` 均为 no-op
 
-**多猫聚合**：多只猫的回复通过 `replyParts` Map 累积，以 replace 模式（`append:false`）发送完整文本（`---` 分隔）。3s debounce 后发 final:true。
+**多猫投递**：`hasArtifact` Set 追踪首只猫是否已发送。首只 `append=false`，后续 `append=true` + `---` 分隔线。
 
-**task 生命周期管理**（已实现，替代早期设计的 session 级单指针）：
+**即时反馈**：`reasoningText` part（`{ kind: 'reasoningText', reasoningText: '' }`）— 空字符串让 HAG 显示三点动画，回复出现后自动折叠。
+
+**task 生命周期管理**：
 
 ```
 taskQueue: Map<sessionId, TaskRecord[]>     — per-session FIFO 队列
-claimedTasks: Set<taskId>                   — 已被 invocation claim 的 task
-activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
+hasArtifact: Set<taskId>                    — 追踪是否已发过 text artifact
+seqCounters: Map<taskId, number>            — per-task artifactId 递增序号
 ```
 
 - 入站 `message/stream` → push 到 FIFO 队列 + 启动 120s timeout
-- `sendPlaceholder`（= invocation 边界）→ `claimTask` 找第一个未 claim 的 task
-- `sendReply` → 通过 `activeTask` 绑定路由到正确 task
-- 3s debounce (`scheduleFinal`) → `emitFinal` + dequeue
+- `sendPlaceholder` → status-update(working) + reasoningText 气泡，返回 ''
+- `sendReply` → 首只 append=false / 后续 append=true
+- `onDeliveryBatchDone(chainDone=true)` → close frame + dequeue
 - `tasks/cancel` / `clearContext` → purge 整个 session
 
-三层 timer 防御：keepalive 20s / debounce 3s / hard timeout 120s
+双层 timer 防御：keepalive 20s / hard timeout 120s
 
 ## 决策
 
@@ -137,11 +143,11 @@ activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
 | 2 | 用 `owner:{agentId}` 做 senderId | OpenClaw 无用户级标识，所有对话归属 connector 配置者 | 2026-04-02 |
 | 3 | 用 `params.sessionId` 而非顶层 `msg.sessionId` | office-claw P1-1 实测验证：顶层 sessionId 每次打开 app 刷新 | 2026-04-02 |
 | 4 | 双服务器 active-active + 去重 | 入站去重防双发，session affinity 保证响应连续性 | 2026-04-02 |
-| 5 | 占位文字用 `artifact-update` 而非 `status-update` message | HAG 把 status message 渲染为持久条目；artifact 内容可被后续 `append:false` 替换（真机验证 2026-04-03） | 2026-04-03 |
+| 5 | 即时反馈用 `reasoningText` 空字符串 | ~~占位文字用 artifact-update~~ → HAG 把 `status-update` message 渲染为永久气泡。`reasoningText` 空串触发三点动画，回复后自动折叠（真机验证 2026-04-06） | 2026-04-06 |
 | 6 | 不做多小艺 agent 接入 | 单账号单 agent，scope 聚焦 | 2026-04-02 |
 | 7 | status-update final 跟随 state | `final: state !== 'working'`。working→false，completed/failed→true（真机验证 2026-04-03） | 2026-04-03 |
-| 8 | 多猫 replyParts 聚合 + 3s debounce | 小艺 task = 一个 artifact，多猫必须聚合 | 2026-04-03 |
-| 9 | FIFO queue + invocation 级 claimTask | 替代 session 级单指针，消除 QueueProcessor 立即启动的 3s 竞态 | 2026-04-03 |
+| 8 | ~~多猫 replyParts 聚合~~ → append 累积 | 首只猫 `append=false`，后续猫 `append=true` + `---` 分隔。无 debounce，信号驱动关闭（真机验证 2026-04-06） | 2026-04-06 |
+| 9 | ~~FIFO + claimTask~~ → FIFO + 信号驱动关闭 | 删除 `claimedTasks`/`activeTask`/`scheduleFinal`。`onDeliveryBatchDone(chainDone=true)` 信号触发 close frame | 2026-04-06 |
 
 ## 放弃的方案
 
@@ -160,7 +166,7 @@ activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
 | WebSocket 双通道 | 主+备，active-active，独立连接管理 |
 | HMAC-SHA256 认证 | `x-access-key` / `x-sign` / `x-ts` / `x-agent-id` headers |
 | A2A 协议处理 | message/stream 入站，agent_response 出站 | 协议层 |
-| task 生命周期 | FIFO queue + claimTask invocation 级绑定 | 出站路由 |
+| task 生命周期 | FIFO queue + onDeliveryBatchDone 信号驱动 | 出站路由 |
 | 协议层抽离 | `xiaoyi-protocol.ts` — 常量、类型、auth、builders | 质量门控 |
 
 ## 给未来Ragdoll的备忘
@@ -168,8 +174,8 @@ activeTask: Map<sessionId, TaskRecord>      — 当前 invocation 绑定的 task
 1. **OpenClaw 协议限制**：不支持快捷指令、端侧插件、账号绑定、卡片等平台功能。P0 只做文本收发，这些都不在 scope 内。
 2. **sessionId 陷阱**：协议有**两个**叫 sessionId 的字段。`params.sessionId`（params 内）稳定，`msg.sessionId`（顶层）每次打开 app 刷新。实现时必须只用 params 内的。但 `tasks/cancel` 和 `clearContext` 的 sessionId 在顶层。
 3. **备 IP TLS**：备 IP `116.63.174.231` 没有域名做 SNI，用 `rejectUnauthorized: false`（与参考实现一致）。
-4. **task 生命周期**：adapter 用 FIFO queue + `claimTask` 做 invocation 级绑定（不是 session 级单指针）。`sendPlaceholder` = invocation 边界信号，claim 下一个未绑定 task。三层 timer：keepalive 20s / debounce 3s / timeout 120s。
-5. **思考中指示**：「思考中…」占位文字放在 `artifact-update` 内容里（不是 `status-update` 的 `message`）。HAG 把 status message 文字渲染为持久消息条目，不会自动清除；artifact 内容会被后续 `append:false` 替换。`status-update` 的 `final` 跟随 state：working→false，completed/failed→true。
-6. **签名算法**：`Base64(HMAC-SHA256(SK, timestamp_string))`。输入**只有 timestamp**，没有 `ak=` 前缀。这跟网上很多示例不同，以 `@ynhcj/xiaoyi` 源码为准。
+4. **task 生命周期**：FIFO queue + `onDeliveryBatchDone` 信号驱动关闭。双层 timer：keepalive 20s / timeout 120s。
+5. **即时反馈**：`reasoningText` 空字符串 → HAG 显示三点动画。字段形状 `{ kind: 'reasoningText', reasoningText: '' }`（不是 `text` 字段！从 `@ynhcj/xiaoyi-channel` 源码确认）。`status-update` 的 `message` 字段**永久残留**，不可用于暂态提示。
+6. **签名算法**：`Base64(HMAC-SHA256(SK, timestamp_string))`。输入**只有 timestamp**，没有 `ak=` 前缀。以 `@ynhcj/xiaoyi` 源码为准。
 7. **出站信封**：必须用两层包装 — `{ msgType: "agent_response", agentId, sessionId, taskId, msgDetail: JSON.stringify(jsonrpc) }`。裸 JSON-RPC 不行。
-8. **append 语义**：`false` = 替换整个 artifact 内容，`true` = 追加。流式必须只发 delta（新增部分），发全量会导致内容翻倍。
+8. **不要做 intra-artifact 流式**：HAG app 对同一 artifactId 的 `append:true` delta 和多 text artifact 的 `append:false` 都有渲染问题（真机验证 2026-04-06）。改用 append 累积：首只猫 `append=false`，后续猫 `append=true`（跨 artifactId 追加有效）。
