@@ -1124,5 +1124,47 @@ describe('QueueProcessor', () => {
       assert.equal(batchDoneCalls[0].threadId, 't1');
       assert.equal(batchDoneCalls[0].chainDone, true, 'single invocation failure → chainDone=true');
     });
+
+    it('P3-P2: reject callback (executeEntry throws in finally) still triggers notifyDeliveryBatchDone', async () => {
+      const batchDoneCalls = [];
+      const streamingHook = {
+        onStreamStart: mock.fn(async () => {}),
+        onStreamChunk: mock.fn(async () => {}),
+        onStreamEnd: mock.fn(async () => {}),
+        cleanupPlaceholders: mock.fn(async () => {}),
+        notifyDeliveryBatchDone: mock.fn(async (threadId, chainDone) => {
+          batchDoneCalls.push({ threadId, chainDone });
+        }),
+      };
+
+      // Make invocationTracker.complete throw in finally block → executeEntry rejects
+      const hookDeps = stubDeps({
+        invocationTracker: {
+          start: mock.fn(() => new AbortController()),
+          complete: mock.fn(() => {
+            throw new Error('tracker.complete crashed');
+          }),
+          has: mock.fn(() => false),
+        },
+        router: {
+          routeExecution: mock.fn(async function* () {
+            yield { type: 'done', catId: 'opus', timestamp: Date.now() };
+          }),
+          ackCollectedCursors: mock.fn(async () => {}),
+        },
+        streamingHook,
+        threadMetaLookup: mock.fn(async () => undefined),
+      });
+      const hookProcessor = new QueueProcessor(hookDeps);
+
+      const entry = enqueueEntry(hookDeps.queue);
+      hookDeps.queue.backfillMessageId('t1', 'u1', entry.id, 'msg-1');
+
+      await hookProcessor.processNext('t1', 'u1');
+      await waitFor(() => batchDoneCalls.length >= 1);
+
+      assert.equal(batchDoneCalls.length, 1, 'reject callback must also fire notifyDeliveryBatchDone');
+      assert.equal(batchDoneCalls[0].threadId, 't1');
+    });
   });
 });

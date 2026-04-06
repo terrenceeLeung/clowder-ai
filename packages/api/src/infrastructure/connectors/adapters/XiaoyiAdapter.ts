@@ -99,8 +99,10 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (!rec) return;
     this.cancelTaskTimeout(rec.taskId);
     this.clearKeepalive(rec.taskId);
-    // Close frame: status-update(completed, final=true)
-    const close = statusUpdate(rec.taskId, 'completed');
+    this.pendingDispatch.delete(rec.taskId);
+    // Close frame: completed if has artifact, failed if no output at all
+    const state = this.hasArtifact.has(rec.taskId) ? 'completed' : 'failed';
+    const close = statusUpdate(rec.taskId, state);
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, close));
     this.dequeueTask(sessionId, rec.taskId);
   }

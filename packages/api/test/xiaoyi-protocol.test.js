@@ -308,6 +308,29 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     await adapter.stopStream();
   });
 
+  it('P3-P1: all cats fail (no artifact) → task closes with failed state', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    const sent = captureSent(adapter);
+    adapter.onMsg = async () => {};
+
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'go'), 'primary');
+
+    // Placeholder sent but NO sendReply (all cats failed)
+    await adapter.sendPlaceholder('agent-1:sess-1', '...');
+    sent.length = 0;
+
+    // Signal chain done — no artifact was ever produced
+    await adapter.onDeliveryBatchDone('agent-1:sess-1', true);
+
+    const closeDetail = parseDetail(sent[0]);
+    assert.equal(closeDetail.result.kind, 'status-update');
+    assert.equal(closeDetail.result.status.state, 'failed', 'no artifact → failed, not completed');
+    assert.equal(closeDetail.result.final, true);
+
+    await adapter.stopStream();
+  });
+
   it('dedup prevents double processing of same task', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
