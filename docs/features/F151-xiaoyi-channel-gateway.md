@@ -232,7 +232,7 @@ onDeliveryBatchDone(chainDone=true):
    - .env 中添加 `XIAOYI_AK` / `XIAOYI_SK` / `XIAOYI_AGENT_ID` 后自动检测并连接
    - 集成点：`connector-secrets-allowlist` 注册 env key → `connector-reload-subscriber` 监听变更 → `connector-gateway-bootstrap` 初始化/销毁 adapter → `connector-hub` 注册平台配置项 + 状态页
 
-### Phase B: P1 入站媒体
+### Phase B: P1 入站媒体 ✅
 
 **目标**：用户在小艺 APP 发送图片/文件，猫猫能看到并处理。
 
@@ -274,14 +274,14 @@ onDeliveryBatchDone(chainDone=true):
 - [x] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
 - [x] AC-A9: 多猫投递完整性 — 首只猫 `append=false`，后续猫 `append=true` 追加（`---` 分隔线），close frame 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
 
-### Phase B (P1 入站媒体)
+### Phase B (P1 入站媒体) ✅
 
-- [ ] AC-B1: 用户在小艺 APP 发送图片，猫猫收到并能看到图片内容（入站 `kind: "file"` 解析 + `mediaService` 下载）
-- [ ] AC-B2: 用户发送非图片文件（pdf/doc 等），猫猫收到 attachment 并能通过 `mediaService` 下载原始文件
-- [ ] AC-B3: `XiaoyiInboundMessage.attachments` 字段正确传递到 `ConnectorRouter.route()`，`platformKey` 为 HAG URI
-- [ ] AC-B4: 文件下载有 60s 超时（AbortController），异常不阻塞文本消息处理
-- [ ] AC-B5: 纯文件消息（无 text part）自动生成 `[filename]` fallback 文本，不被丢弃
-- [ ] AC-B6: `extractFileParts` 过滤缺失 `uri` 的畸形 file part，不因协议脏数据崩溃
+- [x] AC-B1: 用户在小艺 APP 发送图片，猫猫收到并能看到图片内容（入站 `kind: "file"` 解析 + `mediaService` 下载）
+- [x] AC-B2: 用户发送非图片文件（pdf/doc 等），猫猫收到 attachment 并能通过 `mediaService` 下载原始文件
+- [x] AC-B3: `XiaoyiInboundMessage.attachments` 字段正确传递到 `ConnectorRouter.route()`，`platformKey` 为 HAG URI
+- [x] AC-B4: 文件下载有 60s 超时（AbortController） + SSRF guard（https + huawei 域名 allowlist），异常不阻塞文本消息处理
+- [x] AC-B5: 纯文件消息（无 text part）自动生成 `[filename]` fallback 文本，不被丢弃
+- [x] AC-B6: `extractFileParts` 过滤缺失 `uri`/非字符串 `mimeType` 的畸形 file part，不因协议脏数据崩溃
 
 ### Phase C (P1 出站媒体)
 
@@ -336,8 +336,9 @@ onDeliveryBatchDone(chainDone=true):
 |------|-------|
 | 2026-04-01 | Kickoff — spec + ADR-014 |
 | 2026-04-06 | Phase A merged (PR #354) — 真机验证通过 |
-| 2026-04-06 | Phase B dev — 入站媒体解析 + mediaService 下载 + 9 tests |
+| 2026-04-06 | Phase B merged (PR terrenceeLeung/clowder-ai#1) — 入站媒体 + SSRF guard + 40 tests |
 
 ## Review Gate
 
 - Phase A: 缅因猫 review + 铲屎官真机验证 ✅
+- Phase B: 缅因猫 review (REQUEST_CHANGES → APPROVE) ✅
