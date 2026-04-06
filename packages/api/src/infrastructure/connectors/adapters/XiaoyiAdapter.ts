@@ -199,6 +199,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       setTimeout(() => {
         this.taskTimeouts.delete(taskId);
         this.clearKeepalive(taskId);
+        this.pendingDispatch.delete(taskId);
         // Close frame with failed state if no artifact, completed if has artifact
         const state = this.hasArtifact.has(taskId) ? 'completed' : 'failed';
         const close = statusUpdate(rec.taskId, state);

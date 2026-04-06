@@ -194,9 +194,10 @@ export class QueueProcessor {
     return false;
   }
 
-  /** F151: Signal streaming adapters that delivery is done for this thread invocation. */
-  private signalDeliveryBatchDone(threadId: string, status: string): void {
-    if (status !== 'succeeded') return;
+  /** F151: Signal streaming adapters that delivery is done for this thread invocation.
+   *  Fires on both success AND failure — failed invocations must close the task
+   *  immediately instead of waiting for TASK_TIMEOUT_MS (P2-1 review fix). */
+  private signalDeliveryBatchDone(threadId: string, _status: string): void {
     if (!this.deps.streamingHook?.notifyDeliveryBatchDone) return;
     const threadStillBusy = this.deps.invocationTracker.has(threadId) || this.isThreadBusy(threadId);
     this.deps.streamingHook.notifyDeliveryBatchDone(threadId, !threadStillBusy).catch((err) => {

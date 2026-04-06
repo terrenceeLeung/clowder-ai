@@ -25,7 +25,6 @@ export const MAX_RECONNECT = 10;
 export const RECONNECT_BASE_MS = 1_000;
 export const RECONNECT_MAX_MS = 30_000;
 export const DEDUP_TTL_MS = 5 * 60_000;
-export const EDIT_THROTTLE_MS = 300;
 export const STATUS_KEEPALIVE_MS = 20_000;
 export const TASK_TIMEOUT_MS = 120_000;
 
@@ -59,14 +58,6 @@ export interface WsChannel {
 export interface TaskRecord {
   taskId: string;
   source: string;
-}
-
-export interface EditRecord {
-  taskId: string;
-  sessionId: string;
-  source: string;
-  sentLen: number;
-  lastEditAt: number;
 }
 
 export interface XiaoyiInboundMessage {

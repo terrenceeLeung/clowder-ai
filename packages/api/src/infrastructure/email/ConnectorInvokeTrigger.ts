@@ -709,8 +709,9 @@ export class ConnectorInvokeTrigger {
         /* best-effort, don't crash background task */
       });
       // F151: Signal adapters that this invocation's delivery batch is complete.
-      // Must run after tracker.complete + onInvocationComplete so chainDone reflects queued work.
-      if (finalStatus === 'succeeded' && this.opts.streamingHook?.notifyDeliveryBatchDone) {
+      // Fires on both success AND failure — failed invocations must close the task
+      // immediately instead of waiting for TASK_TIMEOUT_MS (P2-1 review fix).
+      if (this.opts.streamingHook?.notifyDeliveryBatchDone) {
         const threadStillBusy =
           invocationTracker.has(threadId) || (this.opts.queueProcessor?.isThreadBusy(threadId) ?? false);
         this.opts.streamingHook.notifyDeliveryBatchDone(threadId, !threadStillBusy).catch((err) => {
