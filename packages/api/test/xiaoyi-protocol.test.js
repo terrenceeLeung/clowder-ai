@@ -68,13 +68,16 @@ describe('xiaoyi-protocol: artifactUpdate', () => {
     assert.equal(art.result.final, false);
   });
 
-  it('partKind defaults to text, can be set to reasoningText', async () => {
+  it('partKind defaults to text, reasoningText uses { kind, reasoningText } shape', async () => {
     const { artifactUpdate } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
     const defaultArt = artifactUpdate('t', 'a1', 'hi', { append: false, lastChunk: true });
     assert.equal(defaultArt.result.artifact.parts[0].kind, 'text', 'default is text');
+    assert.equal(defaultArt.result.artifact.parts[0].text, 'hi');
 
     const thinkArt = artifactUpdate('t', 'a2', 'thinking', { append: false, lastChunk: true, partKind: 'reasoningText' });
     assert.equal(thinkArt.result.artifact.parts[0].kind, 'reasoningText');
+    assert.equal(thinkArt.result.artifact.parts[0].reasoningText, 'thinking', 'uses reasoningText field, not text');
+    assert.equal(thinkArt.result.artifact.parts[0].text, undefined, 'no text field on reasoningText part');
   });
 });
 
@@ -188,7 +191,7 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
         (d) =>
           d.result?.kind === 'artifact-update' &&
           d.result?.artifact?.parts?.[0]?.kind === 'reasoningText' &&
-          d.result?.artifact?.parts?.[0]?.text === '思考中…',
+          d.result?.artifact?.parts?.[0]?.reasoningText === '',
       ),
       'thinking bubble uses reasoningText partKind',
     );

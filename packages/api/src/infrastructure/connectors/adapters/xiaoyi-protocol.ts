@@ -128,7 +128,14 @@ export function artifactUpdate(
       append: opts.append,
       lastChunk: opts.lastChunk,
       final: false,
-      artifact: { artifactId, parts: [{ kind: opts.partKind ?? 'text', text }] },
+      artifact: {
+        artifactId,
+        parts: [
+          opts.partKind === 'reasoningText'
+            ? { kind: 'reasoningText', reasoningText: text }
+            : { kind: 'text', text },
+        ],
+      },
     },
   };
 }
