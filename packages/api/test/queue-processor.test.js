@@ -1089,5 +1089,40 @@ describe('QueueProcessor', () => {
       assert.equal(deliverCalls.length, 1, 'late-bound hook should be called');
       assert.equal(deliverCalls[0].content, 'Late-bound delivery');
     });
+
+    it('P2-1 regression: failed invocation still triggers notifyDeliveryBatchDone', async () => {
+      const batchDoneCalls = [];
+      const streamingHook = {
+        onStreamStart: mock.fn(async () => {}),
+        onStreamChunk: mock.fn(async () => {}),
+        onStreamEnd: mock.fn(async () => {}),
+        cleanupPlaceholders: mock.fn(async () => {}),
+        notifyDeliveryBatchDone: mock.fn(async (threadId, chainDone) => {
+          batchDoneCalls.push({ threadId, chainDone });
+        }),
+      };
+
+      const hookDeps = stubDeps({
+        router: {
+          routeExecution: mock.fn(async function* () {
+            throw new Error('invocation crashed');
+          }),
+          ackCollectedCursors: mock.fn(async () => {}),
+        },
+        streamingHook,
+        threadMetaLookup: mock.fn(async () => undefined),
+      });
+      const hookProcessor = new QueueProcessor(hookDeps);
+
+      const entry = enqueueEntry(hookDeps.queue);
+      hookDeps.queue.backfillMessageId('t1', 'u1', entry.id, 'msg-1');
+
+      await hookProcessor.processNext('t1', 'u1');
+      await waitFor(() => batchDoneCalls.length >= 1);
+
+      assert.equal(batchDoneCalls.length, 1, 'notifyDeliveryBatchDone must fire on failure');
+      assert.equal(batchDoneCalls[0].threadId, 't1');
+      assert.equal(batchDoneCalls[0].chainDone, true, 'single invocation failure → chainDone=true');
+    });
   });
 });

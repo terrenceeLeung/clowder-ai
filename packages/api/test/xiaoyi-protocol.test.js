@@ -278,6 +278,36 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     await adapter.stopStream();
   });
 
+  it('P2-1 regression: partial success + later failure still closes task and dequeues', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    const sent = captureSent(adapter);
+    const dispatched = [];
+    adapter.onMsg = async (msg) => dispatched.push(msg.taskId);
+
+    // Queue two tasks on same session
+    adapter.handleInbound(mkInbound('task-A', 'sess-1', 'msg1'), 'primary');
+    adapter.handleInbound(mkInbound('task-B', 'sess-1', 'msg2'), 'primary');
+    assert.deepEqual(dispatched, ['task-A'], 'task-B queued behind A');
+
+    // Cat A succeeds — sends reply
+    await adapter.sendReply('agent-1:sess-1', 'Cat A ok');
+    // Cat B fails — no sendReply, but chain is done
+    sent.length = 0;
+    await adapter.onDeliveryBatchDone('agent-1:sess-1', true);
+
+    // Task A should close with completed (has artifact from Cat A)
+    const closeDetail = parseDetail(sent[0]);
+    assert.equal(closeDetail.result.kind, 'status-update');
+    assert.equal(closeDetail.result.status.state, 'completed');
+    assert.equal(closeDetail.result.final, true, 'close frame has final=true');
+
+    // Task B should dispatch after A closes
+    assert.deepEqual(dispatched, ['task-A', 'task-B'], 'task-B dispatched after failed close');
+
+    await adapter.stopStream();
+  });
+
   it('dedup prevents double processing of same task', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());

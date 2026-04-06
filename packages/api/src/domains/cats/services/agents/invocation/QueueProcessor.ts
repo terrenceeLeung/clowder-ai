@@ -339,6 +339,7 @@ export class QueueProcessor {
         () => {
           this.processingSlots.delete(sk);
           this.onInvocationComplete(threadId, entryCat, 'failed').catch(() => {});
+          this.signalDeliveryBatchDone(threadId, 'failed');
         },
       );
       // Continue scanning — start all entries with free cat slots (parallel dispatch)
@@ -388,6 +389,7 @@ export class QueueProcessor {
       () => {
         this.processingSlots.delete(entrySk);
         this.onInvocationComplete(threadId, entryCat, 'failed').catch(() => {});
+        this.signalDeliveryBatchDone(threadId, 'failed');
       },
     );
 
@@ -430,6 +432,7 @@ export class QueueProcessor {
       () => {
         this.processingSlots.delete(sk);
         this.onInvocationComplete(threadId, entryCat, 'failed').catch(() => {});
+        this.signalDeliveryBatchDone(threadId, 'failed');
       },
     );
 
