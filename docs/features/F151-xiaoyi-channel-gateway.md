@@ -244,15 +244,15 @@ onDeliveryBatchDone(chainDone=true):
 
 ### Phase A (P0 MVP)
 
-- [ ] AC-A1: XiaoYiAdapter 通过 WebSocket 连接华为 HAG 并完成 HMAC-SHA256 认证
-- [ ] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
-- [ ] AC-A3: 双机制心跳保活（应用层 20s + WS ping 30s）+ 断线指数退避重连（max 10 次）
-- [ ] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
-- [ ] AC-A5: 非流式投递 — `reasoningText` 思考气泡即时反馈 + 每只猫完成后 `artifact-update(text)` 一次性投递（首只 `append=false`，后续 `append=true` 分隔线累积）
-- [ ] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
-- [ ] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
-- [ ] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
-- [ ] AC-A9: 多猫投递完整性 — 首只猫 `append=false`，后续猫 `append=true` 追加（`---` 分隔线），close frame 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
+- [x] AC-A1: XiaoYiAdapter 通过 WebSocket 连接华为 HAG 并完成 HMAC-SHA256 认证
+- [x] AC-A2: 双服务器 HA — active-active 双连接 + 入站去重 (`sessionId+taskId`)，出站 session affinity
+- [x] AC-A3: 双机制心跳保活（应用层 20s + WS ping 30s）+ 断线指数退避重连（max 10 次）
+- [x] AC-A4: 用户在小艺 APP 发送文本，猫猫收到并回复，小艺端展示回复
+- [x] AC-A5: 非流式投递 — `reasoningText` 思考气泡即时反馈 + 每只猫完成后 `artifact-update(text)` 一次性投递（首只 `append=false`，后续 `append=true` 分隔线累积）
+- [x] AC-A6: Principal Link 正确建立 — `externalChatId=${agentId}:${params.sessionId}`, `externalSenderId=owner:{agentId}`
+- [x] AC-A7: Session Binding — `params.sessionId` 映射 thread；`/new` `/threads` `/use` `/thread` 正常工作
+- [x] AC-A8: 热加载 — `XIAOYI_AK/SK/AGENT_ID` 写入 .env 后自动连接；含 allowlist + hub + bootstrap + 状态页全链路
+- [x] AC-A9: 多猫投递完整性 — 首只猫 `append=false`，后续猫 `append=true` 追加（`---` 分隔线），close frame 仅在 `onDeliveryBatchDone(chainDone=true)` 时发出，task 不提前关闭
 
 ## Dependencies
 
