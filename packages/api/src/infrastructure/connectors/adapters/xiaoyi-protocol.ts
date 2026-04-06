@@ -87,14 +87,39 @@ export interface XiaoyiInboundMessage {
   attachments?: XiaoyiAttachment[];
 }
 
-/** Extract file parts from A2A inbound message parts. */
+/** Extract file parts from A2A inbound message parts (validates mimeType is string). */
 export function extractFileParts(parts: Array<{ kind?: string; text?: string; file?: A2AFilePart }>): A2AFilePart[] {
   return parts
     .filter(
       (p): p is { kind: 'file'; file: A2AFilePart } =>
-        p.kind === 'file' && p.file != null && typeof p.file.uri === 'string',
+        p.kind === 'file' && p.file != null && typeof p.file.uri === 'string' && typeof p.file.mimeType === 'string',
     )
     .map((p) => p.file);
+}
+
+/**
+ * SSRF guard — validates that a XiaoYi file URI is safe to fetch.
+ * Rejects non-https, localhost, private-network IPs, and non-HAG domains.
+ */
+const HAG_HOST_ALLOW = /^[\w.-]*\.huawei\.com$|^[\w.-]*\.huaweicloud\.com$/i;
+const PRIVATE_IP = /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1|fc|fd|fe80)/;
+
+export function assertSafeXiaoyiUri(uri: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(uri);
+  } catch {
+    throw new Error(`XiaoYi media URI is not a valid URL: ${uri.slice(0, 120)}`);
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error(`XiaoYi media URI must be https, got: ${parsed.protocol}`);
+  }
+  if (parsed.hostname === 'localhost' || PRIVATE_IP.test(parsed.hostname)) {
+    throw new Error(`XiaoYi media URI points to private network: ${parsed.hostname}`);
+  }
+  if (!HAG_HOST_ALLOW.test(parsed.hostname)) {
+    throw new Error(`XiaoYi media URI host not in allowlist: ${parsed.hostname}`);
+  }
 }
 
 export interface XiaoyiAdapterOptions {

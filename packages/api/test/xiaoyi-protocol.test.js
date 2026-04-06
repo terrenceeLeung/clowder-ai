@@ -150,6 +150,52 @@ describe('xiaoyi-protocol: extractFileParts', () => {
     assert.equal(files.length, 1);
     assert.equal(files[0].name, 'ok.png');
   });
+
+  it('filters out file parts with non-string mimeType (P1-2 review fix)', async () => {
+    const { extractFileParts } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    const parts = [
+      { kind: 'file', file: { name: 'bad.jpg', mimeType: 123, uri: 'https://hag.example.com/a' } },
+      { kind: 'file', file: { name: 'undef.jpg', mimeType: undefined, uri: 'https://hag.example.com/b' } },
+      { kind: 'file', file: { name: 'ok.png', mimeType: 'image/png', uri: 'https://hag.example.com/c' } },
+    ];
+    const files = extractFileParts(parts);
+    assert.equal(files.length, 1, 'only valid mimeType survives');
+    assert.equal(files[0].name, 'ok.png');
+  });
+});
+
+describe('xiaoyi-protocol: assertSafeXiaoyiUri', () => {
+  it('accepts valid HAG https URI', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.doesNotThrow(() => assertSafeXiaoyiUri('https://hag.cloud.huawei.com/files/abc123'));
+    assert.doesNotThrow(() => assertSafeXiaoyiUri('https://obs.huaweicloud.com/bucket/file.jpg'));
+  });
+
+  it('rejects non-https scheme', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('http://hag.cloud.huawei.com/files/abc'), /must be https/);
+    assert.throws(() => assertSafeXiaoyiUri('ftp://hag.cloud.huawei.com/files/abc'), /must be https/);
+  });
+
+  it('rejects localhost and private IPs', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('https://localhost/file'), /private network/);
+    assert.throws(() => assertSafeXiaoyiUri('https://127.0.0.1/file'), /private network/);
+    assert.throws(() => assertSafeXiaoyiUri('https://10.0.0.1/file'), /private network/);
+    assert.throws(() => assertSafeXiaoyiUri('https://192.168.1.1/file'), /private network/);
+  });
+
+  it('rejects non-huawei domains', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('https://evil.com/file'), /not in allowlist/);
+    assert.throws(() => assertSafeXiaoyiUri('https://not-huawei.com/file'), /not in allowlist/);
+  });
+
+  it('rejects invalid URLs', async () => {
+    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
+    assert.throws(() => assertSafeXiaoyiUri('not-a-url'), /not a valid URL/);
+    assert.throws(() => assertSafeXiaoyiUri(''), /not a valid URL/);
+  });
 });
 
 describe('xiaoyi-protocol: message ID uniqueness', () => {
@@ -628,6 +674,25 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
 
     adapter.handleInbound(mkInboundWithFiles('task-1', 'sess-1', [], []), 'primary');
     assert.equal(received.length, 0, 'empty message should be dropped');
+
+    await adapter.stopStream();
+  });
+
+  it('empty message does not block subsequent messages on same session (P2 review fix)', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
+    adapter.ws.send = () => {};
+    const received = [];
+    adapter.onMsg = async (msg) => received.push(msg);
+
+    // Send empty message first — should NOT enter queue
+    adapter.handleInbound(mkInboundWithFiles('task-empty', 'sess-1', [], []), 'primary');
+    assert.equal(received.length, 0);
+
+    // Subsequent valid message on same session should dispatch immediately
+    adapter.handleInbound(mkInbound('task-real', 'sess-1', 'hello'), 'primary');
+    assert.equal(received.length, 1, 'valid message must dispatch without waiting for empty task timeout');
+    assert.equal(received[0].taskId, 'task-real');
 
     await adapter.stopStream();
   });

@@ -151,7 +151,11 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     const inboundAgentId = msg.agentId ?? msg.params?.agentId;
     if (inboundAgentId && inboundAgentId !== this.opts.agentId) return;
     if (msg.method === 'message/stream' && msg.params) {
-      this.handleMessageStream(msg, source);
+      try {
+        this.handleMessageStream(msg, source);
+      } catch (err) {
+        this.log.error({ err, source }, '[XiaoYi] handleMessageStream failed — message dropped');
+      }
     } else if (msg.method === 'tasks/cancel' || msg.method === 'clearContext') {
       const sid = msg.params?.sessionId ?? msg.sessionId;
       if (sid) this.purgeSession(sid);
@@ -169,12 +173,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.dedup.set(key, Date.now());
     this.gcDedup();
 
-    const rec: TaskRecord = { taskId, source };
-    const queue = this.taskQueue.get(sessionId) ?? [];
-    queue.push(rec);
-    this.taskQueue.set(sessionId, queue);
-    this.startTaskTimeout(taskId, sessionId, rec);
-
+    // Parse content BEFORE enqueueing — empty messages must not enter the queue (P2 review fix)
     const parts = msg.params?.message?.parts ?? [];
     const text = parts
       .filter((p): p is { kind: string; text: string } => p.kind === 'text' && typeof p.text === 'string')
@@ -191,6 +190,12 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     }));
 
     if (!text && attachments.length === 0) return;
+
+    const rec: TaskRecord = { taskId, source };
+    const queue = this.taskQueue.get(sessionId) ?? [];
+    queue.push(rec);
+    this.taskQueue.set(sessionId, queue);
+    this.startTaskTimeout(taskId, sessionId, rec);
     const chatId = `${this.opts.agentId}:${sessionId}`;
     const senderId = `owner:${this.opts.agentId}`;
     const payload: XiaoyiInboundMessage = {

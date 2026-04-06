@@ -655,6 +655,7 @@ export async function startConnectorGateway(
   // ── XiaoYi (OpenClaw WebSocket mode) — F151 ──
   if (hasXiaoyi) {
     const { XiaoyiAdapter } = await import('./adapters/XiaoyiAdapter.js');
+    const { assertSafeXiaoyiUri } = await import('./adapters/xiaoyi-protocol.js');
     const xiaoyi = new XiaoyiAdapter(log, {
       agentId: config.xiaoyiAgentId!,
       ak: config.xiaoyiAk!,
@@ -664,6 +665,7 @@ export async function startConnectorGateway(
 
     // Phase B — F151: XiaoYi URI-based media download (HAG provides direct download URLs)
     mediaService.setXiaoyiDownloadFn(async (uri: string) => {
+      assertSafeXiaoyiUri(uri);
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
       try {
