@@ -975,11 +975,11 @@ describe('QueueProcessor', () => {
     });
 
     it('delivery failure: cleanupPlaceholders NOT called when delivery partially fails', async () => {
-      let deliverCallCount = 0;
+      // F151: mid-loop delivery retries failed turns in the final phase,
+      // so use catId-based failure to ensure opus consistently fails.
       const outboundHook = {
-        deliver: mock.fn(async () => {
-          deliverCallCount++;
-          if (deliverCallCount === 1) throw new Error('delivery failed');
+        deliver: mock.fn(async (_threadId, _content, catId) => {
+          if (catId === 'opus') throw new Error('delivery failed');
         }),
       };
       const streamingHook = {
@@ -1009,9 +1009,10 @@ describe('QueueProcessor', () => {
       hookDeps.queue.backfillMessageId('t1', 'u1', entry.id, 'msg-1');
 
       await hookProcessor.processNext('t1', 'u1');
-      await waitFor(() => outboundHook.deliver.mock.calls.length >= 2);
+      // F151: mid-loop delivers both, opus fails and retries in final phase = 3 calls total
+      await waitFor(() => outboundHook.deliver.mock.calls.length >= 3);
 
-      assert.equal(outboundHook.deliver.mock.calls.length, 2, 'deliver should be attempted for both turns');
+      assert.equal(outboundHook.deliver.mock.calls.length, 3, 'mid-loop (2) + final-phase retry (1)');
 
       // One rejection → Promise.allSettled sees mixed results → cleanupPlaceholders skipped
       await new Promise((r) => setTimeout(r, 50));
