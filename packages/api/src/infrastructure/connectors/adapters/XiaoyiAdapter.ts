@@ -194,7 +194,11 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     // Extract file/image attachments (Phase B — F151)
     const fileParts = extractFileParts(parts);
     const attachments: XiaoyiAttachment[] = fileParts.map((fp) => ({
-      type: fp.mimeType.startsWith('image/') ? ('image' as const) : ('file' as const),
+      type: fp.mimeType.startsWith('image/')
+        ? ('image' as const)
+        : fp.mimeType.startsWith('audio/')
+          ? ('audio' as const)
+          : ('file' as const),
       xiaoyiUri: fp.uri,
       fileName: fp.name,
       mimeType: fp.mimeType,

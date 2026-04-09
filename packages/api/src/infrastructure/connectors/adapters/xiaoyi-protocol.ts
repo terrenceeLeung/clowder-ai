@@ -70,7 +70,7 @@ export interface TaskRecord {
 }
 
 export interface XiaoyiAttachment {
-  type: 'image' | 'file';
+  type: 'image' | 'file' | 'audio';
   /** URI from HAG — direct download URL (maps to platformKey in ConnectorRouter) */
   xiaoyiUri: string;
   fileName?: string;
@@ -104,7 +104,7 @@ export function extractFileParts(parts: Array<{ kind?: string; text?: string; fi
  * huaweicloud.com, dbankcloud.com, etc.) and the URI comes from an
  * authenticated WebSocket connection (trusted source).
  */
-const PRIVATE_IP = /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1|fc|fd|fe80)/;
+const PRIVATE_IP = /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1$|fc[0-9a-f]{2}:|fd[0-9a-f]{2}:|fe80:|::ffff:)/;
 
 export function assertSafeXiaoyiUri(uri: string): void {
   let parsed: URL;
@@ -116,7 +116,9 @@ export function assertSafeXiaoyiUri(uri: string): void {
   if (parsed.protocol !== 'https:') {
     throw new Error(`XiaoYi media URI must be https, got: ${parsed.protocol}`);
   }
-  if (parsed.hostname === 'localhost' || PRIVATE_IP.test(parsed.hostname)) {
+  // URL.hostname wraps IPv6 in brackets (e.g. "[::1]") — strip them for regex testing
+  const host = parsed.hostname.replace(/^\[|\]$/g, '');
+  if (host === 'localhost' || PRIVATE_IP.test(host)) {
     throw new Error(`XiaoYi media URI points to private network: ${parsed.hostname}`);
   }
 }
