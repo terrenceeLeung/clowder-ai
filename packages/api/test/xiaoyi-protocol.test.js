@@ -165,10 +165,12 @@ describe('xiaoyi-protocol: extractFileParts', () => {
 });
 
 describe('xiaoyi-protocol: assertSafeXiaoyiUri', () => {
-  it('accepts valid HAG https URI', async () => {
+  it('accepts valid public https URIs (any domain — deny-list model)', async () => {
     const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
     assert.doesNotThrow(() => assertSafeXiaoyiUri('https://hag.cloud.huawei.com/files/abc123'));
     assert.doesNotThrow(() => assertSafeXiaoyiUri('https://obs.huaweicloud.com/bucket/file.jpg'));
+    assert.doesNotThrow(() => assertSafeXiaoyiUri('https://hag-drcn.op.dbankcloud.com/files/img.png'));
+    assert.doesNotThrow(() => assertSafeXiaoyiUri('https://cdn.example.com/file.jpg'));
   });
 
   it('rejects non-https scheme', async () => {
@@ -183,12 +185,6 @@ describe('xiaoyi-protocol: assertSafeXiaoyiUri', () => {
     assert.throws(() => assertSafeXiaoyiUri('https://127.0.0.1/file'), /private network/);
     assert.throws(() => assertSafeXiaoyiUri('https://10.0.0.1/file'), /private network/);
     assert.throws(() => assertSafeXiaoyiUri('https://192.168.1.1/file'), /private network/);
-  });
-
-  it('rejects non-huawei domains', async () => {
-    const { assertSafeXiaoyiUri } = await import('../dist/infrastructure/connectors/adapters/xiaoyi-protocol.js');
-    assert.throws(() => assertSafeXiaoyiUri('https://evil.com/file'), /not in allowlist/);
-    assert.throws(() => assertSafeXiaoyiUri('https://not-huawei.com/file'), /not in allowlist/);
   });
 
   it('rejects invalid URLs', async () => {
