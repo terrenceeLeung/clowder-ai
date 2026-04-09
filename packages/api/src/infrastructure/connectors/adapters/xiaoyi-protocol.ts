@@ -99,9 +99,11 @@ export function extractFileParts(parts: Array<{ kind?: string; text?: string; fi
 
 /**
  * SSRF guard — validates that a XiaoYi file URI is safe to fetch.
- * Rejects non-https, localhost, private-network IPs, and non-HAG domains.
+ * Deny-list approach: rejects non-https, localhost, private-network IPs.
+ * No domain allowlist — HAG uses multiple CDN domains (huawei.com,
+ * huaweicloud.com, dbankcloud.com, etc.) and the URI comes from an
+ * authenticated WebSocket connection (trusted source).
  */
-const HAG_HOST_ALLOW = /^[\w.-]*\.huawei\.com$|^[\w.-]*\.huaweicloud\.com$/i;
 const PRIVATE_IP = /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1|fc|fd|fe80)/;
 
 export function assertSafeXiaoyiUri(uri: string): void {
@@ -116,9 +118,6 @@ export function assertSafeXiaoyiUri(uri: string): void {
   }
   if (parsed.hostname === 'localhost' || PRIVATE_IP.test(parsed.hostname)) {
     throw new Error(`XiaoYi media URI points to private network: ${parsed.hostname}`);
-  }
-  if (!HAG_HOST_ALLOW.test(parsed.hostname)) {
-    throw new Error(`XiaoYi media URI host not in allowlist: ${parsed.hostname}`);
   }
 }
 
