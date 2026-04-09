@@ -681,7 +681,7 @@ export async function startConnectorGateway(
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 60_000);
       try {
-        const res = await fetch(uri, { signal: controller.signal });
+        const res = await fetch(uri, { signal: controller.signal, redirect: 'error' });
         if (!res.ok) throw new Error(`XiaoYi media fetch failed: ${res.status}`);
         return Buffer.from(await res.arrayBuffer());
       } finally {
