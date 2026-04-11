@@ -389,14 +389,10 @@ export class ConnectorRouter {
       }
     }
 
-    // Phase 5+6: Process media attachments
-    let resolvedText = text;
-    let contentBlocks: MessageContent[] | undefined;
-    if (attachments?.length && this.opts.mediaService) {
-      const result = await this.processAttachments(connectorId, text, attachments);
-      resolvedText = result.text;
-      if (result.contentBlocks.length > 0) contentBlocks = result.contentBlocks;
-    }
+    // Phase 5+6: Start media processing early (non-blocking — AC-B4)
+    // Runs concurrently with binding lookup; short deadline so text is never blocked
+    const attachmentPromise =
+      attachments?.length && this.opts.mediaService ? this.processAttachments(connectorId, text, attachments) : null;
 
     // 2. Lookup or create binding
     let binding = await bindingStore.getByExternal(connectorId, externalChatId);
@@ -416,6 +412,30 @@ export class ConnectorRouter {
       const existing = await threadStore.get(binding.threadId);
       if (existing && (!existing.projectPath || existing.projectPath === 'default')) {
         await threadStore.updateProjectPath(binding.threadId, findMonorepoRoot());
+      }
+    }
+
+    // Resolve attachments: give them the time the binding lookup already spent,
+    // plus a short extra budget. If still pending → route text-only (AC-B4).
+    let resolvedText = text;
+    let contentBlocks: MessageContent[] | undefined;
+    if (attachmentPromise) {
+      const ATTACHMENT_DEADLINE_MS = 10_000;
+      try {
+        const result = await Promise.race([
+          attachmentPromise,
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('attachment-deadline')), ATTACHMENT_DEADLINE_MS),
+          ),
+        ]);
+        resolvedText = result.text;
+        if (result.contentBlocks.length > 0) contentBlocks = result.contentBlocks;
+      } catch {
+        log.info({ connectorId }, '[ConnectorRouter] Attachments not ready in time, routing text-only');
+        // Let background download finish for logging; don't block
+        void attachmentPromise.catch((err: unknown) =>
+          log.warn({ err, connectorId }, '[ConnectorRouter] Background attachment processing failed'),
+        );
       }
     }
 
@@ -505,33 +525,41 @@ export class ConnectorRouter {
       messageId?: string;
     }>,
   ): Promise<{ text: string; contentBlocks: MessageContent[] }> {
+    const log = this.opts.log;
+
+    // Download all attachments in parallel (not serial) to avoid N×60s worst-case
+    const settled = await Promise.allSettled(
+      attachments.map(async (att) => {
+        const downloaded = await this.opts.mediaService?.download(connectorId, att);
+        if (!downloaded) throw new Error(`Media service unavailable for ${connectorId}`);
+        return { att, downloaded };
+      }),
+    );
+
     const parts: string[] = [];
     const contentBlocks: MessageContent[] = [];
 
-    for (const att of attachments) {
-      try {
-        const downloaded = await this.opts.mediaService?.download(connectorId, att);
-        if (!downloaded) {
-          throw new Error(`Media service unavailable for ${connectorId}`);
-        }
-
-        if (att.type === 'audio' && this.opts.sttProvider) {
-          try {
-            const result = await this.opts.sttProvider.transcribe({ audioPath: downloaded.absPath });
-            parts.push(`🎤 ${result.text}`);
-          } catch (sttErr) {
-            this.opts.log.warn({ err: sttErr, connectorId }, '[ConnectorRouter] STT failed, using placeholder');
-            parts.push(originalText);
-          }
-        } else if (att.type === 'image') {
-          parts.push(`${originalText} ${downloaded.localUrl}`);
-          contentBlocks.push({ type: 'image', url: downloaded.absPath });
-        } else {
-          parts.push(`${originalText} ${downloaded.localUrl}`);
-        }
-      } catch (err) {
-        this.opts.log.warn({ err, connectorId }, '[ConnectorRouter] Media download failed');
+    for (const entry of settled) {
+      if (entry.status === 'rejected') {
+        log.warn({ err: entry.reason, connectorId }, '[ConnectorRouter] Media download failed');
         parts.push(originalText);
+        continue;
+      }
+      const { att, downloaded } = entry.value;
+
+      if (att.type === 'audio' && this.opts.sttProvider) {
+        try {
+          const result = await this.opts.sttProvider.transcribe({ audioPath: downloaded.absPath });
+          parts.push(`🎤 ${result.text}`);
+        } catch (sttErr) {
+          log.warn({ err: sttErr, connectorId }, '[ConnectorRouter] STT failed, using placeholder');
+          parts.push(originalText);
+        }
+      } else if (att.type === 'image') {
+        parts.push(`${originalText} ${downloaded.localUrl}`);
+        contentBlocks.push({ type: 'image', url: downloaded.absPath });
+      } else {
+        parts.push(`${originalText} ${downloaded.localUrl}`);
       }
     }
 
