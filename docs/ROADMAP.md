@@ -51,6 +51,7 @@ created: 2026-02-26
 | F146 | MCP Marketplace Control Plane — 一键接入 + 多生态聚合 | spec | Maine Coon + Ragdoll | internal | [F146](features/F146-mcp-marketplace-control-plane.md) |
 | F147 | i18n — Hub 界面中英文切换 | idea | 待定 | internal | — |
 | F149 | ACP Runtime Operations — 项目级进程池 + Session Lease | spec | Maine Coon | internal | [F149](features/F149-acp-runtime-operations.md) |
+| F151 | XiaoYi Channel Gateway — 小艺渠道接入 | in-progress | Ragdoll | internal | [F151](features/F151-xiaoyi-channel-gateway.md) |
 | F152 | Expedition Memory — 外部项目记忆冷启动 + 经验回流 | spec | Ragdoll | internal | [F152](features/F152-expedition-memory.md) |
 | F153 | Observability Infrastructure — 运行时可观测基础设施 | in-progress | Community + Ragdoll | community [#388](https://github.com/zts212653/clowder-ai/issues/388) | [F153](features/F153-observability-infra.md) |
 | F154 | Cat Routing Personalization — 全局默认猫 + 首选猫入口 + 单次定向 | spec | Ragdoll | community [#385](https://github.com/zts212653/clowder-ai/issues/385) [#391](https://github.com/zts212653/clowder-ai/pull/391) | [F154](features/F154-cat-routing-personalization.md) |
