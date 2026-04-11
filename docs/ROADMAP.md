@@ -47,6 +47,8 @@ created: 2026-02-26
 | F143 | Hostable Agent Runtime — 统一宿主抽象 | spec | Ragdoll | internal | [F143](features/F143-hostable-agent-runtime.md) |
 | F144 | PPT Forge — AI 演示文稿生成引擎 | in-progress | 三猫 | internal | [F144](features/F144-ppt-forge.md) |
 | F147 | i18n — Hub 界面中英文切换 | idea | 待定 | internal | — |
+| F149 | ACP Runtime Operations — 项目级进程池 + Session Lease | spec | Maine Coon | internal | [F149](features/F149-acp-runtime-operations.md) |
+| F151 | XiaoYi Channel Gateway — 小艺渠道接入 | in-progress | Ragdoll | internal | [F151](features/F151-xiaoyi-channel-gateway.md) |
 | F152 | Expedition Memory — 外部项目记忆冷启动 + 经验回流 | spec | Ragdoll | internal | [F152](features/F152-expedition-memory.md) |
 | F153 | Observability Infrastructure — 运行时可观测基础设施 | in-progress | Community + Ragdoll | community [#388](https://github.com/zts212653/clowder-ai/issues/388) | [F153](features/F153-observability-infra.md) |
 | F155 | Scene-Based Guidance Engine — 场景式交互引导 | in-progress | Maine Coon/gpt52 | community [#409](https://github.com/zts212653/clowder-ai/issues/409) [#398](https://github.com/zts212653/clowder-ai/pull/398) | [F155](features/F155-scene-guidance-engine.md) |
