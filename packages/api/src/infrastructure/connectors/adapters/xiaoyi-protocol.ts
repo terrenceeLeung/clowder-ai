@@ -104,7 +104,8 @@ export function extractFileParts(parts: Array<{ kind?: string; text?: string; fi
  * huaweicloud.com, dbankcloud.com, etc.) and the URI comes from an
  * authenticated WebSocket connection (trusted source).
  */
-const PRIVATE_IP = /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1$|fc[0-9a-f]{2}:|fd[0-9a-f]{2}:|fe80:|::ffff:)/;
+const PRIVATE_IP =
+  /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1$|fc[0-9a-f]{2}:|fd[0-9a-f]{2}:|fe80:|::ffff:)/;
 
 export function assertSafeXiaoyiUri(uri: string): void {
   let parsed: URL;
