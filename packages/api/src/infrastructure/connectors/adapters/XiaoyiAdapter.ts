@@ -55,6 +55,8 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
   private readonly pendingDispatch = new Map<string, XiaoyiInboundMessage>();
   /** Track whether a Push was delivered for this task (for close frame state) */
   private readonly hasPushDelivery = new Set<string>();
+  /** Per-task WS fallback counter — first=0 (append:false), subsequent>0 (append:true) */
+  private readonly fallbackSeq = new Map<string, number>();
 
   constructor(log: FastifyBaseLogger, opts: XiaoyiAdapterOptions, deps?: XiaoyiAdapterDeps) {
     this.log = log;
@@ -97,6 +99,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     this.dedup.clear();
     this.pendingDispatch.clear();
     this.hasPushDelivery.clear();
+    this.fallbackSeq.clear();
   }
 
   private onMsg: ((msg: XiaoyiInboundMessage) => Promise<void>) | null = null;
@@ -128,10 +131,15 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.log.error({ sessionId }, '[XiaoYi] Push failed and no active WS task — delivery_failed');
       return;
     }
-    const artId = `${rec.taskId}:fallback`;
-    const art = artifactUpdate(rec.taskId, artId, content, { append: false, lastChunk: true });
+    const tk = this.taskKey(sessionId, rec.taskId);
+    const seq = this.fallbackSeq.get(tk) ?? 0;
+    this.fallbackSeq.set(tk, seq + 1);
+    const artId = `${rec.taskId}:fallback:${seq}`;
+    const append = seq > 0;
+    const text = append ? `\n\n---\n\n${content}` : content;
+    const art = artifactUpdate(rec.taskId, artId, text, { append, lastChunk: true });
     this.ws.send(rec.source, agentResponse(this.opts.agentId, sessionId, rec.taskId, art));
-    this.hasPushDelivery.add(this.taskKey(sessionId, rec.taskId));
+    this.hasPushDelivery.add(tk);
   }
 
   async onDeliveryBatchDone(externalChatId: string, chainDone: boolean): Promise<void> {
@@ -327,6 +335,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
     if (q.length === 0) this.taskQueue.delete(sessionId);
     const tk = this.taskKey(sessionId, taskId);
     this.hasPushDelivery.delete(tk);
+    this.fallbackSeq.delete(tk);
     const next = q?.[0];
     const nextTk = next && this.taskKey(sessionId, next.taskId);
     const pending = nextTk && this.pendingDispatch.get(nextTk);
@@ -342,6 +351,7 @@ export class XiaoyiAdapter implements IStreamableOutboundAdapter {
       this.cancelTaskTimeout(sid, t.taskId);
       this.clearKeepalive(sid, t.taskId);
       this.hasPushDelivery.delete(tk);
+      this.fallbackSeq.delete(tk);
       this.pendingDispatch.delete(tk);
     }
     this.taskQueue.delete(sid);

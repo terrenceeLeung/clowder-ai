@@ -93,7 +93,7 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
     await adapter.stopStream();
   });
 
-  it('Phase D multi-cat: each sendReply is independent WS fallback artifact', async () => {
+  it('Phase D multi-cat: WS fallback first=append:false, subsequent=append:true', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -111,14 +111,14 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
 
     assert.equal(artifacts.length, 3);
 
-    // Phase D WS fallback: all append=false (independent artifacts, no accumulation)
-    for (const art of artifacts) {
-      assert.equal(art.result.append, false, 'WS fallback always append=false');
-    }
-
+    assert.equal(artifacts[0].result.append, false, 'first fallback: append=false');
     assert.equal(artifacts[0].result.artifact.parts[0].text, 'Cat A');
-    assert.equal(artifacts[1].result.artifact.parts[0].text, 'Cat B');
-    assert.equal(artifacts[2].result.artifact.parts[0].text, 'Cat C');
+
+    assert.equal(artifacts[1].result.append, true, 'second fallback: append=true');
+    assert.ok(artifacts[1].result.artifact.parts[0].text.includes('Cat B'));
+
+    assert.equal(artifacts[2].result.append, true, 'third fallback: append=true');
+    assert.ok(artifacts[2].result.artifact.parts[0].text.includes('Cat C'));
 
     await adapter.stopStream();
   });
@@ -268,7 +268,7 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
     await adapter.stopStream();
   });
 
-  it('Phase D multi-cat: WS fallback sends independent artifacts (no append)', async () => {
+  it('Phase D multi-cat: WS fallback first=append:false, then append:true accumulation', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -285,12 +285,11 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
 
     assert.equal(artifacts.length, 2);
 
-    // Phase D: both use append=false (no accumulation)
-    assert.equal(artifacts[0].result.append, false, 'Cat A: append=false');
+    assert.equal(artifacts[0].result.append, false, 'Cat A: append=false (first)');
     assert.equal(artifacts[0].result.artifact.parts[0].text, 'Cat A response');
 
-    assert.equal(artifacts[1].result.append, false, 'Cat B: append=false');
-    assert.equal(artifacts[1].result.artifact.parts[0].text, 'Cat B response');
+    assert.equal(artifacts[1].result.append, true, 'Cat B: append=true (subsequent)');
+    assert.ok(artifacts[1].result.artifact.parts[0].text.includes('Cat B response'));
 
     // Both have final=false
     assert.equal(artifacts[0].result.final, false);

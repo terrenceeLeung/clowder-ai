@@ -13,6 +13,7 @@ import type { FastifyBaseLogger } from 'fastify';
 const PUSH_ENDPOINT = 'https://hag.cloud.huawei.com/open-ability-agent/v1/agent-webhook';
 const PUSH_TEXT_TITLE_MAX = 57;
 const PUSH_TEXT_MAX = 4000;
+export const PUSH_TIMEOUT_MS = 10_000;
 
 export interface XiaoyiPushConfig {
   ak: string;
@@ -71,22 +72,34 @@ export class XiaoyiPushService {
       },
     };
 
-    const res = await fetch(PUSH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'x-hag-trace-id': uuid(),
-        'X-Access-Key': this.config.ak,
-        'X-Sign': sign(this.config.sk, ts),
-        'X-Ts': ts,
-      },
-      body: JSON.stringify(body),
-    });
+    const ac = new AbortController();
+    const timer = setTimeout(() => ac.abort(), PUSH_TIMEOUT_MS);
+    try {
+      const res = await fetch(PUSH_ENDPOINT, {
+        method: 'POST',
+        signal: ac.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'x-hag-trace-id': uuid(),
+          'X-Access-Key': this.config.ak,
+          'X-Sign': sign(this.config.sk, ts),
+          'X-Ts': ts,
+        },
+        body: JSON.stringify(body),
+      });
 
-    const resBody = await res.text();
-    this.log.info({ status: res.status, pushId: pushId.slice(0, 20) }, '[XiaoYi:Push] sent');
-
-    return { ok: res.ok, status: res.status, body: resBody };
+      const resBody = await res.text();
+      this.log.info({ status: res.status, pushId: pushId.slice(0, 20) }, '[XiaoYi:Push] sent');
+      return { ok: res.ok, status: res.status, body: resBody };
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') {
+        this.log.warn({ pushId: pushId.slice(0, 20) }, '[XiaoYi:Push] timeout');
+        return { ok: false, status: 0 };
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }

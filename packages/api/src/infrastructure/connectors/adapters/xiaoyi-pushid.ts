@@ -32,7 +32,11 @@ export class XiaoyiPushIdManager {
   async addPushId(pushId: string): Promise<void> {
     if (!pushId) return;
     if (this.redis) {
-      await this.redis.sadd(this.redisKey(), pushId);
+      try {
+        await this.redis.sadd(this.redisKey(), pushId);
+      } catch (err) {
+        this.log.warn({ err }, '[XiaoYi:PushId] Redis sadd failed, memory-only');
+      }
     }
     this.memorySet.add(pushId);
     this.log.debug({ pushId: pushId.slice(0, 20) }, '[XiaoYi:PushId] added');
@@ -40,15 +44,23 @@ export class XiaoyiPushIdManager {
 
   async getAllPushIds(): Promise<string[]> {
     if (this.redis) {
-      const ids = await this.redis.smembers(this.redisKey());
-      if (ids.length > 0) return ids;
+      try {
+        const ids = await this.redis.smembers(this.redisKey());
+        if (ids.length > 0) return ids;
+      } catch (err) {
+        this.log.warn({ err }, '[XiaoYi:PushId] Redis smembers failed, using memory fallback');
+      }
     }
     return [...this.memorySet];
   }
 
   async getPushIdCount(): Promise<number> {
     if (this.redis) {
-      return this.redis.scard(this.redisKey());
+      try {
+        return await this.redis.scard(this.redisKey());
+      } catch (err) {
+        this.log.warn({ err }, '[XiaoYi:PushId] Redis scard failed, using memory fallback');
+      }
     }
     return this.memorySet.size;
   }
