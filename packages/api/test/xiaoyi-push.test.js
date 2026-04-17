@@ -188,9 +188,9 @@ describe('XiaoyiPushThrottle', () => {
   });
 });
 
-// ── Adapter Phase D tests ──
+// ── Adapter Push/WS routing tests ──
 
-describe('XiaoyiAdapter Phase D: Push outbound', () => {
+describe('XiaoyiAdapter: active WS replies + async Push outbound', () => {
   const mkLog = () => ({
     info() {},
     warn() {},
@@ -240,7 +240,7 @@ describe('XiaoyiAdapter Phase D: Push outbound', () => {
     return sent;
   }
 
-  it('without apiId: sendReply logs error (no Push, no WS artifact)', async () => {
+  it('delivers active conversation replies via WS when Push is unavailable', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const warns = [];
     const errors = [];
@@ -254,18 +254,62 @@ describe('XiaoyiAdapter Phase D: Push outbound', () => {
 
     adapter.handleInbound(mkInbound('task-1', 'sess-1', 'hello'), 'primary');
 
-    // sendReply without Push and without active task lookup
     await adapter.sendReply('agent-1:sess-1', 'reply text');
 
-    // Without pushThrottle, should log error (no Push, WS fallback attempted)
-    // Since WS fallback requires push to fail first, and there's no pushThrottle,
-    // it skips to WS fallback which works because there's an active task
     const artifacts = sent
       .map((f) => parseDetail(f))
       .filter((d) => d.result?.kind === 'artifact-update' && d.result?.artifact?.parts?.[0]?.kind === 'text');
-    assert.equal(artifacts.length, 1, 'WS fallback delivers artifact');
+    assert.equal(artifacts.length, 1, 'WS delivers artifact');
     assert.equal(artifacts[0].result.append, false);
     assert.equal(artifacts[0].result.artifact.parts[0].text, 'reply text');
+
+    await adapter.stopStream();
+  });
+
+  it('delivers active conversation replies via WS even when Push is configured', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts('api-id'));
+    const sent = captureSent(adapter);
+    let pushCalls = 0;
+    adapter.pushThrottle = {
+      enqueue: async () => {
+        pushCalls++;
+        return { ok: true, pushCount: 1, failCount: 0 };
+      },
+      destroy() {},
+    };
+    adapter.onMsg = async () => {};
+
+    adapter.handleInbound(mkInbound('task-1', 'sess-1', 'hello', 'my-push-id'), 'primary');
+    await adapter.sendReply('agent-1:sess-1', 'reply text');
+
+    assert.equal(pushCalls, 0, 'active task replies must not be diverted to Push');
+    const artifacts = sent
+      .map((f) => parseDetail(f))
+      .filter((d) => d.result?.kind === 'artifact-update' && d.result?.artifact?.parts?.[0]?.kind === 'text');
+    assert.equal(artifacts.length, 1);
+    assert.equal(artifacts[0].result.artifact.parts[0].text, 'reply text');
+
+    await adapter.stopStream();
+  });
+
+  it('uses Push for async replies when no active WS task exists', async () => {
+    const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
+    const adapter = new XiaoyiAdapter(mkLog(), mkOpts('api-id'));
+    const sent = captureSent(adapter);
+    const pushed = [];
+    adapter.pushThrottle = {
+      enqueue: async (text) => {
+        pushed.push(text);
+        return { ok: true, pushCount: 1, failCount: 0 };
+      },
+      destroy() {},
+    };
+
+    await adapter.sendReply('agent-1:sess-1', 'async notice');
+
+    assert.deepEqual(pushed, ['async notice']);
+    assert.equal(sent.length, 0, 'no WS frame can be sent without an active task');
 
     await adapter.stopStream();
   });
@@ -284,7 +328,7 @@ describe('XiaoyiAdapter Phase D: Push outbound', () => {
     await adapter.stopStream();
   });
 
-  it('onDeliveryBatchDone sends completed close frame after Push delivery', async () => {
+  it('onDeliveryBatchDone sends completed close frame after WS delivery', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts(undefined));
     const sent = captureSent(adapter);

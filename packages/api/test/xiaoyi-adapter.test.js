@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-// ── Adapter tests (Phase D: Push outbound + WS fallback) ──
+// ── Adapter tests (active WS replies + async Push support) ──
 
-describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
+describe('XiaoyiAdapter: active WS replies + async Push support', () => {
   const mkLog = () => ({
     info() {},
     warn() {},
@@ -43,7 +43,7 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
     return sent;
   }
 
-  it('inbound → sendPlaceholder → sendReply (WS fallback) → onDeliveryBatchDone lifecycle', async () => {
+  it('inbound → sendPlaceholder → sendReply (WS) → onDeliveryBatchDone lifecycle', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -72,12 +72,12 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
 
     sent.length = 0;
 
-    // sendReply — Phase D WS fallback (no apiId → no Push → WS artifact)
+    // sendReply — active conversations use WS artifact delivery.
     await adapter.sendReply('agent-1:sess-1', 'world');
     const replyDetail = parseDetail(sent[0]);
     assert.equal(replyDetail.result.kind, 'artifact-update');
     assert.equal(replyDetail.result.artifact.parts[0].text, 'world');
-    assert.equal(replyDetail.result.append, false, 'WS fallback: append=false');
+    assert.equal(replyDetail.result.append, false, 'first WS reply: append=false');
     assert.equal(replyDetail.result.lastChunk, true);
     assert.equal(replyDetail.result.final, false, 'artifact never carries final');
 
@@ -93,7 +93,7 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
     await adapter.stopStream();
   });
 
-  it('Phase D multi-cat: WS fallback first=append:false, subsequent=append:true', async () => {
+  it('multi-cat active WS replies: first=append:false, subsequent=append:true', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -111,13 +111,13 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
 
     assert.equal(artifacts.length, 3);
 
-    assert.equal(artifacts[0].result.append, false, 'first fallback: append=false');
+    assert.equal(artifacts[0].result.append, false, 'first WS reply: append=false');
     assert.equal(artifacts[0].result.artifact.parts[0].text, 'Cat A');
 
-    assert.equal(artifacts[1].result.append, true, 'second fallback: append=true');
+    assert.equal(artifacts[1].result.append, true, 'second WS reply: append=true');
     assert.ok(artifacts[1].result.artifact.parts[0].text.includes('Cat B'));
 
-    assert.equal(artifacts[2].result.append, true, 'third fallback: append=true');
+    assert.equal(artifacts[2].result.append, true, 'third WS reply: append=true');
     assert.ok(artifacts[2].result.artifact.parts[0].text.includes('Cat C'));
 
     await adapter.stopStream();
@@ -268,7 +268,7 @@ describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
     await adapter.stopStream();
   });
 
-  it('Phase D multi-cat: WS fallback first=append:false, then append:true accumulation', async () => {
+  it('multi-cat active WS replies: first=append:false, then append:true accumulation', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);

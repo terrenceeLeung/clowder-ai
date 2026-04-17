@@ -2,8 +2,8 @@
  * XiaoYi Push Throttle — FIFO rate-limited queue for Push delivery.
  *
  * Enforces minimum 15s interval between Push API calls (HAG rate limit).
- * Failure: no retry. If active WS task exists, caller falls back to WS.
- * Async (no task) failures are logged + marked delivery_failed.
+ * Failure: no retry. This throttle is only used for async/no-task outbound;
+ * active conversation replies bypass Push and use WS artifact-update.
  *
  * F151 Phase D
  */

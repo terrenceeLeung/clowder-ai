@@ -744,7 +744,7 @@ export const ENV_VARS: EnvDefinition[] = [
   {
     name: 'XIAOYI_API_ID',
     defaultValue: '(未设置)',
-    description: '华为小艺 Push API ID（创建 webhook 时生成，Push 出站必选）',
+    description: '华为小艺 Push API ID（创建 webhook 时生成；仅异步 Push 通知需要）',
     category: 'connector',
     sensitive: false,
   },

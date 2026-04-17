@@ -1,8 +1,8 @@
 /**
  * XiaoYi Push Service — HTTP Push API for outbound text delivery.
  *
- * Push replaces WS append accumulation for text replies (Phase D).
- * Media/file delivery still requires WS (out of Phase D scope).
+ * Push handles async/no-task outbound notifications. Active conversation
+ * replies still use WS artifact-update so the chat UI updates immediately.
  *
  * F151 Phase D
  */
