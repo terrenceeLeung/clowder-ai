@@ -43,12 +43,13 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
                   (wss://hag.cloud.huawei.com        │
                    /openclaw/v1/ws/link)              ├→ Connector Gateway
                                                       │   ├→ Principal Link
-                                                      │   ├→ Session Binding
-                                                      │   └→ Command Layer
-                                                      └→ Agent Router → Cat Agents
+                  ←── Push HTTP API ──────────────────┤   ├→ Session Binding
+                  (POST /open-ability-agent/           │   └→ Command Layer
+                   v1/agent-webhook)                   └→ Agent Router → Cat Agents
 ```
 
-连接方向：**Cat Cafe 主动连接华为 HAG**（类似 DingTalk Stream 模式）。
+连接方向：**WS — Cat Cafe 主动连接华为 HAG**（类似 DingTalk Stream 模式）。
+出站通道：**Push — Cat Cafe 通过 HTTP POST 推送回复**（Phase D，类似飞书 stateless 模式）。
 
 ### 核心 ID
 
@@ -66,7 +67,7 @@ MVP 聚焦文本对话链路，这些高级功能不在本 feature 范围内。
 | 传输 | WebSocket (wss)：主 `wss://hag.cloud.huawei.com/openclaw/v1/ws/link`，备 `wss://116.63.174.231/openclaw/v1/ws/link` |
 | 认证 | HMAC-SHA256: `signature = Base64(HMAC-SHA256(SK, timestamp_string))` — 注意：输入只有 timestamp，无 ak 前缀 |
 | 消息 | A2A JSON-RPC 2.0，出站需两层信封（见下文） |
-| 投递 | 非流式 — 每只猫完成后 `artifact-update(text, lastChunk=true)` 一次性推送，首只 `append=false`，后续 `append=true` 累积。首次触发前发 `reasoningText` 思考气泡。close frame `status-update(completed, final=true)` 关闭 task |
+| 投递 | **Phase D 混合模式**：WS 仅发 thinking status + close frame；猫回复通过 Push HTTP API 独立推送。Push 不可用时 fallback 为 WS 单次 artifact 投递（非 append 累积，见 Risk 表） |
 | 保活 | 双机制：应用层 `{ msgType: "heartbeat", agentId }` 每 20s + WebSocket ping 每 30s（pong 超时 90s） |
 | HA | 双服务器 active-active + 入站去重 (key: `sessionId+taskId`)，出站 session affinity（记录入站来源服务器，回包走同一通道） |
 | 备链路 TLS | 备 IP `116.63.174.231` — IP 直连无域名 SNI，使用 `rejectUnauthorized: false`（与 `@ynhcj/xiaoyi` 参考实现一致） |
@@ -260,6 +261,91 @@ onDeliveryBatchDone(chainDone=true):
 3. **优雅降级** — 未配上传凭证时 → 文本 URL fallback
 4. **热加载** — `XIAOYI_UID/API_KEY/FILE_UPLOAD_URL` 加入 allowlist + hub 状态页
 
+### Phase D: P1 Push 出站重构 — WS+Push 混合架构
+
+**目标**：将文本回复的出站通道从 WS task 内 artifact 改为 Push HTTP API，简化多猫投递、解耦 task 生命周期、支持异步推送场景。
+
+**背景**：Phase A 的 WS append 累积模型将所有猫的回复绑定到同一个 task 的 artifact 链上，导致：
+- 多猫投递需要精确的 append 序列控制（首只 `false` / 后续 `true`）
+- task 生命周期（keepalive + timeout + close frame）与业务回复强耦合
+- 定时任务、Web UI 跨渠道推送无法实现（没有入站 task 就没有 WS 回复通道）
+
+Push API（`@ynhcj/xiaoyi-channel` v1.1.18 参考 + 华为官方文档 + 真机实验验证）提供了独立的出站通道：
+- HTTP POST，无需 WS task 绑定
+- 支持 markdown 渲染（标题、粗体、代码块带语法高亮 — 真机验证 2026-04-16）
+- 每只猫独立推送，互不干扰
+- 限制：仅 `text` + `data` part（无 `file` kind）；~15s 最小安全间隔
+
+**架构变更**：
+
+```
+入站（不变）:
+  用户 → 小艺 APP → HAG → [WS] message/stream → XiaoyiAdapter
+
+出站（重构 — task 生命周期不变）:
+  收到 task → [WS] status:working + reasoningText 思考气泡
+           → keepalive 每 20s...
+  猫 A 完成 → [Push] HTTP POST 推送猫 A 回复（独立消息）
+  猫 B 完成 → [Push] HTTP POST 推送猫 B 回复（独立消息，≥15s 间隔）
+  Push 失败 → [WS] 单次 artifact 投递 fallback（append=false, lastChunk=true）
+  onDeliveryBatchDone(chainDone=true)
+           → [WS] status:completed 关闭 task（思考气泡折叠）
+  注：cafe→xiaoyi 文件推送不在 Phase D 范围（需 OSMS 上传 + WS 活跃 task，留待 Phase E）
+
+异步场景（新增）:
+  定时任务 / Web UI → [Push] 直接推送（无 WS task 依赖）
+```
+
+**实现**：
+
+1. **XiaoyiPushService** — 新增 Push 发送服务
+   - endpoint: `https://hag.cloud.huawei.com/open-ability-agent/v1/agent-webhook`
+   - auth: `X-Access-Key` + `X-Sign(HMAC-SHA256(SK, ts))` + `X-Ts`
+   - payload: JSON-RPC response 格式 `{ jsonrpc, id, result: { apiId, pushId, pushText, kind: "task", artifacts, status } }`
+   - Push 文本截断策略：`pushText`（通知栏摘要）取首行 ≤57 字符；`text` part 推送完整 markdown
+
+2. **PushId 管理** — 从入站消息提取并持久化
+   - 入站 `data.variables.systemVariables.push_id` 提取 pushId
+   - 持久化到 Redis（key: `xiaoyi:pushIds:{agentId}`，Set 类型去重）
+   - `sendPush` 时遍历所有 pushId 广播（多设备支持）
+   - 平台需开启系统变量开关
+
+3. **PushThrottle** — 15s 限流队列
+   - FIFO 队列 + 最小间隔 15s
+   - 猫回复入队后自动延迟调度
+   - 多猫场景：猫 A 立即推，猫 B 等 ≥15s 后推
+   - 失败不重试（15s 限流下重试延迟太大）→ 日志告警；有活跃 WS task 时 fallback WS 单次 artifact，无 task（异步场景）时仅记录失败
+
+4. **XiaoyiAdapter 瘦身** — 删除 WS 出站累积逻辑
+   - 删除：`hasArtifact` Set、`seqCounters` Map、`nextArtifactId()`、append 累积分支
+   - `sendReply()` 改为调用 `PushThrottle.enqueue()` 投递到 Push 队列
+   - `sendPlaceholder()` 保留：发 `status:working` + `reasoningText` 思考气泡（WS）
+   - `onDeliveryBatchDone()` 简化：`chainDone=true` → 关闭 WS task（`status:completed`）+ 清理 keepalive/timeout
+   - `editMessage()` / `deleteMessage()` 保持 no-op
+
+5. **WS task 生命周期** — 与 Phase A 一致，不因 Push 改变
+   - `onDeliveryBatchDone(chainDone=true)` 是唯一的 task 关闭信号（D11 不变）
+   - 思考气泡在 task close 时自然折叠（用户此前已通过 Push 收到回复）
+   - WS task 在整个 delivery batch 期间保持 open — 确保 Push 失败时 WS fallback 可用
+   - `TASK_TIMEOUT_MS = 120s` 兜底僵尸任务（已有机制，无需新增超时）
+
+6. **配置** — 新增必选 env
+   - `XIAOYI_API_ID`：Push 所需的 apiId（创建 webhook 时生成），**必选**（与 AK/SK/AGENT_ID 同级）
+   - pushId 从入站自动收集，无需手动配置
+   - `XIAOYI_PUSH_MIN_INTERVAL_MS`：可选覆盖，默认 15000
+   - 平台侧必须开启：系统变量 → `push_id`
+
+7. **Connector Hub 配置引导** — XiaoYi 配置面板 UX
+   - 每个字段带 inline 帮助文本（去哪个页面获取）
+   - 「平台必要开关」折叠区：列出 `push_id` 系统变量开关的开启路径
+   - 状态行：实时展示 WS/Push 各能力是否就绪 + pushId 收集数量
+
+8. **测试连接** — 配置面板「测试连接」按钮
+   - 验证 WS 连接状态（已有）
+   - 验证 Push 可达性：用当前凭证发一条 test push，检查 HTTP 200
+   - 检查 pushId 是否已收集（未收集 → 提示用户先用手机发一条消息）
+   - 综合状态反馈：✅/⚠️/❌ 逐项展示
+
 ## Acceptance Criteria
 
 ### Phase A (P0 MVP) ✅
@@ -289,6 +375,19 @@ onDeliveryBatchDone(chainDone=true):
 - [ ] AC-C2: 未配上传凭证时，优雅降级为文本 URL fallback
 - [ ] AC-C3: 上传凭证热加载 — 写入 .env 后自动生效
 
+### Phase D (P1 Push 出站重构) ✅
+
+- [x] AC-D1: 猫回复通过 Push API 送达小艺 APP，支持 markdown 渲染（标题/粗体/代码块）
+- [x] AC-D2: 多猫独立 Push — 每只猫的回复作为独立消息送达，不再依赖 WS append 累积
+- [x] AC-D3: Push 限流队列 — 多猫回复间隔 ≥15s，FIFO 排队自动调度
+- [x] AC-D4: pushId 从入站 `variables.systemVariables.push_id` 自动收集并持久化到 Redis
+- [x] AC-D5: WS task 生命周期不变 — `onDeliveryBatchDone(chainDone=true)` 关闭 task（思考气泡折叠）；Push 不改变 task 关闭时机
+- [x] AC-D6: 异步推送 — 无 WS task 时（定时任务/Web UI）可直接通过 Push 发送消息到小艺
+- [x] AC-D7: XiaoyiAdapter 瘦身 — 删除 `hasArtifact`/`seqCounters`/append 累积逻辑，`sendReply` 改走 Push 队列
+- [x] AC-D8: `XIAOYI_API_ID` 必选配置 + 热加载（与 AK/SK/AGENT_ID 同级）
+- [x] AC-D9: Connector Hub 配置引导 — 字段帮助文本 + 平台必要开关清单（push_id）+ 实时状态行
+- [ ] AC-D10: 测试连接按钮 — 验证 WS + Push 可达性 + pushId 收集状态，综合反馈（延后）
+
 ## Dependencies
 
 - **Evolved from**: F088 (Multi-Platform Chat Gateway)，复用三层 connector 架构
@@ -306,6 +405,9 @@ onDeliveryBatchDone(chainDone=true):
 | 无用户级标识（OpenClaw 固有限制） | 用 `owner:{agentId}` 做 senderId，所有对话归属 connector 配置者 |
 | A2A 两个 sessionId 易混淆 | 强制用 `params.sessionId`（稳定），忽略顶层 `msg.sessionId`（不稳定） |
 | 双服务器 active-active 复杂性 | 入站去重 `sessionId+taskId`；出站 session affinity 记录来源服务器；备 IP TLS 需显式信任华为 CA |
+| Push 15s 限流导致多猫回复延迟 | FIFO 队列自动排队，用户感知为"猫逐个回复"（自然体验）；LLM 推理本身 5-15s 天然错开 |
+| pushId 过期/失效 | 每次入站消息重新收集 pushId 保持新鲜；Redis 持久化跨重启；广播所有已知 pushId 覆盖多设备 |
+| Push 服务不可用（HAG webhook 宕机） | **有活跃 WS task 时**：fallback 回 WS 单次 artifact 投递（`append=false, lastChunk=true`），task 关闭仍由 `onDeliveryBatchDone` 处理（D12 不变）。触发条件：Push HTTP 非 2xx 或超时。**异步无 task 时**（定时任务/Web UI）：无 WS 可回退，记录失败日志 + 标记消息状态为 `delivery_failed`，由用户或后续机制重发 |
 
 ## Key Decisions
 
@@ -329,6 +431,14 @@ onDeliveryBatchDone(chainDone=true):
 | 16 | `reasoningText` 作为即时反馈 | 收到用户消息后立即发 `artifact-update(reasoningText='', lastChunk=true)`。空字符串→HAG app 显示三点动画。注意协议字段形状：`{ kind: 'reasoningText', reasoningText: text }`（不是 `text` 字段），已从 `@ynhcj/xiaoyi-channel` 源码确认。`reasoningText` 在 HAG app 中渲染为独立思考气泡，回复出现后自动折叠 | 2026-04-06 |
 | 17 | 入站媒体拆为 Phase B，出站媒体拆为 Phase C | 入站只需 fetch URI（零额外凭证）；出站需 OSMS 三阶段上传 + 独立 uid/apiKey 凭证。拆分降低配置门槛——Phase B 零配置增量 | 2026-04-06 |
 | 18 | XiaoYi 入站文件 URI 直接 fetch，无需鉴权 | HAG 下发的 `file.uri` 是预签名直下链接（类似 S3 presigned URL），与飞书/Telegram 需额外凭证不同。`@ynhcj/xiaoyi-channel` 和 jiuwenclaw 均直接 `fetch(uri)` 下载 | 2026-04-06 |
+| 19 | Push 作为文本回复主出站通道 | Push HTTP API 独立于 WS task 生命周期，每只猫独立推送。`@ynhcj/xiaoyi-channel` v1.1.18 的 `outbound.js` 采用同一模式（`sendText→Push`, `sendMedia→WS`）。华为官方 PUSH通知文档明确 Push 适用于异步长耗时任务。真机验证 Push 支持 markdown 渲染（标题/粗体/代码块语法高亮） | 2026-04-16 |
+| 20 | WS 保留为 inbound + thinking + media 通道 | Push 仅支持 `text`/`data` part（`kind: "file"` 返回 400 — 真机验证 2026-04-16）。媒体出站（Phase C）仍需 WS `kind: "file"` + `fileId`。端侧插件指令（Action/DeepLink/GPS）也只能走 WS 下行 | 2026-04-16 |
+| 21 | pushId 从入站消息收集并持久化 | `@ynhcj/xiaoyi-channel` 的 `pushid-manager.js` 将 pushId 持久化到文件，支持多 pushId 广播（多设备）。pushId 来源：入站 `data.variables.systemVariables.push_id`（平台需开启系统变量开关） | 2026-04-16 |
+| 22 | Push 限流 15s 最小间隔 | 真机限流探测实验（5s/10s/15s/20s/30s gap）：10s 被吞，15s 稳定送达。`@ynhcj/xiaoyi-channel` 未做客户端限流（依赖服务端静默丢弃），我们选择客户端 FIFO 队列主动限流 | 2026-04-16 |
+| 23 | WS task 生命周期与 Phase A 一致 | ~~原方案"首猫即关"~~ 废弃 — 会阻断 WS 媒体通道和 Push fallback（缅因猫 review P1-2）。`onDeliveryBatchDone(chainDone=true)` 保持为唯一 close 信号。Push 只改变文本投递通道，不改变 task 生命周期。思考气泡在 batch 结束关 task 时折叠 | 2026-04-17 |
+| 24 | Push payload 使用 `text` part 而非 `data`+`pushDataId` | `@ynhcj/xiaoyi-channel` 用 `data` part 存储 pushDataId 引用本地长文本。Cat Cafe 不需要此间接层 — 直接推 `text` part 即可，markdown 完整渲染。避免额外的本地存储和客户端拉取逻辑 | 2026-04-16 |
+| 25 | `XIAOYI_API_ID` 必选 + 渐进式能力解锁 | 4 必选项 (AK/SK/AGENT_ID/API_ID) 解锁 WS+Push 完整能力。Phase C 的 3 个额外凭证 (UID/API_KEY/FILE_UPLOAD_URL) 可选解锁媒体上传。Connector Hub 配置面板 inline 帮助文本 + 平台开关引导降低用户配置门槛 | 2026-04-16 |
+| 26 | Phase B 入站媒体不受 Phase D 影响 | Phase D 仅重构出站链路（sendReply → Push）。入站解析 (handleMessageStream → extractFileParts → attachments → connectorRouter.route) 保持不变。Phase B 已 merge (PR #1 + SSRF/audio 修复) 且 AC-B1~B6 全部通过 | 2026-04-16 |
 
 ## Timeline
 
@@ -337,8 +447,10 @@ onDeliveryBatchDone(chainDone=true):
 | 2026-04-01 | Kickoff — spec + ADR-014 |
 | 2026-04-06 | Phase A merged (PR #354) — 真机验证通过 |
 | 2026-04-06 | Phase B merged (PR terrenceeLeung/clowder-ai#1) — 入站媒体 + SSRF guard + 40 tests |
+| 2026-04-17 | Phase D merged (PR #3) — Push 出站 + WS fallback + 10s timeout + Redis 兜底 + 53 XiaoYi tests |
 
 ## Review Gate
 
 - Phase A: 缅因猫 review + 铲屎官真机验证 ✅
 - Phase B: 缅因猫 review (REQUEST_CHANGES → APPROVE) ✅
+- Phase D: 缅因猫 review (2P1+1P2 → 修复 → APPROVE) + 云端 review (0 P1/P2) ✅
