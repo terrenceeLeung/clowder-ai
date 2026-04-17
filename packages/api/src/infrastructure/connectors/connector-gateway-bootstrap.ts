@@ -77,7 +77,7 @@ export interface ConnectorGatewayConfig {
   xiaoyiAk?: string | undefined;
   xiaoyiSk?: string | undefined;
   xiaoyiAgentId?: string | undefined;
-  /** F151 Phase D: Push API identifier (required for Push outbound) */
+  /** F151 Phase D: Push API identifier (enables async/no-task Push outbound) */
   xiaoyiApiId?: string | undefined;
 }
 

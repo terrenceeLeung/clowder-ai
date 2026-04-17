@@ -78,6 +78,18 @@ describe('buildConnectorStatus', () => {
     assert.equal(feishu.configured, false);
   });
 
+  it('marks xiaoyi as configured without optional Push API ID', () => {
+    const result = buildConnectorStatus({
+      XIAOYI_AK: 'ak',
+      XIAOYI_SK: 'sk',
+      XIAOYI_AGENT_ID: 'agent-1',
+    });
+    const xiaoyi = result.find((p) => p.id === 'xiaoyi');
+    assert.ok(xiaoyi);
+    assert.equal(xiaoyi.configured, true);
+    assert.equal(xiaoyi.fields.find((f) => f.envName === 'XIAOYI_API_ID')?.currentValue, null);
+  });
+
   it('marks telegram as configured when token is set', () => {
     const result = buildConnectorStatus({
       TELEGRAM_BOT_TOKEN: '123456:ABC-DEF-tokenfull',
