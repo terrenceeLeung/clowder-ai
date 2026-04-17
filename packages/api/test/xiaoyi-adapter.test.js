@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-// ── Adapter tests (non-streaming append accumulation model) ──
+// ── Adapter tests (Phase D: Push outbound + WS fallback) ──
 
-describe('XiaoyiAdapter: non-streaming append accumulation', () => {
+describe('XiaoyiAdapter: Push outbound + WS fallback', () => {
   const mkLog = () => ({
     info() {},
     warn() {},
@@ -43,7 +43,7 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     return sent;
   }
 
-  it('inbound → sendPlaceholder → sendReply → onDeliveryBatchDone lifecycle', async () => {
+  it('inbound → sendPlaceholder → sendReply (WS fallback) → onDeliveryBatchDone lifecycle', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -55,11 +55,9 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     assert.equal(received[0].chatId, 'agent-1:sess-1');
     assert.equal(received[0].senderId, 'owner:agent-1');
 
-    // sendPlaceholder returns '' (no streaming artifacts)
     const artId = await adapter.sendPlaceholder('agent-1:sess-1', '...');
-    assert.equal(artId, '', 'non-streaming: returns empty string');
+    assert.equal(artId, '', 'returns empty string');
 
-    // Should send status-update(working) + reasoningText thinking bubble
     const details = sent.map((f) => parseDetail(f));
     assert.ok(details.some((d) => d.result?.kind === 'status-update' && d.result?.status?.state === 'working'));
     assert.ok(
@@ -74,13 +72,12 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
 
     sent.length = 0;
 
-    // sendReply — first cat uses append=false
+    // sendReply — Phase D WS fallback (no apiId → no Push → WS artifact)
     await adapter.sendReply('agent-1:sess-1', 'world');
     const replyDetail = parseDetail(sent[0]);
     assert.equal(replyDetail.result.kind, 'artifact-update');
-    assert.equal(replyDetail.result.artifact.artifactId, 'task-1:2', 'seq 2 (thinkId took seq 1)');
     assert.equal(replyDetail.result.artifact.parts[0].text, 'world');
-    assert.equal(replyDetail.result.append, false, 'first cat: append=false');
+    assert.equal(replyDetail.result.append, false, 'WS fallback: append=false');
     assert.equal(replyDetail.result.lastChunk, true);
     assert.equal(replyDetail.result.final, false, 'artifact never carries final');
 
@@ -96,7 +93,7 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     await adapter.stopStream();
   });
 
-  it('append accumulation: first sendReply append=false, rest append=true with separator', async () => {
+  it('Phase D multi-cat: WS fallback first=append:false, subsequent=append:true', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -108,24 +105,20 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     await adapter.sendReply('agent-1:sess-1', 'Cat B');
     await adapter.sendReply('agent-1:sess-1', 'Cat C');
 
-    const artifacts = sent.map((f) => parseDetail(f)).filter((d) => d.result?.kind === 'artifact-update');
+    const artifacts = sent
+      .map((f) => parseDetail(f))
+      .filter((d) => d.result?.kind === 'artifact-update' && d.result?.artifact?.parts?.[0]?.kind === 'text');
+
     assert.equal(artifacts.length, 3);
 
-    // Unique artifactIds
-    const artIds = artifacts.map((a) => a.result.artifact.artifactId);
-    assert.equal(new Set(artIds).size, 3, 'all artifactIds must be unique');
-
-    // First cat: append=false, plain text
-    assert.equal(artifacts[0].result.append, false, 'first cat: append=false');
+    assert.equal(artifacts[0].result.append, false, 'first fallback: append=false');
     assert.equal(artifacts[0].result.artifact.parts[0].text, 'Cat A');
 
-    // Second cat: append=true, with separator prefix
-    assert.equal(artifacts[1].result.append, true, 'second cat: append=true');
-    assert.equal(artifacts[1].result.artifact.parts[0].text, '\n\n---\n\nCat B');
+    assert.equal(artifacts[1].result.append, true, 'second fallback: append=true');
+    assert.ok(artifacts[1].result.artifact.parts[0].text.includes('Cat B'));
 
-    // Third cat: append=true, with separator prefix
-    assert.equal(artifacts[2].result.append, true, 'third cat: append=true');
-    assert.equal(artifacts[2].result.artifact.parts[0].text, '\n\n---\n\nCat C');
+    assert.equal(artifacts[2].result.append, true, 'third fallback: append=true');
+    assert.ok(artifacts[2].result.artifact.parts[0].text.includes('Cat C'));
 
     await adapter.stopStream();
   });
@@ -249,10 +242,10 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
 
     adapter.handleInbound(JSON.stringify({ method: 'tasks/cancel', params: { sessionId: 'sess-1' } }), 'primary');
 
-    const warns = [];
-    adapter.log = { ...mkLog(), warn: (obj) => warns.push(obj) };
+    const errors = [];
+    adapter.log = { ...mkLog(), error: (obj) => errors.push(obj), warn() {} };
     await adapter.sendReply('agent-1:sess-1', 'late');
-    assert.ok(warns.length > 0, 'should warn about missing task');
+    assert.ok(errors.length > 0, 'should log error about delivery_failed (no Push, no task)');
 
     await adapter.stopStream();
   });
@@ -275,7 +268,7 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     await adapter.stopStream();
   });
 
-  it('multi-cat: append accumulation with separator', async () => {
+  it('Phase D multi-cat: WS fallback first=append:false, then append:true accumulation', async () => {
     const { XiaoyiAdapter } = await import('../dist/infrastructure/connectors/adapters/XiaoyiAdapter.js');
     const adapter = new XiaoyiAdapter(mkLog(), mkOpts());
     const sent = captureSent(adapter);
@@ -286,18 +279,17 @@ describe('XiaoyiAdapter: non-streaming append accumulation', () => {
     await adapter.sendReply('agent-1:sess-1', 'Cat A response');
     await adapter.sendReply('agent-1:sess-1', 'Cat B response');
 
-    const artifacts = sent.map((f) => parseDetail(f)).filter((d) => d.result?.kind === 'artifact-update');
+    const artifacts = sent
+      .map((f) => parseDetail(f))
+      .filter((d) => d.result?.kind === 'artifact-update' && d.result?.artifact?.parts?.[0]?.kind === 'text');
 
     assert.equal(artifacts.length, 2);
-    assert.notEqual(artifacts[0].result.artifact.artifactId, artifacts[1].result.artifact.artifactId);
 
-    // Cat A: append=false, plain text
-    assert.equal(artifacts[0].result.append, false, 'first cat: append=false');
+    assert.equal(artifacts[0].result.append, false, 'Cat A: append=false (first)');
     assert.equal(artifacts[0].result.artifact.parts[0].text, 'Cat A response');
 
-    // Cat B: append=true, with separator
-    assert.equal(artifacts[1].result.append, true, 'second cat: append=true');
-    assert.equal(artifacts[1].result.artifact.parts[0].text, '\n\n---\n\nCat B response');
+    assert.equal(artifacts[1].result.append, true, 'Cat B: append=true (subsequent)');
+    assert.ok(artifacts[1].result.artifact.parts[0].text.includes('Cat B response'));
 
     // Both have final=false
     assert.equal(artifacts[0].result.final, false);

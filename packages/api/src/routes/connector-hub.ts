@@ -37,6 +37,8 @@ interface ConnectorFieldDef {
   envName: string;
   label: string;
   sensitive: boolean;
+  /** Inline help text — where to find this value on the platform */
+  help?: string;
   /** When set, this field is only required if the condition env var has the given value */
   requiredWhen?: { envName: string; value: string };
   /** When true, this field is never required for the platform to be "configured" */
@@ -159,15 +161,18 @@ export const CONNECTOR_PLATFORMS: PlatformDef[] = [
     name: '小艺',
     nameEn: 'XiaoYi (Huawei)',
     fields: [
-      { envName: 'XIAOYI_AK', label: 'Access Key', sensitive: false },
-      { envName: 'XIAOYI_SK', label: 'Secret Key', sensitive: true },
-      { envName: 'XIAOYI_AGENT_ID', label: 'Agent ID', sensitive: false },
+      { envName: 'XIAOYI_AK', label: 'Access Key', sensitive: false, help: '小艺开放平台 → 智能体管理 → 凭证管理' },
+      { envName: 'XIAOYI_SK', label: 'Secret Key', sensitive: true, help: '与 AK 一同获取' },
+      { envName: 'XIAOYI_AGENT_ID', label: 'Agent ID', sensitive: false, help: '智能体详情页顶部' },
+      { envName: 'XIAOYI_API_ID', label: 'Push API ID', sensitive: false, help: '创建 Webhook 后生成，Push 出站必选' },
     ],
     docsUrl: 'https://developer.huawei.com/consumer/cn/service/josp/agc/index.html',
     steps: [
       { text: '在小艺开放平台创建 OpenClaw 模式智能体，获取 AK/SK 和 Agent ID' },
-      { text: '填写以下配置并保存，重启 API 服务后自动通过 WebSocket 连接华为 HAG' },
-      { text: '在小艺 APP 中发送消息验证对话链路是否正常' },
+      { text: '创建 Webhook（Push 通知入口），获取 API ID' },
+      { text: '在平台「系统变量」设置中开启 push_id 开关（Push 投递必需）' },
+      { text: '填写以下配置并保存，自动通过 WebSocket 连接华为 HAG' },
+      { text: '在小艺 APP 中发送消息，验证对话 + Push 投递链路' },
     ],
   },
   {

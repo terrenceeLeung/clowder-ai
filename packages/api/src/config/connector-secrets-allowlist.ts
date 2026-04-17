@@ -26,6 +26,7 @@ export const CONNECTOR_SECRETS_ALLOWLIST: ReadonlySet<string> = new Set([
   'XIAOYI_AK',
   'XIAOYI_SK',
   'XIAOYI_AGENT_ID',
+  'XIAOYI_API_ID',
 ]);
 
 export function isConnectorSecret(name: string): boolean {

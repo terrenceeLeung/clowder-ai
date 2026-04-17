@@ -75,6 +75,8 @@ export interface ConnectorGatewayConfig {
   xiaoyiAk?: string | undefined;
   xiaoyiSk?: string | undefined;
   xiaoyiAgentId?: string | undefined;
+  /** F151 Phase D: Push API identifier (required for Push outbound) */
+  xiaoyiApiId?: string | undefined;
 }
 
 export interface ConnectorGatewayDeps {
@@ -211,6 +213,7 @@ export function loadConnectorGatewayConfig(): ConnectorGatewayConfig {
     xiaoyiAk: process.env.XIAOYI_AK,
     xiaoyiSk: process.env.XIAOYI_SK,
     xiaoyiAgentId: process.env.XIAOYI_AGENT_ID,
+    xiaoyiApiId: process.env.XIAOYI_API_ID,
   };
 }
 
@@ -656,11 +659,16 @@ export async function startConnectorGateway(
   if (hasXiaoyi) {
     const { XiaoyiAdapter } = await import('./adapters/XiaoyiAdapter.js');
     const { assertSafeXiaoyiUri } = await import('./adapters/xiaoyi-protocol.js');
-    const xiaoyi = new XiaoyiAdapter(log, {
-      agentId: config.xiaoyiAgentId!,
-      ak: config.xiaoyiAk!,
-      sk: config.xiaoyiSk!,
-    });
+    const xiaoyi = new XiaoyiAdapter(
+      log,
+      {
+        agentId: config.xiaoyiAgentId!,
+        ak: config.xiaoyiAk!,
+        sk: config.xiaoyiSk!,
+        apiId: config.xiaoyiApiId,
+      },
+      { redis: deps.redis },
+    );
     adapters.set('xiaoyi', xiaoyi);
 
     // Phase B — F151: XiaoYi URI-based media download (HAG provides direct download URLs)
