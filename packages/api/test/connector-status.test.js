@@ -10,7 +10,7 @@ describe('buildConnectorStatus', () => {
     const xiaoyi = result.find((p) => p.id === 'xiaoyi');
     assert.ok(xiaoyi);
     assert.equal(xiaoyi.configured, false);
-    assert.equal(xiaoyi.fields.length, 3);
+    assert.equal(xiaoyi.fields.length, 4);
 
     const feishu = result.find((p) => p.id === 'feishu');
     assert.ok(feishu);

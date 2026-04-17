@@ -128,6 +128,8 @@ export interface XiaoyiAdapterOptions {
   agentId: string;
   ak: string;
   sk: string;
+  /** Phase D: Push API identifier (required for Push outbound) */
+  apiId?: string;
   wsUrl1?: string;
   wsUrl2?: string;
 }

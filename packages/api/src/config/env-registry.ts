@@ -837,6 +837,13 @@ export const ENV_VARS: EnvDefinition[] = [
     sensitive: false,
   },
   {
+    name: 'XIAOYI_API_ID',
+    defaultValue: '(未设置)',
+    description: '华为小艺 Push API ID（创建 webhook 时生成，Push 出站必选）',
+    category: 'connector',
+    sensitive: false,
+  },
+  {
     name: 'FEISHU_BOT_OPEN_ID',
     defaultValue: '(未设置)',
     description: '飞书机器人 Open ID（接收消息的 bot 身份标识）',
