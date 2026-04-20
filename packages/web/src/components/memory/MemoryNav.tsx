@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 import { useChatStore } from '@/stores/chatStore';
+import { assignDocumentRoute } from '@/components/ThreadSidebar/thread-navigation';
 
 export type MemoryTab = 'feed' | 'search' | 'status' | 'health';
 
@@ -62,8 +63,9 @@ export function MemoryNav({ active }: MemoryNavProps) {
 
   return (
     <nav aria-label="Memory navigation" className="flex items-center gap-2">
-      <Link
-        href={backHref}
+      <button
+        type="button"
+        onClick={() => assignDocumentRoute(backHref, typeof window !== 'undefined' ? window : undefined)}
         className="inline-flex items-center gap-1.5 rounded-lg border border-[#D8C6AD] bg-[#FCF7EE] px-3 py-1.5 text-xs font-medium text-[#8B6F47] transition-colors hover:bg-[#F7EEDB]"
         data-testid="memory-back-to-chat"
       >
@@ -79,7 +81,7 @@ export function MemoryNav({ active }: MemoryNavProps) {
           <polyline points="15 18 9 12 15 6" />
         </svg>
         返回对话
-      </Link>
+      </button>
       {items.map((item) => {
         const isActive = item.id === active;
         return (
