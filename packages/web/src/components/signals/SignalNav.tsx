@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 
 export type SignalNavItem = 'chat' | 'signals' | 'sources';
@@ -21,13 +21,14 @@ interface ItemConfig {
  */
 function useReferrerThread(): string | null {
   const storeThreadId = useChatStore((s) => s.currentThreadId);
+  const [fromParam, setFromParam] = useState<string | null>(null);
+  useEffect(() => {
+    setFromParam(new URLSearchParams(window.location.search).get('from'));
+  }, []);
   return useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const fromParam = new URLSearchParams(window.location.search).get('from');
-      if (fromParam) return fromParam;
-    }
+    if (fromParam) return fromParam;
     return storeThreadId && storeThreadId !== 'default' ? storeThreadId : null;
-  }, [storeThreadId]);
+  }, [fromParam, storeThreadId]);
 }
 
 export function SignalNav({ active }: SignalNavProps) {
