@@ -62,7 +62,7 @@ export function MemoryNav({ active }: MemoryNavProps) {
 
   return (
     <nav aria-label="Memory navigation" className="flex items-center gap-2">
-      <Link
+      <a
         href={backHref}
         className="inline-flex items-center gap-1.5 rounded-lg border border-[#D8C6AD] bg-[#FCF7EE] px-3 py-1.5 text-xs font-medium text-[#8B6F47] transition-colors hover:bg-[#F7EEDB]"
         data-testid="memory-back-to-chat"
@@ -79,7 +79,7 @@ export function MemoryNav({ active }: MemoryNavProps) {
           <polyline points="15 18 9 12 15 6" />
         </svg>
         返回对话
-      </Link>
+      </a>
       {items.map((item) => {
         const isActive = item.id === active;
         return (
