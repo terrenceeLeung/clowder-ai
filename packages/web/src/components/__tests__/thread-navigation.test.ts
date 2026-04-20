@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CHAT_THREAD_ROUTE_EVENT,
   assignDocumentRoute,
+  CHAT_THREAD_ROUTE_EVENT,
   getThreadHref,
   getThreadIdFromPathname,
   pushThreadRouteWithHistory,
