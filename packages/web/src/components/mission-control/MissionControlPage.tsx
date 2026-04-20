@@ -1,7 +1,6 @@
 'use client';
 
 import type { BacklogItem, CatId, ExternalProject, MissionHubSelfClaimScope, ThreadPhase } from '@cat-cafe/shared';
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useExternalProjectStore } from '@/stores/externalProjectStore';
@@ -452,7 +451,7 @@ export function MissionControlPage() {
         {/* Header */}
         <header className="flex items-center justify-between border-b border-[#E7DAC7] bg-[#FFFDF8] px-6 py-3">
           <div className="flex items-center gap-3">
-            <Link
+            <a
               href={referrerThread && referrerThread !== 'default' ? `/thread/${referrerThread}` : '/'}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D8C6AD] bg-[#FCF7EE] px-3 py-1.5 text-xs font-medium text-[#8B6F47] transition-colors hover:bg-[#F7EEDB]"
               data-testid="mc-back-to-chat"
@@ -469,7 +468,7 @@ export function MissionControlPage() {
                 <polyline points="15 18 9 12 15 6" />
               </svg>
               返回线程
-            </Link>
+            </a>
             <div className="flex items-center gap-2">
               <svg
                 className="h-5 w-5 text-[#9A866F]"

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CHAT_THREAD_ROUTE_EVENT,
+  assignDocumentRoute,
   getThreadHref,
   getThreadIdFromPathname,
   pushThreadRouteWithHistory,
@@ -53,5 +54,17 @@ describe('thread navigation history bridge', () => {
     expect(href).toBe('/thread/thread-b');
     expect(fakeWindow.location.pathname).toBe('/thread/thread-b');
     expect(fakeWindow.dispatched).toEqual([]);
+  });
+
+  it('assigns document routes for hub navigation outside the chat route store', () => {
+    const assigned: string[] = [];
+    const href = assignDocumentRoute('/memory?from=thread-b', {
+      location: {
+        assign: (url) => assigned.push(url),
+      },
+    });
+
+    expect(href).toBe('/memory?from=thread-b');
+    expect(assigned).toEqual(['/memory?from=thread-b']);
   });
 });
