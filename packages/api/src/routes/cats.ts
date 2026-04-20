@@ -31,6 +31,7 @@ import { bootstrapCatCatalog, resolveCatCatalogPath } from '../config/cat-catalo
 import { getAcpConfig, getRoster, loadCatConfig, toAllCatConfigs } from '../config/cat-config-loader.js';
 import { configEventBus, createChangeSetId } from '../config/config-event-bus.js';
 import { resolveProjectTemplatePath } from '../config/project-template-path.js';
+import { getResolvedCats } from '../config/resolved-cats.js';
 import { createRuntimeCat, deleteRuntimeCat, updateRuntimeCat } from '../config/runtime-cat-catalog.js';
 import { deleteRuntimeOverride, getRuntimeOverride, setRuntimeOverride } from '../config/session-strategy-overrides.js';
 import { resolveActiveProjectRoot } from '../utils/active-project-root.js';
@@ -56,7 +57,7 @@ const cliSchema = z.object({
   effort: cliEffortSchema.nullable().optional(),
 });
 
-const clientSchema = z.enum(['anthropic', 'openai', 'google', 'kimi', 'dare', 'antigravity', 'opencode']);
+const clientSchema = z.enum(['anthropic', 'openai', 'google', 'kimi', 'dare', 'antigravity', 'opencode', 'catagent']);
 const catIdSchema = z
   .string()
   .min(1)
@@ -379,20 +380,6 @@ function getManagedCatalogIds(projectRoot: string): Set<string> {
   }
 }
 
-function getResolvedCats(projectRoot: string) {
-  try {
-    const templatePath = resolveProjectTemplatePath(projectRoot);
-    bootstrapCatCatalog(projectRoot, templatePath);
-    const resolved = toAllCatConfigs(loadCatConfig(resolveCatCatalogPath(projectRoot)));
-    for (const [id, config] of Object.entries(catRegistry.getAllConfigs())) {
-      if (!resolved[id]) resolved[id] = config;
-    }
-    return resolved;
-  } catch {
-    return catRegistry.getAllConfigs();
-  }
-}
-
 export const catsRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/cats - 获取所有猫猫配置
   app.get('/api/cats', async () => {
@@ -581,7 +568,7 @@ export const catsRoutes: FastifyPluginAsync = async (app) => {
       if (oldBuiltin && builtinAccountIdForClient(oldBuiltin) === effectiveAccountRef) {
         const newBuiltin = resolveBuiltinClientForProvider(effectiveClient);
         if (newBuiltin) {
-          effectiveAccountRef = builtinAccountIdForClient(newBuiltin);
+          effectiveAccountRef = builtinAccountIdForClient(newBuiltin) ?? undefined;
           targetAccountRef = effectiveAccountRef;
         }
       }

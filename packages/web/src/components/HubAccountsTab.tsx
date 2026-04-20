@@ -5,7 +5,7 @@ import { apiFetch } from '@/utils/api-client';
 import { HubAccountItem, type ProfileEditPayload } from './HubAccountItem';
 import { AccountsSummaryCard, CreateApiKeyAccountSection } from './hub-accounts.sections';
 import type { AccountsResponse } from './hub-accounts.types';
-import { ensureBuiltinAccounts, resolveAccountActionId } from './hub-accounts.view';
+import { normalizeBuiltinClientIds, resolveAccountActionId } from './hub-accounts.view';
 
 export function HubAccountsTab() {
   const [loading, setLoading] = useState(true);
@@ -127,7 +127,7 @@ export function HubAccountsTab() {
     [callApi, fetchAccounts],
   );
 
-  const displayAccounts = useMemo(() => ensureBuiltinAccounts(data?.providers ?? []), [data?.providers]);
+  const displayAccounts = useMemo(() => normalizeBuiltinClientIds(data?.providers ?? []), [data?.providers]);
   const builtinAccounts = useMemo(() => displayAccounts.filter((a) => a.builtin), [displayAccounts]);
   const customAccounts = useMemo(() => displayAccounts.filter((a) => !a.builtin), [displayAccounts]);
   const displayCards = useMemo(() => [...builtinAccounts, ...customAccounts], [builtinAccounts, customAccounts]);
@@ -141,7 +141,7 @@ export function HubAccountsTab() {
 
       <AccountsSummaryCard />
 
-      <div role="group" aria-label="Account List" className="space-y-4">
+      <div role="group" aria-label="Account List" className="space-y-4" data-guide-id="accounts.account-list">
         {displayCards.map((account) => (
           <HubAccountItem
             key={account.id}

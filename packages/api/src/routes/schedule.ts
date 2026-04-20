@@ -14,7 +14,11 @@
  * DELETE /api/schedule/control/tasks/:id → remove task override (AC-D1)
  */
 
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import type {
+  InvocationRecord,
+  InvocationRegistry,
+} from '../domains/cats/services/agents/invocation/InvocationRegistry.js';
 import type { ITaskStore } from '../domains/cats/services/stores/ports/TaskStore.js';
 import type { DynamicTaskStore } from '../infrastructure/scheduler/DynamicTaskStore.js';
 import type { GlobalControlStore } from '../infrastructure/scheduler/GlobalControlStore.js';
@@ -28,6 +32,8 @@ import {
 import type { TaskRunnerV2 } from '../infrastructure/scheduler/TaskRunnerV2.js';
 import type { ScheduleLifecycleNotifier, TriggerSpec } from '../infrastructure/scheduler/types.js';
 import { resolveHeaderUserId } from '../utils/request-identity.js';
+import { registerCallbackAuthHook } from './callback-auth-prehandler.js';
+import { deriveCallbackActor } from './callback-scope-helpers.js';
 import { governanceRoutes } from './schedule-governance.js';
 
 /** #415: Normalize once-trigger input — accepts delayMs (relative) or fireAt (absolute) */
@@ -65,6 +71,8 @@ export interface ScheduleRoutesOptions {
   taskStore?: ITaskStore;
   /** Ephemeral lifecycle notifications for scheduler management actions */
   notifyLifecycle?: ScheduleLifecycleNotifier;
+  /** Optional callback registry for inferring current thread from callback auth. */
+  registry?: InvocationRegistry;
 }
 
 /** Extract threadId from subjectKey — handles both thread-xxx (real tasks) and thread:xxx formats */
@@ -80,6 +88,46 @@ function addSubjectKeyWithAliases(target: Set<string>, subjectKey: string): void
   if (subjectKey.startsWith('pr-')) target.add(`pr:${subjectKey.slice(3)}`);
 }
 
+type DeliveryThreadResolutionCode = 'STALE_INVOCATION';
+
+interface ScheduleActor {
+  triggerUserId: string;
+  createdBy: string;
+}
+
+/** Resolve deliveryThreadId from preHandler auth (headers) or explicit body param.
+ *  Panel UI requests have no auth → uses explicit deliveryThreadId or null.
+ *  MCP requests have callbackAuth → infer from invocation record.
+ *  Invalid credentials are rejected at the preHandler level (fail-closed, #474). */
+function resolveScopedDeliveryThreadId(
+  callbackAuth: InvocationRecord | undefined,
+  body: { deliveryThreadId?: string },
+  registry?: InvocationRegistry,
+): { deliveryThreadId: string | null; code: DeliveryThreadResolutionCode | null } {
+  if (!callbackAuth) {
+    return { deliveryThreadId: body.deliveryThreadId ?? null, code: null };
+  }
+  if (registry && !registry.isLatest(callbackAuth.invocationId)) {
+    return { deliveryThreadId: null, code: 'STALE_INVOCATION' };
+  }
+  if (body.deliveryThreadId) return { deliveryThreadId: body.deliveryThreadId, code: null };
+  return { deliveryThreadId: callbackAuth.threadId, code: null };
+}
+
+function deriveScheduleActor(request: FastifyRequest, body: { createdBy?: string }): ScheduleActor {
+  if (request.callbackAuth) {
+    const actor = deriveCallbackActor(request.callbackAuth);
+    return {
+      triggerUserId: actor.userId,
+      createdBy: actor.catId,
+    };
+  }
+  return {
+    triggerUserId: resolveHeaderUserId(request) ?? 'default-user',
+    createdBy: body.createdBy ?? 'unknown',
+  };
+}
+
 export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (app, opts) => {
   const {
     taskRunner,
@@ -89,7 +137,11 @@ export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (
     packTemplateStore,
     taskStore,
     notifyLifecycle,
+    registry,
   } = opts;
+
+  // #476: Register callback auth preHandler for MCP-originated schedule requests
+  if (registry) registerCallbackAuthHook(app, registry);
 
   // GET /api/schedule/tasks
   // #320: Optional ?threadId= filter — resolves thread's task subjectKeys for cross-match
@@ -260,6 +312,15 @@ export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (
         }
       : { label: template.label, category: template.category, description: template.description };
 
+    const resolution = resolveScopedDeliveryThreadId(request.callbackAuth, body, registry);
+    if (resolution.code === 'STALE_INVOCATION') {
+      reply.status(409);
+      return {
+        error: 'Stale callback invocation superseded by a newer invocation',
+        code: 'STALE_INVOCATION',
+      };
+    }
+
     return {
       draft: {
         templateId: body.templateId,
@@ -267,7 +328,7 @@ export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (
         trigger,
         params,
         display,
-        deliveryThreadId: body.deliveryThreadId ?? null,
+        deliveryThreadId: resolution.deliveryThreadId,
         paramSchema: template.paramSchema,
       },
     };
@@ -287,6 +348,8 @@ export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (
       display?: { label: string; category: string; description?: string };
       deliveryThreadId?: string;
       createdBy?: string;
+      invocationId?: string;
+      callbackToken?: string;
     };
 
     if (!body.templateId) {
@@ -319,9 +382,10 @@ export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (
       return { error: 'params must be a plain object' };
     }
 
-    // Server-authoritative: always overwrite triggerUserId from request identity.
-    // Prevents client from forging userId on scheduler-triggered cat replies.
-    params.triggerUserId = resolveHeaderUserId(request) ?? 'default-user';
+    const actor = deriveScheduleActor(request, body);
+    // Server-authoritative: callback-authenticated writes derive actor fields from
+    // the verified invocation record; panel requests fall back to request identity.
+    params.triggerUserId = actor.triggerUserId;
 
     const id = `dyn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const display = body.display
@@ -332,15 +396,24 @@ export const scheduleRoutes: FastifyPluginAsync<ScheduleRoutesOptions> = async (
         }
       : { label: template.label, category: template.category, description: template.description };
 
+    const resolution = resolveScopedDeliveryThreadId(request.callbackAuth, body, registry);
+    if (resolution.code === 'STALE_INVOCATION') {
+      reply.status(409);
+      return {
+        error: 'Stale callback invocation superseded by a newer invocation',
+        code: 'STALE_INVOCATION',
+      };
+    }
+
     const def = {
       id,
       templateId: body.templateId,
       trigger,
       params,
       display,
-      deliveryThreadId: body.deliveryThreadId ?? null,
+      deliveryThreadId: resolution.deliveryThreadId,
       enabled: true,
-      createdBy: body.createdBy ?? 'unknown',
+      createdBy: actor.createdBy,
       createdAt: new Date().toISOString(),
     };
 

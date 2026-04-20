@@ -11,7 +11,7 @@ import { RichBlocks } from './rich/RichBlocks';
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 function renderContentBlocks(blocks: MessageContent[]) {
@@ -49,7 +49,8 @@ const DEFAULT_CONNECTOR_THEME: ConnectorTailwindTheme = {
   bubble: 'border border-conn-blue-bubble-border bg-conn-blue-bubble-bg',
 };
 
-/** F056: Designed icon per connector — replaces emoji with SVG/PNG icons. */
+/** F056: Designed icon per connector — replaces emoji with SVG/PNG icons.
+ *  Thread-local system notices are filtered earlier in ChatMessage and do not render here. */
 function ConnectorIcon({ connector, fallbackIcon }: { connector: string; fallbackIcon: string }) {
   switch (connector) {
     case 'feishu':

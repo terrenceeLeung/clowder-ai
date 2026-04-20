@@ -139,7 +139,7 @@ describe('accounts routes', () => {
       assert.equal(listRes.statusCode, 200);
       const list = listRes.json();
       assert.ok(Array.isArray(list.providers));
-      // F340: activeProfileId removed — activate concept retired
+      // clowder-ai#340: activeProfileId removed — activate concept retired
       assert.equal(list.activeProfileId, undefined);
       const listed = list.providers.find((p) => p.id === created.profile.id);
       assert.ok(listed, 'created profile should appear in list');
@@ -151,7 +151,7 @@ describe('accounts routes', () => {
     }
   });
 
-  // F340: POST /api/accounts/:id/test route removed — incomplete feature with no frontend entry.
+  // clowder-ai#340: POST /api/accounts/:id/test route removed — incomplete feature with no frontend entry.
   // Probe/heuristic protocol inference deleted alongside.
 
   it('rejects blank profile name in create request', async () => {
@@ -401,6 +401,60 @@ describe('accounts routes', () => {
 
       const opencode = providers.find((p) => p.id === 'opencode');
       assert.equal(opencode.clientId, 'opencode', 'opencode builtin clientId should be its own ID, not protocol');
+    } finally {
+      restoreGlobalRoot();
+      await rm(projectDir, { recursive: true, force: true });
+      await app.close();
+    }
+  });
+
+  it('#499: unmapped oauth accounts omit clientId so frontend heuristic can categorize them', async () => {
+    const { writeCatalogAccount } = await import('../dist/config/catalog-accounts.js');
+    const Fastify = (await import('fastify')).default;
+    const { accountsRoutes } = await import('../dist/routes/accounts.js');
+    const app = Fastify();
+    await app.register(accountsRoutes);
+    await app.ready();
+
+    const projectDir = await makeTmpDir('unmapped-clientid');
+    setGlobalRoot(projectDir);
+    try {
+      const catCafeDir = join(projectDir, '.cat-cafe');
+      mkdirSync(catCafeDir, { recursive: true });
+      writeFileSync(
+        join(catCafeDir, 'cat-catalog.json'),
+        JSON.stringify({ version: 2, breeds: [], roster: {}, reviewPolicy: {}, accounts: {} }),
+      );
+
+      // 'claude' is in BUILTIN_CLIENT_FOR_ID → should get clientId
+      writeCatalogAccount(projectDir, 'claude', { authType: 'oauth', models: ['m1'] });
+      // 'claude-2' is NOT in the map → should NOT get clientId
+      writeCatalogAccount(projectDir, 'claude-2', { authType: 'oauth', displayName: 'Claude-2', models: ['m2'] });
+      // 'glm' is NOT in the map → should NOT get clientId
+      writeCatalogAccount(projectDir, 'glm', { authType: 'oauth', displayName: 'GLM', models: ['glm-5'] });
+
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/accounts?projectPath=${encodeURIComponent(projectDir)}`,
+        headers: AUTH_HEADERS,
+      });
+      assert.equal(res.statusCode, 200);
+      const providers = res.json().providers;
+
+      const claude = providers.find((p) => p.id === 'claude');
+      assert.equal(claude.clientId, 'anthropic', 'mapped account should have correct clientId');
+
+      const claude2 = providers.find((p) => p.id === 'claude-2');
+      assert.equal(
+        claude2.clientId,
+        undefined,
+        'unmapped oauth account must not have clientId (let frontend heuristic work)',
+      );
+      assert.equal(claude2.builtin, true, 'unmapped oauth account should still be builtin');
+
+      const glm = providers.find((p) => p.id === 'glm');
+      assert.equal(glm.clientId, undefined, 'unmapped oauth account must not have clientId');
+      assert.equal(glm.builtin, true, 'unmapped oauth account should still be builtin');
     } finally {
       restoreGlobalRoot();
       await rm(projectDir, { recursive: true, force: true });

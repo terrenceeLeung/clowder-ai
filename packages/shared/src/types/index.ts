@@ -70,6 +70,7 @@ export type {
   BootstrapAction,
   BootstrapReport,
   CapabilitiesConfig,
+  CapabilityAuditEntry,
   CapabilityBoardItem,
   CapabilityBoardResponse,
   CapabilityEntry,
@@ -84,15 +85,21 @@ export type {
   GovernanceHealthSummary,
   GovernancePackMeta,
   GovernanceRule,
+  LockVersion,
+  McpDeleteParams,
+  McpInstallPreview,
+  McpInstallRequest,
   McpServerDescriptor,
   McpToolInfo,
+  McpTransport,
+  ProbeState,
   SkillHealthSummary,
 } from './capability.js';
 // Cat types
 export type {
   CatColor,
   CatConfig,
-  /** @deprecated F340: Use ClientId instead. */
+  /** @deprecated clowder-ai#340: Use ClientId instead. */
   CatProvider,
   CatState,
   CatStatus,
@@ -125,6 +132,12 @@ export type {
   Roster,
   RosterEntry,
 } from './cat-breed.js';
+export type { BuiltinAccountClient } from './client-routing.js';
+export {
+  builtinAccountFamilyForClient,
+  builtinAccountIdForClient,
+  protocolForClient,
+} from './client-routing.js';
 // Command types (F142 Phase B — slash command framework)
 export type {
   CommandSource,
@@ -132,6 +145,24 @@ export type {
   ParsedCommand,
   SlashCommandDefinition,
 } from './command.js';
+// Community Issue types (F168 社区事务编排引擎)
+export type {
+  CommunityIssueItem,
+  ConsensusResult,
+  ConsensusState,
+  CreateCommunityIssueInput,
+  DirectionCardPayload,
+  IssueState,
+  IssueType,
+  PrBoardGroup,
+  QuestionGrade,
+  QuestionId,
+  QuestionResult,
+  ReplyState,
+  TriageEntry,
+  UpdateCommunityIssueInput,
+  Verdict,
+} from './community-issue.js';
 // Connector types (F97 外部信息源抽象)
 export type {
   ConnectorDefinition,
@@ -139,6 +170,11 @@ export type {
   ConnectorTailwindTheme,
   ConnectorThreadBinding,
   OutboundDeliveryTarget,
+  ReplyPreview,
+  ReplyPreviewKind,
+  SchedulerLifecycleEvent,
+  SchedulerMessageExtra,
+  SchedulerToastPayload,
 } from './connector.js';
 export {
   getAllConnectorDefinitions,
@@ -249,6 +285,23 @@ export type {
   LimbNodeRecord,
   LimbNodeStatus,
 } from './limb.js';
+// Marketplace types (F146 MCP Marketplace Control Plane)
+export type {
+  InstallMode,
+  InstallPlan,
+  MarketplaceAdapter,
+  MarketplaceArtifactKind,
+  MarketplaceEcosystem,
+  MarketplaceSearchQuery,
+  MarketplaceSearchResult,
+  TrustLevel,
+} from './marketplace.js';
+export {
+  INSTALL_MODES,
+  MARKETPLACE_ARTIFACT_KINDS,
+  MARKETPLACE_ECOSYSTEMS,
+  TRUST_LEVELS,
+} from './marketplace.js';
 // Memory types (F3-lite 显式记忆)
 export type {
   MemoryEntry,
@@ -366,6 +419,17 @@ export type {
   SignalSourceSchedule,
   SignalTier,
 } from './signals.js';
+// Skill security types (F146 Phase C)
+export type {
+  ContentScanFinding,
+  InstallPolicy,
+  PolicyEvaluation,
+  SkillFingerprint,
+  SkillPermissionSet,
+  SkillSecurityEntry,
+  SkillSecurityStatus,
+} from './skill-security.js';
+export { DEFAULT_INSTALL_POLICY } from './skill-security.js';
 // Slice types (F076 Phase 2 — 切片)
 export type {
   CreateSliceInput,
@@ -414,6 +478,8 @@ export type {
   VoiceStreamEvent,
   VoiceStreamStartEvent,
 } from './tts.js';
+// User preferences types (F166 猫猫排序自定义)
+export type { UserPreferences } from './user-preferences.js';
 // Workflow SOP types (F073 告示牌)
 export type {
   CheckStatus,

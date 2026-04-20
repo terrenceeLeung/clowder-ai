@@ -1,5 +1,5 @@
 /**
- * Accounts API Routes — F136 Phase 4d → F340 renamed
+ * Accounts API Routes — F136 Phase 4d → clowder-ai#340 renamed
  *
  * Reads/writes via global ~/.cat-cafe/accounts.json + credentials.json.
  */
@@ -21,7 +21,7 @@ import { findMonorepoRoot } from '../utils/monorepo-root.js';
 import { validateProjectPath } from '../utils/project-path.js';
 import { resolveUserId } from '../utils/request-identity.js';
 
-// F340: Derive client identity from well-known account IDs, not stored protocol.
+// clowder-ai#340: Derive client identity from well-known account IDs, not stored protocol.
 const BUILTIN_CLIENT_FOR_ID: Record<string, string> = {
   claude: 'anthropic',
   codex: 'openai',
@@ -29,6 +29,11 @@ const BUILTIN_CLIENT_FOR_ID: Record<string, string> = {
   kimi: 'kimi',
   dare: 'dare',
   opencode: 'opencode',
+  // Canonical OAuth IDs (reachable via deriveAccountId slugging display names)
+  anthropic: 'anthropic',
+  openai: 'openai',
+  google: 'google',
+  // builtin_* prefixed (explicit reserved form):
   builtin_anthropic: 'anthropic',
   builtin_openai: 'openai',
   builtin_google: 'google',
@@ -40,7 +45,7 @@ const BUILTIN_CLIENT_FOR_ID: Record<string, string> = {
 /** Synthesize a ProviderProfileView-compatible object from AccountConfig (backward compat for Hub UI). */
 function accountToView(id: string, account: AccountConfig, apiKeyPresent: boolean) {
   const isBuiltin = account.authType === 'oauth';
-  const builtinClient = BUILTIN_CLIENT_FOR_ID[id] ?? id;
+  const builtinClient = BUILTIN_CLIENT_FOR_ID[id];
   return {
     id,
     name: account.displayName ?? id,
@@ -48,7 +53,7 @@ function accountToView(id: string, account: AccountConfig, apiKeyPresent: boolea
     kind: isBuiltin ? 'builtin' : ('api_key' as const),
     authType: account.authType,
     builtin: isBuiltin,
-    ...(isBuiltin ? { clientId: builtinClient } : {}),
+    ...(isBuiltin && builtinClient ? { clientId: builtinClient } : {}),
     ...(account.baseUrl ? { baseUrl: account.baseUrl } : {}),
     models: account.models ? [...account.models] : [],
     hasApiKey: apiKeyPresent,
@@ -241,7 +246,7 @@ export const accountsRoutes: FastifyPluginAsync = async (app) => {
 
     const body = parsed.data;
     try {
-      // F340: protocol not persisted on new accounts. Custom accounts use explicit
+      // clowder-ai#340: protocol not persisted on new accounts. Custom accounts use explicit
       // accountRef binding; system callers use well-known builtin IDs.
       const account: AccountConfig = {
         authType: (body.authType as 'oauth' | 'api_key') ?? 'api_key',
@@ -298,7 +303,7 @@ export const accountsRoutes: FastifyPluginAsync = async (app) => {
         reply.status(404);
         return { error: `Account "${params.profileId}" not found` };
       }
-      // F340: protocol not persisted — derived at runtime from well-known account IDs.
+      // clowder-ai#340: protocol not persisted — derived at runtime from well-known account IDs.
       const account: AccountConfig = {
         authType: (parsed.data.authType as 'oauth' | 'api_key') ?? existing.authType,
         ...(parsed.data.baseUrl != null
