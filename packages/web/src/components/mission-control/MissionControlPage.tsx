@@ -436,14 +436,14 @@ export function MissionControlPage() {
   // AC-H2: Referrer-based back button — remember where we came from
   // Priority: URL ?from= param > store's currentThreadId (last active thread)
   const storeThreadId = useChatStore((s) => s.currentThreadId);
+  const [mcFromParam, setMcFromParam] = useState<string | null>(null);
+  useEffect(() => {
+    setMcFromParam(new URLSearchParams(window.location.search).get('from'));
+  }, []);
   const referrerThread = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const fromParam = new URLSearchParams(window.location.search).get('from');
-      if (fromParam) return fromParam;
-    }
-    // Fallback: use last active thread from store (survives navigation without ?from=)
+    if (mcFromParam) return mcFromParam;
     return storeThreadId && storeThreadId !== 'default' ? storeThreadId : null;
-  }, [storeThreadId]);
+  }, [mcFromParam, storeThreadId]);
 
   return (
     <div className="flex h-screen bg-[#F4EFE7]">
