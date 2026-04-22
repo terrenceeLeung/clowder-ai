@@ -182,6 +182,8 @@ import {
   workspaceGitRoutes,
   workspaceRoutes,
 } from './routes/index.js';
+import { loadKnowledgeMap } from './domains/memory/knowledge-map.js';
+import { evidenceGraphRoutes } from './routes/evidence-graph.js';
 import { knowledgeFeedRoutes } from './routes/knowledge-feed.js';
 import { marketplaceRoutes } from './routes/marketplace.js';
 import { previewRoutes } from './routes/preview.js';
@@ -1532,6 +1534,17 @@ async function main(): Promise<void> {
     indexBuilder: memoryServices.indexBuilder,
     knowledgeResolver: memoryServices.knowledgeResolver,
   });
+
+  // F169: Knowledge graph explore + module subgraph API
+  try {
+    const knowledgeMap = loadKnowledgeMap(findMonorepoRoot(process.cwd()));
+    await app.register(evidenceGraphRoutes, {
+      evidenceStore: memoryServices.evidenceStore,
+      knowledgeMap,
+    });
+  } catch {
+    app.log.warn('F169: knowledge-map.yaml not found, graph routes disabled');
+  }
 
   // F163: Knowledge promotion admin API (localhost-only)
   const { f163AdminRoutes } = await import('./routes/f163-admin.js');

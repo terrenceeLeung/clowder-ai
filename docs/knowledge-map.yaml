@@ -1,0 +1,78 @@
+version: 1
+modules:
+  memory:
+    name: 记忆与知识工程
+    anchors:
+      - docs/features/F102-memory-adapter-refactor.md
+      - docs/features/F163-memory-entropy-reduction.md
+      - docs/features/F152-expedition-memory.md
+      - docs/features/F100-self-evolution.md
+      - docs/features/F169-feynman-cat.md
+      - docs/decisions/020-f102-memory-system-architecture.md
+      - docs/decisions/015-knowledge-object-contract.md
+  collaboration:
+    name: 多猫协作
+    anchors:
+      - docs/features/F002-agent-to-agent.md
+      - docs/features/F027-a2a-path-unification.md
+      - docs/features/F055-a2a-mcp-structured-routing.md
+      - docs/features/F167-a2a-chain-quality.md
+      - docs/features/F037-agent-swarm.md
+      - docs/decisions/001-agent-invocation-approach.md
+      - docs/decisions/002-collaboration-protocol.md
+  games:
+    name: 游戏系统
+    anchors:
+      - docs/features/F101-mode-v2-game-engine.md
+      - docs/features/F090-pixel-cat-brawl.md
+      - docs/features/F107-headband-guess-game.md
+      - docs/features/F119-who-is-spy-game.md
+      - docs/features/F093-cats-and-u-world-engine.md
+      - docs/features/F044-channel-activity-system.md
+  messaging:
+    name: 消息与富交互
+    anchors:
+      - docs/features/F022-rich-blocks.md
+      - docs/features/F109-message-actions-overhaul.md
+      - docs/features/F020-voice-input-suite.md
+      - docs/features/F034-voice-message.md
+      - docs/features/F035-whisper-visibility.md
+      - docs/features/F039-message-queue-delivery.md
+      - docs/decisions/008-conversation-mutability-and-invocation-lifecycle.md
+  guidance:
+    name: 引导与教学
+    anchors:
+      - docs/features/F155-scene-guidance-engine.md
+      - docs/features/F110-bootcamp-vision-elicitation.md
+      - docs/features/F165-guided-overfitting.md
+      - docs/features/F056-cat-cafe-design-language.md
+  integration:
+    name: 外部连接与生态
+    anchors:
+      - docs/features/F146-mcp-marketplace-control-plane.md
+      - docs/features/F151-xiaoyi-channel-gateway.md
+      - docs/features/F126-limb-control-plane.md
+      - docs/features/F021-signal-study-mode.md
+      - docs/features/F054-hci-preheat-infra.md
+      - docs/features/F129-pack-system-multi-agent-mod.md
+      - docs/decisions/014-xiaoyi-connector-gateway.md
+  infrastructure:
+    name: 基础设施
+    anchors:
+      - docs/features/F048-restart-recovery.md
+      - docs/features/F113-multi-platform-one-click-deploy.md
+      - docs/features/F143-hostable-agent-runtime.md
+      - docs/features/F149-acp-runtime-operations.md
+      - docs/features/F153-observability-infra.md
+      - docs/features/F156-websocket-security-hardening.md
+      - docs/features/F025-reliability-engineering.md
+      - docs/decisions/022-unified-schedule-abstraction.md
+  identity:
+    name: 猫猫身份与治理
+    anchors:
+      - docs/features/F127-cat-instance-management.md
+      - docs/features/F038-skills-discovery.md
+      - docs/features/F077-multi-user-secure-collab.md
+      - docs/features/F067-cold-start-verifier.md
+      - docs/features/F168-community-ops-board.md
+      - docs/decisions/009-cat-cafe-skills-distribution.md

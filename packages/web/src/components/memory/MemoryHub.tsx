@@ -5,6 +5,7 @@ import { KnowledgeFeed } from '../workspace/KnowledgeFeed';
 import { EvidenceSearch } from './EvidenceSearch';
 import { HealthReport } from './HealthReport';
 import { IndexStatus } from './IndexStatus';
+import { KnowledgeExplore } from './KnowledgeExplore';
 import { MemoryNav, type MemoryTab } from './MemoryNav';
 
 interface MemoryHubProps {
@@ -23,6 +24,11 @@ export function MemoryHub({ activeTab = 'feed', initialQuery }: MemoryHubProps) 
         {activeTab === 'feed' && (
           <div data-testid="memory-tab-feed">
             <KnowledgeFeed />
+          </div>
+        )}
+        {activeTab === 'explore' && (
+          <div data-testid="memory-tab-explore">
+            <KnowledgeExplore />
           </div>
         )}
         {activeTab === 'search' && (

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 
-export type MemoryTab = 'feed' | 'search' | 'status' | 'health';
+export type MemoryTab = 'feed' | 'explore' | 'search' | 'status' | 'health';
 
 interface MemoryNavProps {
   readonly active: MemoryTab;
@@ -37,6 +37,7 @@ export function buildBackHref(referrerThread: string | null): string {
 export function buildMemoryTabItems(fromSuffix: string): readonly TabConfig[] {
   return [
     { id: 'feed', href: `/memory${fromSuffix}`, label: 'Knowledge Feed' },
+    { id: 'explore', href: `/memory/explore${fromSuffix}`, label: 'Explore' },
     { id: 'search', href: `/memory/search${fromSuffix}`, label: 'Search' },
     { id: 'status', href: `/memory/status${fromSuffix}`, label: 'Index Status' },
     { id: 'health', href: `/memory/health${fromSuffix}`, label: 'Health' },
