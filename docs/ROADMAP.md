@@ -62,4 +62,5 @@ created: 2026-02-26
 | F165 | Guided Overfitting — 引导式过拟合 / 养猫路径 | spec | Ragdoll | internal | [F165](features/F165-guided-overfitting.md) |
 | F167 | A2A Chain Quality — 乒乓球熔断 + 虚空传球检测 + 角色护栏 | spec | Ragdoll | internal | [F167](features/F167-a2a-chain-quality.md) |
 | F168 | Community Operations Board — 社区事务编排引擎 | in-progress | Ragdoll | internal | [F168](features/F168-community-ops-board.md) |
+| F169 | Feynman Cat — 费曼式知识导览与知识图谱可视化 | planning | Ragdoll | internal | [F169](features/F169-feynman-cat.md) |
 
