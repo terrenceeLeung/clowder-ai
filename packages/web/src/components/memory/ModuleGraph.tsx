@@ -50,8 +50,15 @@ export function ModuleGraph({ moduleId }: ModuleGraphProps) {
     setLoading(true);
     setError(null);
     fetch(buildGraphApiUrl(moduleId))
-      .then((res) => res.json())
-      .then((data: GraphResponse) => setGraphData(data))
+      .then((res) => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        return res.json();
+      })
+      .then((data: unknown) => {
+        const d = data as Record<string, unknown>;
+        if (!Array.isArray(d.nodes)) throw new Error('Invalid graph response');
+        setGraphData(d as unknown as GraphResponse);
+      })
       .catch((e: unknown) => setError(String(e)))
       .finally(() => setLoading(false));
   }, [moduleId]);

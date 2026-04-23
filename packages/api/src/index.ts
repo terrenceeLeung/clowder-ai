@@ -1540,6 +1540,7 @@ async function main(): Promise<void> {
     await app.register(evidenceGraphRoutes, {
       evidenceStore: memoryServices.evidenceStore,
       knowledgeMap,
+      listEdgesForAnchors: (anchors) => memoryServices.store.listEdgesForAnchors(anchors),
     });
   } catch {
     app.log.warn('F169: knowledge-map.yaml not found, graph routes disabled');

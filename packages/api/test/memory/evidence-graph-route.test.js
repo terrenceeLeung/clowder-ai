@@ -145,27 +145,28 @@ describe('GET /api/evidence/graph', () => {
     assert.equal(body.nodes[0].title, 'F102');
   });
 
-  it('collects edges within module anchors', async () => {
-    const mockDb = {
-      prepare: () => ({
-        all: (anchor) => {
-          if (anchor === 'docs/features/F102.md') {
-            return [{ other_anchor: 'docs/features/F163.md', relation: 'related' }];
-          }
-          return [];
-        },
+  it('collects edges via listEdgesForAnchors', async () => {
+    const app = Fastify();
+    await app.register(evidenceGraphRoutes, {
+      evidenceStore: createMockStore({
+        getByAnchor: async (anchor) => ({
+          anchor,
+          kind: 'feature',
+          status: 'active',
+          title: anchor,
+          updatedAt: '2026-01-01',
+        }),
       }),
-    };
-    const app = await setup({
-      getByAnchor: async (anchor) => ({
-        anchor,
-        kind: 'feature',
-        status: 'active',
-        title: anchor,
-        updatedAt: '2026-01-01',
-      }),
-      getDb: () => mockDb,
+      knowledgeMap: MOCK_MAP,
+      listEdgesForAnchors: (anchors) => {
+        const set = new Set(anchors);
+        if (set.has('docs/features/F102.md') && set.has('docs/features/F163.md')) {
+          return [{ from: 'docs/features/F102.md', to: 'docs/features/F163.md', relation: 'related' }];
+        }
+        return [];
+      },
     });
+    await app.ready();
 
     const res = await app.inject({
       method: 'GET',
@@ -173,5 +174,34 @@ describe('GET /api/evidence/graph', () => {
     });
     const body = res.json();
     assert.ok(Array.isArray(body.edges));
+    assert.equal(body.edges.length, 1);
+    assert.equal(body.edges[0].relation, 'related');
+  });
+
+  it('excludes edges for unresolved anchors', async () => {
+    const app = Fastify();
+    await app.register(evidenceGraphRoutes, {
+      evidenceStore: createMockStore({
+        getByAnchor: async (anchor) =>
+          anchor.includes('F102')
+            ? { anchor, kind: 'feature', status: 'active', title: 'F102', updatedAt: '2026-01-01' }
+            : null,
+      }),
+      knowledgeMap: MOCK_MAP,
+      listEdgesForAnchors: (anchors) => {
+        assert.equal(anchors.length, 1, 'only resolved anchors passed');
+        assert.ok(anchors[0].includes('F102'));
+        return [];
+      },
+    });
+    await app.ready();
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/evidence/graph?module=memory',
+    });
+    const body = res.json();
+    assert.equal(body.nodes.length, 1);
+    assert.deepEqual(body.edges, []);
   });
 });
