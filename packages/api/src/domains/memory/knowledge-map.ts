@@ -4,6 +4,7 @@ import { parse } from 'yaml';
 
 export interface KnowledgeModule {
   name: string;
+  description?: string;
   anchors: string[];
 }
 
@@ -21,12 +22,13 @@ export function parseKnowledgeMap(raw: string): KnowledgeMap {
   }
   const parsed: Record<string, KnowledgeModule> = {};
   for (const [id, val] of Object.entries(modules)) {
-    const m = val as { name?: string; anchors?: string[] };
+    const m = val as { name?: string; description?: string; anchors?: string[] };
     if (!m.name) throw new Error(`knowledge-map: module "${id}" missing name`);
     if (!Array.isArray(m.anchors) || m.anchors.length === 0) {
       throw new Error(`knowledge-map: module "${id}" must have at least one anchor`);
     }
     parsed[id] = { name: m.name, anchors: m.anchors };
+    if (m.description) parsed[id].description = m.description;
   }
   return { version: 1, modules: parsed };
 }

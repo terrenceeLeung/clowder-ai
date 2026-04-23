@@ -20,6 +20,33 @@ modules:
     assert.deepEqual(result.modules.memory.anchors, ['docs/features/F102.md', 'docs/features/F163.md']);
   });
 
+  it('parses description field', () => {
+    const yaml = `
+version: 1
+modules:
+  memory:
+    name: 记忆系统
+    description: 记忆存储与检索、元数据治理
+    anchors:
+      - F102
+`;
+    const result = parseKnowledgeMap(yaml);
+    assert.equal(result.modules.memory.description, '记忆存储与检索、元数据治理');
+  });
+
+  it('allows missing description', () => {
+    const yaml = `
+version: 1
+modules:
+  memory:
+    name: 记忆系统
+    anchors:
+      - F102
+`;
+    const result = parseKnowledgeMap(yaml);
+    assert.equal(result.modules.memory.description, undefined);
+  });
+
   it('parses multiple modules', () => {
     const yaml = `
 version: 1

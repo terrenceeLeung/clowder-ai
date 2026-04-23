@@ -17,10 +17,17 @@ interface GraphEdge {
   relation: string;
 }
 
+interface UnclassifiedAnchor {
+  anchor: string;
+  kind: string;
+  title: string;
+}
+
 export interface EvidenceGraphRoutesOptions {
   evidenceStore: IEvidenceStore;
   knowledgeMap: KnowledgeMap;
   listEdgesForAnchors?: (anchors: string[]) => GraphEdge[];
+  listAllAnchors?: () => UnclassifiedAnchor[];
 }
 
 const graphQuerySchema = z.object({ module: z.string().min(1) });
@@ -43,7 +50,7 @@ async function resolveNodes(store: IEvidenceStore, anchors: string[]): Promise<G
 }
 
 export const evidenceGraphRoutes: FastifyPluginAsync<EvidenceGraphRoutesOptions> = async (app, opts) => {
-  const { evidenceStore, knowledgeMap, listEdgesForAnchors } = opts;
+  const { evidenceStore, knowledgeMap, listEdgesForAnchors, listAllAnchors } = opts;
 
   app.get('/api/evidence/explore', async () => {
     const modules = await Promise.all(
@@ -53,10 +60,24 @@ export const evidenceGraphRoutes: FastifyPluginAsync<EvidenceGraphRoutesOptions>
           const doc = await evidenceStore.getByAnchor(anchor);
           if (doc) evidenceCount++;
         }
-        return { id, name: mod.name, anchorCount: mod.anchors.length, evidenceCount };
+        return { id, name: mod.name, description: mod.description, anchorCount: mod.anchors.length, evidenceCount };
       }),
     );
     return { modules };
+  });
+
+  app.get('/api/evidence/unclassified', async (_request, reply) => {
+    if (!listAllAnchors) {
+      reply.status(501);
+      return { error: 'listAllAnchors not available' };
+    }
+    const allAnchors = listAllAnchors();
+    const classified = new Set<string>();
+    for (const mod of Object.values(knowledgeMap.modules)) {
+      for (const a of mod.anchors) classified.add(a);
+    }
+    const unclassified = allAnchors.filter((a) => !classified.has(a.anchor));
+    return { total: allAnchors.length, classifiedCount: classified.size, unclassified };
   });
 
   app.get('/api/evidence/graph', async (request, reply) => {

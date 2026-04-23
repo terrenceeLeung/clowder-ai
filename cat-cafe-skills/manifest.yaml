@@ -399,6 +399,28 @@ skills:
     sop_step: null
     merged_from: null
 
+  # ── 知识图谱维护 (F169) ──
+  knowledge-map-maintain:
+    description: >
+      扫描 evidence_docs 对比 knowledge-map.yaml，LLM 辅助分类未归入的 anchor。
+      Use when: maintainer 手动触发知识图谱维护，需要整理未分类的 evidence anchor。
+      Not for: 自动触发、新模块创建（需 CVO 决策）。
+      Output: 分类建议 rich block → 确认后更新 knowledge-map.yaml 并 commit。
+    triggers:
+      - "knowledge map maintain"
+      - "知识图谱维护"
+      - "整理知识图谱"
+      - "knowledge-map"
+      - "更新 knowledge map"
+    not_for:
+      - "自动触发"
+      - "新模块创建"
+    output: "Classification suggestions rich block → YAML update + commit"
+    next: []
+    sop_step: null
+    merged_from: null
+    feature: "F169"
+
   # ── 定时任务 ──
   schedule-tasks:
     description: >
