@@ -52,6 +52,8 @@ export interface RouteStrategyDeps {
   evidenceStore?: import('../../../../memory/interfaces.js').IEvidenceStore;
   /** F150: Tool usage counter (fire-and-forget INCR on tool_use events) */
   toolUsageCounter?: import('../../tool-usage/ToolUsageCounter.js').ToolUsageCounter;
+  /** F169 Phase A-2: Knowledge map for feynman module resolution */
+  knowledgeMap?: import('../../../../memory/knowledge-map.js').KnowledgeMap;
 }
 
 /** Mutable context for tracking persistence failures across the generator boundary.

@@ -132,6 +132,9 @@ export async function* routeSerial(
   let voiceMode: boolean | undefined;
   // F087: Bootcamp state for CVO onboarding
   let bootcampState: InvocationContext['bootcampState'];
+  // F169 Phase A-2: Feynman teaching state + resolved module
+  let feynmanState: InvocationContext['feynmanState'];
+  let feynmanModule: InvocationContext['feynmanModule'];
   const targetCatIds = new Set<string>(targetCats);
   // Thread read: shared across routingPolicy, voiceMode, bootcamp, SOP, and guide interceptor
   let routeThread: Thread | null = null;
@@ -141,6 +144,11 @@ export async function* routeSerial(
       routingPolicy = routeThread?.routingPolicy;
       voiceMode = routeThread?.voiceMode;
       bootcampState = routeThread?.bootcampState;
+      // F169 Phase A-2: Read feynman state for teaching prompt injection
+      if (routeThread?.feynmanState && deps.knowledgeMap) {
+        feynmanState = routeThread.feynmanState;
+        feynmanModule = deps.knowledgeMap.modules[feynmanState.module];
+      }
       // F073 P4: Read workflow-sop if thread is linked to a backlog item
       if (routeThread?.backlogItemId && deps.invocationDeps.workflowSopStore) {
         try {
@@ -298,6 +306,7 @@ export async function* routeSerial(
         ...(activeSignals ? { activeSignals } : {}),
         ...(voiceMode ? { voiceMode } : {}),
         ...(bootcampState ? { bootcampState, threadId } : {}),
+        ...(feynmanState && feynmanModule ? { feynmanState, feynmanModule, threadId } : {}),
         ...(alwaysOnDocs && alwaysOnInjectionMode === 'on' ? { alwaysOnDocs } : {}),
         ...guideContextForCat(guideCtx, catId, targetCatIds, threadId),
       });

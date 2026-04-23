@@ -1543,6 +1543,10 @@ async function main(): Promise<void> {
       listEdgesForAnchors: (anchors) => memoryServices.store.listEdgesForAnchors(anchors),
       listAllAnchors: () => memoryServices.store.listAllAnchors(),
     });
+    // F169 Phase A-2: Feynman teaching routes + router injection
+    const { feynmanRoutes } = await import('./routes/feynman.js');
+    await app.register(feynmanRoutes, { threadStore, knowledgeMap });
+    router.setKnowledgeMap(knowledgeMap);
   } catch {
     app.log.warn('F169: knowledge-map.yaml not found, graph routes disabled');
   }

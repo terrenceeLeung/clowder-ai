@@ -90,13 +90,14 @@ export async function registerCallbackMemoryRoutes(
       reply.status(400);
       return { error: 'Invalid request body', details: parsed.error.issues };
     }
-    const { content } = parsed.data;
+    const { content, metadata } = parsed.data;
 
     try {
       await deps.markerQueue.submit({
         content,
         source: `callback:${record.catId}:${record.invocationId}`,
         status: 'captured',
+        ...(metadata ? { metadata } : {}),
       });
       return { status: 'ok' };
     } catch {
