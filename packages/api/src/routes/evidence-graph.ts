@@ -32,6 +32,8 @@ export interface EvidenceGraphRoutesOptions {
 
 const graphQuerySchema = z.object({ module: z.string().min(1) });
 
+const CLASSIFIABLE_KINDS = new Set(['feature', 'decision', 'plan', 'lesson', 'research', 'pack-knowledge']);
+
 async function resolveNodes(store: IEvidenceStore, anchors: string[]): Promise<GraphNode[]> {
   const nodes: GraphNode[] = [];
   for (const anchor of anchors) {
@@ -71,13 +73,14 @@ export const evidenceGraphRoutes: FastifyPluginAsync<EvidenceGraphRoutesOptions>
       reply.status(501);
       return { error: 'listAllAnchors not available' };
     }
-    const allAnchors = listAllAnchors();
+    const allAnchors = listAllAnchors().filter((a) => CLASSIFIABLE_KINDS.has(a.kind));
     const classified = new Set<string>();
     for (const mod of Object.values(knowledgeMap.modules)) {
       for (const a of mod.anchors) classified.add(a);
     }
     const unclassified = allAnchors.filter((a) => !classified.has(a.anchor));
-    return { total: allAnchors.length, classifiedCount: classified.size, unclassified };
+    const classifiedInEvidence = allAnchors.filter((a) => classified.has(a.anchor)).length;
+    return { total: allAnchors.length, classifiedCount: classifiedInEvidence, unclassified };
   });
 
   app.get('/api/evidence/graph', async (request, reply) => {

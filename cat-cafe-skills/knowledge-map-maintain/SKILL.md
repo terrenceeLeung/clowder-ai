@@ -25,10 +25,7 @@ triggers:
 
 调用 `GET /api/evidence/unclassified` 获取未分类 anchor 列表。
 
-如果 API 不可用，降级方案：
-1. 读取 `docs/knowledge-map.yaml`，提取所有模块的 anchors 集合
-2. 调用 `search_evidence` 用空关键词 + `limit:200` 获取全量 evidence anchor
-3. 做差集，得到未分类 anchor 列表
+如果 API 不可用，告知 maintainer："unclassified API 不可用，无法获取完整未分类列表。请检查 API 服务状态后重试。" 然后中止。不要尝试用 search_evidence 做不完备的差集。
 
 **如果没有未分类 anchor**：告知 maintainer "知识图谱已完整，无需更新"，结束。
 
