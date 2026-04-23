@@ -1041,7 +1041,7 @@
     {
       "id": "F169",
       "name": "Feynman Cat — 费曼式知识导览与知识图谱可视化",
-      "status": "planning | **Owner**: Ragdoll | **Priority**: P1",
+      "status": "in-progress | **Owner**: Ragdoll | **Priority**: P1",
       "file": "F169-feynman-cat.md"
     },
     {
@@ -1051,5 +1051,5 @@
       "file": "F169-phase-a2-quality-gate-evidence.md"
     }
   ],
-  "generated_at": "2026-04-23T13:14:25.107Z"
+  "generated_at": "2026-04-23T14:05:30.175Z"
 }
