@@ -32,11 +32,15 @@ describe('buildFeynmanPromptLines', () => {
     assert.ok(text.includes('thread=thread-abc'), 'should include threadId');
   });
 
-  it('includes teaching protocol', () => {
+  it('includes teaching protocol with mastery scoring', () => {
     const lines = buildFeynmanPromptLines(baseInput);
     const text = lines.join('\n');
     assert.ok(text.includes('费曼老师'), 'should include teaching protocol');
     assert.ok(text.includes('Delta Report'), 'should include delta report instruction');
+    assert.ok(text.includes('单轮单锚点'), 'should enforce single-anchor-per-turn');
+    assert.ok(text.includes('0/1/2'), 'should include mastery scoring');
+    assert.ok(text.includes('结课门槛'), 'should include completion threshold');
+    assert.ok(text.includes('未掌握 anchors'), 'should include unmastered tracking');
   });
 
   it('includes anti-sycophancy guardrails (AC-A2-10)', () => {

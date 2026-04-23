@@ -13,8 +13,10 @@ export interface FeynmanRoutesOptions {
   knowledgeMap: KnowledgeMap;
 }
 
+const MODULE_ID_RE = /^[a-z0-9_-]+$/i;
+
 const startSchema = z.object({
-  module: z.string().min(1).max(100),
+  module: z.string().min(1).max(100).regex(MODULE_ID_RE),
 });
 
 export const feynmanRoutes: FastifyPluginAsync<FeynmanRoutesOptions> = async (app, opts) => {
@@ -34,10 +36,14 @@ export const feynmanRoutes: FastifyPluginAsync<FeynmanRoutesOptions> = async (ap
     }
     const { module: moduleId } = parsed.data;
 
-    const mod = knowledgeMap.modules[moduleId];
-    if (!mod) {
+    if (!Object.hasOwn(knowledgeMap.modules, moduleId)) {
       reply.status(404);
       return { error: `Module "${moduleId}" not found in knowledge-map` };
+    }
+    const mod = knowledgeMap.modules[moduleId];
+    if (!mod || !Array.isArray(mod.anchors) || !mod.anchors.every((a: unknown) => typeof a === 'string')) {
+      reply.status(500);
+      return { error: 'Module has invalid structure' };
     }
 
     // AC-A2-5: module uniqueness — return existing active feynman thread

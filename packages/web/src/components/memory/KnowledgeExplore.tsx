@@ -22,7 +22,10 @@ export function KnowledgeExplore() {
 
   useEffect(() => {
     fetch(buildExploreApiUrl())
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Explore API failed: ${res.status}`);
+        return res.json();
+      })
       .then((data: { modules: ModuleOverview[] }) => setModules(data.modules ?? []))
       .catch((e: unknown) => setError(String(e)))
       .finally(() => setLoading(false));
@@ -71,12 +74,19 @@ export function KnowledgeExplore() {
     <div data-testid="knowledge-explore">
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {modules.map((mod) => (
-          <button
+          <div
             key={mod.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => handleSelect(mod.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleSelect(mod.id);
+              }
+            }}
             className={[
-              'rounded-xl border p-4 text-left transition-all hover:shadow-md',
+              'cursor-pointer rounded-xl border p-4 text-left transition-all hover:shadow-md',
               selectedModule === mod.id
                 ? 'border-cocreator-primary bg-cocreator-light shadow-sm'
                 : 'border-[#E7DAC7] bg-[#FFFDF8] hover:border-cocreator-light',
@@ -97,7 +107,7 @@ export function KnowledgeExplore() {
             >
               {startingTour === mod.id ? '启动中...' : '开始导览'}
             </button>
-          </button>
+          </div>
         ))}
       </div>
 

@@ -14,6 +14,16 @@ function validateMarkerId(id: string): void {
   }
 }
 
+const SAFE_META_KEY_RE = /^[a-z0-9_]+$/;
+function sanitizeMetadata(raw: Record<string, string>): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (!SAFE_META_KEY_RE.test(k)) continue;
+    result[k] = String(v).replace(/[\r\n]/g, ' ');
+  }
+  return result;
+}
+
 export class MarkerQueue implements IMarkerQueue {
   constructor(private readonly markersDir: string) {}
 
@@ -26,7 +36,9 @@ export class MarkerQueue implements IMarkerQueue {
       createdAt: new Date().toISOString(),
     };
     if (input.targetKind) marker.targetKind = input.targetKind;
-    if (input.metadata && Object.keys(input.metadata).length > 0) marker.metadata = input.metadata;
+    if (input.metadata && Object.keys(input.metadata).length > 0) {
+      marker.metadata = sanitizeMetadata(input.metadata);
+    }
 
     this.writeYaml(marker);
     return marker;

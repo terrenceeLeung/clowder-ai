@@ -105,6 +105,32 @@ describe('POST /api/feynman/start', () => {
     });
     assert.equal(res.statusCode, 401);
   });
+
+  it('rejects prototype-polluting module ids', async () => {
+    const { app } = await setup();
+    for (const bad of ['__proto__', 'constructor', 'toString']) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/feynman/start',
+        headers: { 'x-cat-cafe-user': 'user1' },
+        payload: { module: bad },
+      });
+      assert.ok([400, 404].includes(res.statusCode), `${bad} should be rejected (got ${res.statusCode})`);
+    }
+  });
+
+  it('rejects module ids with special characters', async () => {
+    const { app } = await setup();
+    for (const bad of ['../etc', 'foo bar', 'a\nb']) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/feynman/start',
+        headers: { 'x-cat-cafe-user': 'user1' },
+        payload: { module: bad },
+      });
+      assert.equal(res.statusCode, 400, `${JSON.stringify(bad)} should be rejected`);
+    }
+  });
 });
 
 describe('GET /api/feynman/threads', () => {

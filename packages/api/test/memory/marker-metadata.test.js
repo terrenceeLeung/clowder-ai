@@ -71,4 +71,41 @@ describe('MarkerQueue metadata', () => {
     assert.equal(marker.metadata.feynman_type, 'correction');
     assert.equal(marker.metadata.module, 'memory');
   });
+
+  it('sanitizes metadata keys (rejects non-alphanumeric)', async () => {
+    const marker = await queue.submit({
+      content: 'Injection attempt',
+      source: 'callback:ragdoll:inv4',
+      status: 'captured',
+      metadata: {
+        valid_key: 'ok',
+        'bad-key': 'dropped',
+        UPPER: 'dropped',
+        '../../path': 'dropped',
+      },
+    });
+
+    assert.equal(marker.metadata.valid_key, 'ok');
+    assert.equal(marker.metadata['bad-key'], undefined);
+    assert.equal(marker.metadata['../../path'], undefined);
+  });
+
+  it('strips CR/LF from metadata values (YAML injection defense)', async () => {
+    const marker = await queue.submit({
+      content: 'YAML injection attempt',
+      source: 'callback:ragdoll:inv5',
+      status: 'captured',
+      metadata: {
+        feynman_type: 'gap\nstatus: approved',
+        module: 'memory\r\ncontent: |',
+      },
+    });
+
+    assert.ok(!marker.metadata.feynman_type.includes('\n'), 'should strip newlines');
+    assert.ok(!marker.metadata.module.includes('\n'), 'should strip newlines');
+
+    const listed = await queue.list();
+    assert.equal(listed[0].metadata.feynman_type, 'gap status: approved');
+    assert.equal(listed.length, 1);
+  });
 });
