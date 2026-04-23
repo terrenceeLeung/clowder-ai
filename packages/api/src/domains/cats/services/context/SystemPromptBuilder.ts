@@ -17,12 +17,15 @@ import {
 } from '../../../../config/cat-config-loader.js';
 import { getCatModel } from '../../../../config/cat-models.js';
 import { buildGuidePromptLines } from '../../../guides/GuidePromptSection.js';
+import type { KnowledgeModule } from '../../../memory/knowledge-map.js';
 import type {
   BootcampStateV1,
+  FeynmanStateV1,
   ThreadMentionRoutingFeedback,
   ThreadParticipantActivity,
   ThreadRoutingPolicyV1,
 } from '../stores/ports/ThreadStore.js';
+import { buildFeynmanPromptLines } from './FeynmanPromptSection.js';
 import { RICH_BLOCK_SHORT } from './rich-block-rules.js';
 
 /**
@@ -139,6 +142,12 @@ export interface InvocationContext {
    * Populated from SqliteEvidenceStore.queryAlwaysOn() at bootstrap time.
    */
   alwaysOnDocs?: readonly { anchor: string; title: string; summary: string }[];
+  /**
+   * F169 Phase A-2: Feynman teaching state + resolved module metadata.
+   * When present, cats inject feynman teaching protocol.
+   */
+  feynmanState?: FeynmanStateV1;
+  feynmanModule?: KnowledgeModule;
 }
 
 /** Get all cat configs — registry first, fallback to static CAT_CONFIGS */
@@ -678,6 +687,17 @@ export function buildInvocationContext(context: InvocationContext): string {
       `Bootcamp Mode:${threadPart} phase=${phase}${leadCat ? ` leadCat=${leadCat}` : ''}${selectedTaskId ? ` task=${selectedTaskId}` : ''}`,
       '→ Load bootcamp-guide skill and act per current phase.',
       '',
+    );
+  }
+
+  // F169 Phase A-2: Feynman teaching mode
+  if (context.feynmanState && context.feynmanModule && context.feynmanState.status === 'active') {
+    lines.push(
+      ...buildFeynmanPromptLines({
+        feynmanState: context.feynmanState,
+        module: context.feynmanModule,
+        threadId: context.threadId,
+      }),
     );
   }
 

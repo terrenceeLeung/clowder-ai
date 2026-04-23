@@ -26,6 +26,7 @@ export class MarkerQueue implements IMarkerQueue {
       createdAt: new Date().toISOString(),
     };
     if (input.targetKind) marker.targetKind = input.targetKind;
+    if (input.metadata && Object.keys(input.metadata).length > 0) marker.metadata = input.metadata;
 
     this.writeYaml(marker);
     return marker;
@@ -95,6 +96,12 @@ export class MarkerQueue implements IMarkerQueue {
       `created_at: ${marker.createdAt}`,
     ];
     if (marker.targetKind) lines.push(`target_kind: ${marker.targetKind}`);
+    if (marker.metadata && Object.keys(marker.metadata).length > 0) {
+      lines.push('metadata:');
+      for (const [k, v] of Object.entries(marker.metadata)) {
+        lines.push(`  ${k}: ${v}`);
+      }
+    }
     lines.push(`content: |`);
     for (const line of marker.content.split('\n')) {
       lines.push(`  ${line}`);
@@ -106,6 +113,8 @@ export class MarkerQueue implements IMarkerQueue {
     const fields: Record<string, string> = {};
     let contentLines: string[] = [];
     let inContent = false;
+    let inMetadata = false;
+    const metadata: Record<string, string> = {};
 
     for (const line of text.split('\n')) {
       if (inContent) {
@@ -117,10 +126,22 @@ export class MarkerQueue implements IMarkerQueue {
           inContent = false;
         }
       }
+      if (inMetadata && !inContent) {
+        if (line.startsWith('  ')) {
+          const match = line.match(/^\s+(\w+):\s*(.+)$/);
+          if (match?.[1] && match[2]) {
+            metadata[match[1]] = match[2].trim();
+          }
+          continue;
+        }
+        inMetadata = false;
+      }
       if (!inContent) {
         if (line.startsWith('content: |')) {
           inContent = true;
           contentLines = [];
+        } else if (line.trim() === 'metadata:') {
+          inMetadata = true;
         } else {
           const match = line.match(/^(\w+):\s*(.+)$/);
           if (match?.[1] && match[2]) {
@@ -147,6 +168,7 @@ export class MarkerQueue implements IMarkerQueue {
     };
     const tk = fields.target_kind;
     if (tk) marker.targetKind = tk as NonNullable<Marker['targetKind']>;
+    if (Object.keys(metadata).length > 0) marker.metadata = metadata;
     return marker;
   }
 }

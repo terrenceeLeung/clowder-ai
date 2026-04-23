@@ -168,6 +168,8 @@ export interface AgentRouterOptions {
   evidenceStore?: import('../../../../memory/interfaces.js').IEvidenceStore;
   /** F150: Tool usage counter */
   toolUsageCounter?: import('../../tool-usage/ToolUsageCounter.js').ToolUsageCounter;
+  /** F169 Phase A-2: Knowledge map for feynman module resolution */
+  knowledgeMap?: import('../../../../memory/knowledge-map.js').KnowledgeMap;
   /** F155 B-4: Independent guide session store */
   guideSessionStore?: import('../../../../guides/GuideSessionRepository.js').IGuideSessionStore;
   /** F155 B-6: Dismiss tracker for guide offer suppression */
@@ -214,6 +216,8 @@ export class AgentRouter {
   private evidenceStore?: import('../../../../memory/interfaces.js').IEvidenceStore;
   /** F150 */
   private toolUsageCounter?: import('../../tool-usage/ToolUsageCounter.js').ToolUsageCounter;
+  /** F169 Phase A-2 */
+  private knowledgeMap?: import('../../../../memory/knowledge-map.js').KnowledgeMap;
   /** F155 B-4 */
   private guideSessionStore?: import('../../../../guides/GuideSessionRepository.js').IGuideSessionStore;
   /** F155 B-6 */
@@ -256,12 +260,17 @@ export class AgentRouter {
     this.packStore = options.packStore;
     this.evidenceStore = options.evidenceStore;
     this.toolUsageCounter = options.toolUsageCounter;
+    this.knowledgeMap = options.knowledgeMap;
     this.guideSessionStore = options.guideSessionStore;
     this.dismissTracker = options.dismissTracker;
   }
 
   refreshFromRegistry(agentRegistry: AgentRegistry): void {
     this.rebuildRuntimeCaches(agentRegistry);
+  }
+
+  setKnowledgeMap(map: import('../../../../memory/knowledge-map.js').KnowledgeMap): void {
+    this.knowledgeMap = map;
   }
 
   private isRoutableCat(catId: string | null | undefined): catId is CatId {
@@ -686,6 +695,7 @@ export class AgentRouter {
       ...(this.packStore ? { packStore: this.packStore } : {}),
       ...(this.evidenceStore ? { evidenceStore: this.evidenceStore } : {}),
       ...(this.toolUsageCounter ? { toolUsageCounter: this.toolUsageCounter } : {}),
+      ...(this.knowledgeMap ? { knowledgeMap: this.knowledgeMap } : {}),
     };
   }
 

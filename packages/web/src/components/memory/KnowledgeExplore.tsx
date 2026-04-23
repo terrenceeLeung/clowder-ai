@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { API_URL } from '../../utils/api-client';
 import { ModuleGraph } from './ModuleGraph';
 import { buildExploreApiUrl } from './module-graph-utils';
 
@@ -17,6 +18,7 @@ export function KnowledgeExplore() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [startingTour, setStartingTour] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(buildExploreApiUrl())
@@ -28,6 +30,25 @@ export function KnowledgeExplore() {
 
   const handleSelect = useCallback((moduleId: string) => {
     setSelectedModule((prev) => (prev === moduleId ? null : moduleId));
+  }, []);
+
+  const handleStartTour = useCallback(async (moduleId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStartingTour(moduleId);
+    try {
+      const res = await fetch(`${API_URL}/api/feynman/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ module: moduleId }),
+      });
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      const data = (await res.json()) as { thread: { id: string }; reused: boolean };
+      window.location.href = `/thread/${data.thread.id}`;
+    } catch (err: unknown) {
+      setError(`导览启动失败: ${String(err)}`);
+    } finally {
+      setStartingTour(null);
+    }
   }, []);
 
   if (loading) {
@@ -67,6 +88,15 @@ export function KnowledgeExplore() {
             <p className="mt-1 text-xs text-[#9A866F]">
               {mod.anchorCount} anchors · {mod.evidenceCount} evidence docs
             </p>
+            <button
+              type="button"
+              disabled={startingTour === mod.id}
+              onClick={(e) => handleStartTour(mod.id, e)}
+              className="mt-2 rounded-lg bg-cocreator-primary px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-cocreator-primary/90 disabled:opacity-50"
+              data-testid={`explore-tour-${mod.id}`}
+            >
+              {startingTour === mod.id ? '启动中...' : '开始导览'}
+            </button>
           </button>
         ))}
       </div>

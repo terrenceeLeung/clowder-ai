@@ -137,6 +137,7 @@ export interface Marker {
   status: MarkerStatus;
   targetKind?: EvidenceKind;
   createdAt: string;
+  metadata?: Record<string, string>;
 }
 
 export interface SearchOptions {

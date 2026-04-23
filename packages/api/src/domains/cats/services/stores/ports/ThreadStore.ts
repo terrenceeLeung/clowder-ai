@@ -134,6 +134,8 @@ export interface Thread {
   connectorHubState?: ConnectorHubStateV1;
   /** F168: Auto-switch workspace panel when this thread is opened. */
   preferredWorkspaceMode?: 'dev' | 'recall' | 'schedule' | 'tasks' | 'community';
+  /** F169: Feynman teaching session state — knowledge tour per module. */
+  feynmanState?: FeynmanStateV1;
 }
 
 /** F088 Phase G: Connector Hub thread state for IM command isolation. */
@@ -174,6 +176,18 @@ export interface BootcampStateV1 {
   advancedFeatures?: Record<string, 'available' | 'unavailable' | 'skipped'>;
   startedAt: number;
   completedAt?: number;
+}
+
+/** F169: Feynman teaching session status */
+export type FeynmanStatus = 'active' | 'completed';
+
+/** F169: Feynman teaching state — thread-level metadata for knowledge tour */
+export interface FeynmanStateV1 {
+  v: 1;
+  module: string;
+  anchors: string[];
+  status: FeynmanStatus;
+  startedAt: number;
 }
 
 /** F155: Guide session status */
@@ -270,6 +284,8 @@ export interface IThreadStore {
   updateBootcampState(threadId: string, state: BootcampStateV1 | null): void | Promise<void>;
   /** F088 Phase G: Get/update connector hub state. */
   updateConnectorHubState(threadId: string, state: ConnectorHubStateV1 | null): void | Promise<void>;
+  /** F169: Get/update Feynman teaching state. */
+  updateFeynmanState(threadId: string, state: FeynmanStateV1 | null): void | Promise<void>;
   updateLastActive(threadId: string): void | Promise<void>;
   delete(threadId: string): boolean | Promise<boolean>;
   /** F095 Phase D: Soft-delete — mark thread as deleted without removing data. */
@@ -586,6 +602,16 @@ export class ThreadStore implements IThreadStore {
       delete thread.connectorHubState;
     } else {
       thread.connectorHubState = state;
+    }
+  }
+
+  updateFeynmanState(threadId: string, state: FeynmanStateV1 | null): void {
+    const thread = this.get(threadId);
+    if (!thread) return;
+    if (state === null) {
+      delete thread.feynmanState;
+    } else {
+      thread.feynmanState = state;
     }
   }
 

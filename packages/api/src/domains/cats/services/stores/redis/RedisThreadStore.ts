@@ -16,6 +16,7 @@ import type { RedisClient } from '@cat-cafe/shared/utils';
 import type {
   BootcampStateV1,
   ConnectorHubStateV1,
+  FeynmanStateV1,
   IThreadStore,
   MentionActionabilityMode,
   Thread,
@@ -455,6 +456,15 @@ export class RedisThreadStore implements IThreadStore {
     }
   }
 
+  async updateFeynmanState(threadId: string, state: FeynmanStateV1 | null): Promise<void> {
+    const key = ThreadKeys.detail(threadId);
+    if (state === null) {
+      await this.deleteDetailFields(key, 'feynmanState');
+    } else {
+      await this.setDetailFields(key, 'feynmanState', JSON.stringify(state));
+    }
+  }
+
   async updateBubbleDisplay(
     threadId: string,
     field: 'bubbleThinking' | 'bubbleCli',
@@ -865,6 +875,9 @@ export class RedisThreadStore implements IThreadStore {
     if (thread.connectorHubState) {
       result.connectorHubState = JSON.stringify(thread.connectorHubState);
     }
+    if (thread.feynmanState) {
+      result.feynmanState = JSON.stringify(thread.feynmanState);
+    }
     if (thread.preferredWorkspaceMode) {
       result.preferredWorkspaceMode = thread.preferredWorkspaceMode;
     }
@@ -953,6 +966,16 @@ export class RedisThreadStore implements IThreadStore {
         const parsed = JSON.parse(data.connectorHubState);
         if (parsed && typeof parsed === 'object' && parsed.v === 1) {
           result.connectorHubState = parsed as ConnectorHubStateV1;
+        }
+      } catch {
+        /* ignore malformed JSON */
+      }
+    }
+    if (data.feynmanState) {
+      try {
+        const parsed = JSON.parse(data.feynmanState);
+        if (parsed && typeof parsed === 'object' && parsed.v === 1) {
+          result.feynmanState = parsed as FeynmanStateV1;
         }
       } catch {
         /* ignore malformed JSON */
