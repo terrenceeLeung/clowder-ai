@@ -892,6 +892,15 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     return edges;
   }
 
+  listAllAnchors(): { anchor: string; kind: string; title: string }[] {
+    this.ensureOpen();
+    return this.db!.prepare('SELECT anchor, kind, title FROM evidence_docs').all() as Array<{
+      anchor: string;
+      kind: string;
+      title: string;
+    }>;
+  }
+
   // ── Passage operations ─────────────────────────────────────────────
 
   /** Search passage_fts and return matching passages with doc context. */

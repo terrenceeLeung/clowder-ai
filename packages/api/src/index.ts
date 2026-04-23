@@ -1541,6 +1541,7 @@ async function main(): Promise<void> {
       evidenceStore: memoryServices.evidenceStore,
       knowledgeMap,
       listEdgesForAnchors: (anchors) => memoryServices.store.listEdgesForAnchors(anchors),
+      listAllAnchors: () => memoryServices.store.listAllAnchors(),
     });
   } catch {
     app.log.warn('F169: knowledge-map.yaml not found, graph routes disabled');

@@ -2,6 +2,7 @@ version: 1
 modules:
   memory:
     name: 记忆与知识工程
+    description: 记忆存储与检索（F102）、元数据三轴治理（F163）、跨项目知识出征（F152）、猫自进化（F100）、知识图谱与费曼导览（F169）
     anchors:
       - F102
       - F163
@@ -12,6 +13,7 @@ modules:
       - doc:decisions/005-hindsight-integration-decisions
   collaboration:
     name: 多猫协作
+    description: 多猫协作协议、任务分配与跟踪、跨猫 mention 与沟通、技能分工
     anchors:
       - F002
       - F027
@@ -22,6 +24,7 @@ modules:
       - doc:decisions/009-cat-cafe-skills-distribution
   games:
     name: 游戏系统
+    description: 猫的社交游戏机制、互动小游戏、成就与排行、趣味体验系统
     anchors:
       - F101
       - F090
@@ -31,6 +34,7 @@ modules:
       - F044
   messaging:
     name: 消息与富交互
+    description: 消息发送接收、富文本与 rich block、消息引用与回复、对话可变性与调用生命周期
     anchors:
       - F022
       - F109
@@ -41,6 +45,7 @@ modules:
       - doc:decisions/008-conversation-mutability-and-invocation-lifecycle
   guidance:
     name: 引导与教学
+    description: 用户引导 Guide 系统、教学流程、新手 Bootcamp、技能学习
     anchors:
       - F155
       - F110
@@ -48,6 +53,7 @@ modules:
       - F056
   integration:
     name: 外部连接与生态
+    description: 外部服务对接（MCP connector）、第三方 API 集成、Webhook、推送通知、用户级 Hook
     anchors:
       - F146
       - F151
@@ -58,6 +64,7 @@ modules:
       - doc:decisions/019-user-level-hooks-architecture
   infrastructure:
     name: 基础设施
+    description: 构建工具链、目录卫生、配置管理、运行时诊断、CLI 基础设施
     anchors:
       - F048
       - F113
@@ -69,6 +76,7 @@ modules:
       - doc:decisions/010-directory-hygiene-anti-rot
   identity:
     name: 猫猫身份与治理
+    description: 猫的身份定义与人设、角色权限治理、猫的生命周期、级联删除语义
     anchors:
       - F127
       - F038

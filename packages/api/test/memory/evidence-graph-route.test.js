@@ -20,10 +20,12 @@ const MOCK_MAP = {
   modules: {
     memory: {
       name: '记忆与知识工程',
+      description: '记忆存储与检索、元数据治理、知识图谱',
       anchors: ['docs/features/F102.md', 'docs/features/F163.md'],
     },
     games: {
       name: '游戏系统',
+      description: '猫的社交游戏机制',
       anchors: ['docs/features/F090.md'],
     },
   },
@@ -57,6 +59,7 @@ describe('GET /api/evidence/explore', () => {
     assert.equal(body.modules.length, 2);
     const mem = body.modules.find((m) => m.id === 'memory');
     assert.equal(mem.name, '记忆与知识工程');
+    assert.equal(mem.description, '记忆存储与检索、元数据治理、知识图谱');
     assert.equal(mem.anchorCount, 2);
     assert.equal(mem.evidenceCount, 2);
   });
@@ -203,5 +206,68 @@ describe('GET /api/evidence/graph', () => {
     const body = res.json();
     assert.equal(body.nodes.length, 1);
     assert.deepEqual(body.edges, []);
+  });
+});
+
+describe('GET /api/evidence/unclassified', () => {
+  it('returns anchors not in any module, filtering out thread/session kinds', async () => {
+    const app = Fastify();
+    await app.register(evidenceGraphRoutes, {
+      evidenceStore: createMockStore(),
+      knowledgeMap: MOCK_MAP,
+      listAllAnchors: () => [
+        { anchor: 'docs/features/F102.md', kind: 'feature', title: 'Memory Adapter' },
+        { anchor: 'docs/features/F090.md', kind: 'feature', title: 'Game Engine' },
+        { anchor: 'docs/features/F999.md', kind: 'feature', title: 'New Feature' },
+        { anchor: 'doc:decisions/042', kind: 'decision', title: 'Some Decision' },
+        { anchor: 'thread:abc123', kind: 'thread', title: 'Some Thread' },
+        { anchor: 'session:xyz789', kind: 'session', title: 'Some Session' },
+      ],
+    });
+    await app.ready();
+
+    const res = await app.inject({ method: 'GET', url: '/api/evidence/unclassified' });
+    assert.equal(res.statusCode, 200);
+    const body = res.json();
+    assert.equal(body.total, 4);
+    assert.equal(body.classifiedCount, 2);
+    assert.equal(body.unclassified.length, 2);
+    const anchors = body.unclassified.map((u) => u.anchor);
+    assert.ok(anchors.includes('docs/features/F999.md'));
+    assert.ok(anchors.includes('doc:decisions/042'));
+    assert.ok(!anchors.includes('thread:abc123'));
+    assert.ok(!anchors.includes('session:xyz789'));
+  });
+
+  it('returns 501 when listAllAnchors not provided', async () => {
+    const app = Fastify();
+    await app.register(evidenceGraphRoutes, {
+      evidenceStore: createMockStore(),
+      knowledgeMap: MOCK_MAP,
+    });
+    await app.ready();
+
+    const res = await app.inject({ method: 'GET', url: '/api/evidence/unclassified' });
+    assert.equal(res.statusCode, 501);
+  });
+
+  it('returns empty when all classifiable anchors classified', async () => {
+    const app = Fastify();
+    await app.register(evidenceGraphRoutes, {
+      evidenceStore: createMockStore(),
+      knowledgeMap: MOCK_MAP,
+      listAllAnchors: () => [
+        { anchor: 'docs/features/F102.md', kind: 'feature', title: 'Memory Adapter' },
+        { anchor: 'docs/features/F090.md', kind: 'feature', title: 'Game Engine' },
+        { anchor: 'thread:t1', kind: 'thread', title: 'Thread' },
+      ],
+    });
+    await app.ready();
+
+    const res = await app.inject({ method: 'GET', url: '/api/evidence/unclassified' });
+    const body = res.json();
+    assert.equal(body.total, 2);
+    assert.equal(body.classifiedCount, 2);
+    assert.equal(body.unclassified.length, 0);
   });
 });

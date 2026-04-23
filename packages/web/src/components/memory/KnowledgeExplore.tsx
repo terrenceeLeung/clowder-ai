@@ -7,6 +7,7 @@ import { buildExploreApiUrl } from './module-graph-utils';
 interface ModuleOverview {
   id: string;
   name: string;
+  description?: string;
   anchorCount: number;
   evidenceCount: number;
 }
@@ -62,6 +63,7 @@ export function KnowledgeExplore() {
             data-testid={`explore-module-${mod.id}`}
           >
             <h3 className="text-sm font-bold text-[#8B6F47]">{mod.name}</h3>
+            {mod.description && <p className="mt-0.5 text-[10px] leading-tight text-[#B5A18C]">{mod.description}</p>}
             <p className="mt-1 text-xs text-[#9A866F]">
               {mod.anchorCount} anchors · {mod.evidenceCount} evidence docs
             </p>
