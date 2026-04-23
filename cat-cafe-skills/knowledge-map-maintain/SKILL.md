@@ -49,7 +49,9 @@ triggers:
 分类规则：
 1. anchor 以 `F` 开头 + 数字 → feature，对比各模块已有 feature 的主题归类
 2. anchor 以 `doc:decisions/` 开头 → decision，对比各模块已有 decision 的领域归类
-3. 其他格式（lesson、research、session 等）→ 根据 title 语义与模块 description 匹配
+3. 其他格式（lesson、research、plan、pack-knowledge）→ 根据 title 语义与模块 description 匹配
+
+注意：thread 和 session 类 anchor 已被 API 过滤，不会出现在未分类列表中。
 
 分类结果分两类：
 - **可归入现有模块**：指定目标模块 + 理由
