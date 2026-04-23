@@ -18,7 +18,6 @@ import { getCatContextBudget } from './config/cat-budgets.js';
 import {
   bootstrapDefaultCatCatalog,
   getAcpConfig,
-  getAllCatIdsFromConfig,
   getConfigSessionStrategy,
   isCatAvailable,
   toAllCatConfigs,
@@ -81,6 +80,7 @@ import { startTtsCacheCleaner } from './domains/cats/services/tts/tts-cache-clea
 import { initVoiceBlockSynthesizer } from './domains/cats/services/tts/VoiceBlockSynthesizer.js';
 import type { AgentService } from './domains/cats/services/types.js';
 import { ActivityTracker } from './domains/health/ActivityTracker.js';
+import { loadKnowledgeMap } from './domains/memory/knowledge-map.js';
 import { PortDiscoveryService } from './domains/preview/port-discovery.js';
 import { collectRuntimePorts } from './domains/preview/port-validator.js';
 import { PreviewGateway } from './domains/preview/preview-gateway.js';
@@ -112,6 +112,7 @@ import { sessionAuthPlugin, sessionRoute } from './infrastructure/session-auth.j
 import { SocketManager } from './infrastructure/websocket/index.js';
 import { configSecretsRoutes } from './routes/config-secrets.js';
 import { connectorWebhookRoutes } from './routes/connector-webhooks.js';
+import { evidenceGraphRoutes } from './routes/evidence-graph.js';
 import { gameRoutes } from './routes/games.js';
 import {
   accountsRoutes,
@@ -182,8 +183,6 @@ import {
   workspaceGitRoutes,
   workspaceRoutes,
 } from './routes/index.js';
-import { loadKnowledgeMap } from './domains/memory/knowledge-map.js';
-import { evidenceGraphRoutes } from './routes/evidence-graph.js';
 import { knowledgeFeedRoutes } from './routes/knowledge-feed.js';
 import { marketplaceRoutes } from './routes/marketplace.js';
 import { previewRoutes } from './routes/preview.js';
@@ -711,8 +710,8 @@ async function main(): Promise<void> {
           const proxyPort = process.env.ANTHROPIC_PROXY_PORT || '9877';
           // Read first upstream slug from proxy-upstreams.json
           try {
-            const { readFileSync } = await import('fs');
-            const { resolve: resolvePath } = await import('path');
+            const { readFileSync } = await import('node:fs');
+            const { resolve: resolvePath } = await import('node:path');
             const upstreamsPath =
               process.env.ANTHROPIC_PROXY_UPSTREAMS_PATH ||
               resolvePath(process.cwd(), '.cat-cafe', 'proxy-upstreams.json');
@@ -739,7 +738,7 @@ async function main(): Promise<void> {
         getThreadLastActivity: async (threadId) => {
           const msgs = await messageStore.getByThread(threadId, 1, 'default-user');
           if (msgs.length === 0) return null;
-          return { threadId, lastMessageAt: msgs[0]!.timestamp };
+          return { threadId, lastMessageAt: msgs[0]?.timestamp };
         },
         getMessagesAfterWatermark: async (threadId, afterMessageId, limit) => {
           // P1 fix (砚砚 review): use getByThreadAfter for true "after watermark" semantics,

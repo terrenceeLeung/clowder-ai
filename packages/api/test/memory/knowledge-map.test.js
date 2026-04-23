@@ -17,10 +17,7 @@ modules:
     assert.equal(result.version, 1);
     assert.deepEqual(Object.keys(result.modules), ['memory']);
     assert.equal(result.modules.memory.name, '记忆系统');
-    assert.deepEqual(result.modules.memory.anchors, [
-      'docs/features/F102.md',
-      'docs/features/F163.md',
-    ]);
+    assert.deepEqual(result.modules.memory.anchors, ['docs/features/F102.md', 'docs/features/F163.md']);
   });
 
   it('parses multiple modules', () => {
@@ -47,10 +44,7 @@ modules:
   });
 
   it('throws on empty modules', () => {
-    assert.throws(
-      () => parseKnowledgeMap('version: 1\nmodules: {}'),
-      /module/i,
-    );
+    assert.throws(() => parseKnowledgeMap('version: 1\nmodules: {}'), /module/i);
   });
 
   it('throws on module without anchors', () => {
@@ -59,8 +53,7 @@ modules:
   });
 
   it('throws on module without name', () => {
-    const yaml =
-      'version: 1\nmodules:\n  m:\n    anchors:\n      - docs/x.md';
+    const yaml = 'version: 1\nmodules:\n  m:\n    anchors:\n      - docs/x.md';
     assert.throws(() => parseKnowledgeMap(yaml), /name/i);
   });
 });
