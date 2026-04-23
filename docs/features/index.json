@@ -1037,7 +1037,13 @@
       "name": "Community Operations Board — 社区事务编排引擎",
       "status": "in-progress | **Owner**: Ragdoll | **Priority**: P1",
       "file": "F168-community-ops-board.md"
+    },
+    {
+      "id": "F169",
+      "name": "Feynman Cat — 费曼式知识导览与知识图谱可视化",
+      "status": "planning | **Owner**: Ragdoll | **Priority**: P1",
+      "file": "F169-feynman-cat.md"
     }
   ],
-  "generated_at": "2026-04-19T14:38:05.641Z"
+  "generated_at": "2026-04-23T03:22:41.264Z"
 }
