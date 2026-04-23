@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * XiaoYi Push API 探针 — F151 真机 payload 变体验证。
  *
@@ -15,9 +16,9 @@
  * 多次发送之间请间隔 ≥15s（华为 Push 限流）。
  */
 
+import { execSync } from 'node:child_process';
 import { createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { execSync } from 'node:child_process';
 
 const PUSH_ENDPOINT = 'https://hag.cloud.huawei.com/open-ability-agent/v1/agent-webhook';
 const REDIS_PORT = 6399;
@@ -52,10 +53,9 @@ function sign(sk, ts) {
 }
 
 function readPushIdsFromRedis(agentId) {
-  const out = execSync(
-    `redis-cli -p ${REDIS_PORT} SMEMBERS 'cat-cafe:xiaoyi:pushIds:${agentId}'`,
-    { encoding: 'utf8' },
-  );
+  const out = execSync(`redis-cli -p ${REDIS_PORT} SMEMBERS 'cat-cafe:xiaoyi:pushIds:${agentId}'`, {
+    encoding: 'utf8',
+  });
   return out.trim().split('\n').filter(Boolean);
 }
 
@@ -116,9 +116,7 @@ function buildV4({ text, cfg, pushId }) {
 function buildV5({ text, cfg, pushId }) {
   // parts 显式声明 mimeType: text/markdown
   const v0 = buildV0({ text, cfg, pushId });
-  v0.body.result.artifacts[0].parts = [
-    { kind: 'text', text, mimeType: 'text/markdown' },
-  ];
+  v0.body.result.artifacts[0].parts = [{ kind: 'text', text, mimeType: 'text/markdown' }];
   return v0;
 }
 
@@ -176,7 +174,9 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   if (!args.env) {
-    console.error('Usage: node scripts/probe-xiaoyi-push.mjs --env <path> [--variant V0..V7] [--text ...] [--pushid ...]');
+    console.error(
+      'Usage: node scripts/probe-xiaoyi-push.mjs --env <path> [--variant V0..V7] [--text ...] [--pushid ...]',
+    );
     process.exit(2);
   }
 
@@ -187,7 +187,9 @@ async function main() {
     apiId: env.XIAOYI_API_ID,
     agentId: env.XIAOYI_AGENT_ID,
   };
-  const missing = Object.entries(cfg).filter(([_, v]) => !v).map(([k]) => `XIAOYI_${k.toUpperCase().replace('AGENTID', 'AGENT_ID').replace('APIID', 'API_ID')}`);
+  const missing = Object.entries(cfg)
+    .filter(([_, v]) => !v)
+    .map(([k]) => `XIAOYI_${k.toUpperCase().replace('AGENTID', 'AGENT_ID').replace('APIID', 'API_ID')}`);
   if (missing.length) {
     console.error(`Missing env: ${missing.join(', ')}`);
     process.exit(2);

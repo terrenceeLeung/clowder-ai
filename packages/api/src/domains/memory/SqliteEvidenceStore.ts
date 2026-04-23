@@ -869,6 +869,29 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     });
   }
 
+  listEdgesForAnchors(anchors: string[]): { from: string; to: string; relation: string }[] {
+    if (anchors.length === 0) return [];
+    this.ensureOpen();
+    const anchorSet = new Set(anchors);
+    const stmt = this.db!.prepare(
+      `SELECT to_anchor AS other, relation FROM edges WHERE from_anchor = ?
+       UNION
+       SELECT from_anchor AS other, relation FROM edges WHERE to_anchor = ?`,
+    );
+    const edges: { from: string; to: string; relation: string }[] = [];
+    const seen = new Set<string>();
+    for (const anchor of anchors) {
+      for (const row of stmt.all(anchor, anchor) as Array<{ other: string; relation: string }>) {
+        if (!anchorSet.has(row.other)) continue;
+        const key = `${[anchor, row.other].sort().join('::')}::${row.relation}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        edges.push({ from: anchor, to: row.other, relation: row.relation });
+      }
+    }
+    return edges;
+  }
+
   // ── Passage operations ─────────────────────────────────────────────
 
   /** Search passage_fts and return matching passages with doc context. */
