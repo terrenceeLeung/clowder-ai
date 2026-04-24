@@ -2,29 +2,43 @@ version: 1
 modules:
   memory:
     name: 记忆与知识工程
-    description: 记忆存储与检索（F102）、元数据三轴治理（F163）、跨项目知识出征（F152）、猫自进化（F100）、知识图谱与费曼导览（F169）
+    description: 记忆存储与检索、元数据三轴治理、跨项目知识出征、猫自进化、知识图谱与费曼导览、信号学习
     anchors:
       - F102
       - F163
       - F152
       - F100
       - F169
+      - F003
+      - F091
       - "012"
       - doc:decisions/005-hindsight-integration-decisions
   collaboration:
     name: 多猫协作
-    description: 多猫协作协议、任务分配与跟踪、跨猫 mention 与沟通、技能分工
+    description: 多猫协作协议、A2A 路由与链条质量、任务分配与跟踪、并发执行、外部 Agent 接入、投票系统
     anchors:
       - F002
       - F027
       - F055
       - F167
       - F037
+      - F005
+      - F024
+      - F032
+      - F050
+      - F052
+      - F064
+      - F078
+      - F079
+      - F086
+      - F108
+      - F122
+      - F128
       - doc:decisions/002-collaboration-protocol
       - doc:decisions/009-cat-cafe-skills-distribution
   games:
     name: 游戏系统
-    description: 猫的社交游戏机制、互动小游戏、成就与排行、趣味体验系统
+    description: 猫的社交游戏机制、互动小游戏、成就与排行、语音陪伴体验、趣味体验系统
     anchors:
       - F101
       - F090
@@ -32,9 +46,11 @@ modules:
       - F119
       - F093
       - F044
+      - F075
+      - F092
   messaging:
     name: 消息与富交互
-    description: 消息发送接收、富文本与 rich block、消息引用与回复、对话可变性与调用生命周期
+    description: 消息投递生命周期、富文本与 rich block、气泡渲染与状态机、队列调度、毛线球任务、CLI 事件流
     anchors:
       - F022
       - F109
@@ -42,18 +58,32 @@ modules:
       - F034
       - F035
       - F039
+      - F009
+      - F030
+      - F047
+      - F060
+      - F081
+      - F096
+      - F097
+      - F098
+      - F117
+      - F123
+      - F160
       - doc:decisions/008-conversation-mutability-and-invocation-lifecycle
   guidance:
     name: 引导与教学
-    description: 用户引导 Guide 系统、教学流程、新手 Bootcamp、技能学习
+    description: 用户引导 Guide 系统、教学流程、新手 Bootcamp、训练营、功能可发现性
     anchors:
       - F155
       - F110
       - F165
       - F056
+      - F012
+      - F087
+      - F106
   integration:
     name: 外部连接与生态
-    description: 外部服务对接（MCP connector）、第三方 API 集成、Webhook、推送通知、用户级 Hook
+    description: MCP 市场与连接器、渠道网关（飞书/钉钉/企微/微信）、GitHub 信号、Agent 接入、跨平台 slash 命令
     anchors:
       - F146
       - F151
@@ -61,10 +91,26 @@ modules:
       - F021
       - F054
       - F129
+      - F043
+      - F061
+      - F088
+      - F105
+      - F132
+      - F133
+      - F134
+      - F135
+      - F137
+      - F140
+      - F141
+      - F142
+      - F145
+      - F157
+      - F158
+      - F159
       - doc:decisions/019-user-level-hooks-architecture
   infrastructure:
     name: 基础设施
-    description: 构建工具链、目录卫生、配置管理、运行时诊断、CLI 基础设施
+    description: 构建工具链、配置管理与热更新、运行时引擎（Session/Dispatch/启动链）、可观测性、部署与安全
     anchors:
       - F048
       - F113
@@ -73,14 +119,100 @@ modules:
       - F153
       - F156
       - F025
+      - F001
+      - F004
+      - F008
+      - F023
+      - F033
+      - F045
+      - F051
+      - F065
+      - F074
+      - F082
+      - F115
+      - F118
+      - F125
+      - F130
+      - F136
+      - F139
+      - F148
+      - F150
+      - F161
+      - F164
       - doc:decisions/010-directory-hygiene-anti-rot
   identity:
     name: 猫猫身份与治理
-    description: 猫的身份定义与人设、角色权限治理、猫的生命周期、级联删除语义
+    description: 猫的身份定义与人设、模式系统、角色权限治理、路由个性化、猫的生命周期
     anchors:
       - F127
       - F038
       - F077
       - F067
       - F168
+      - F011
+      - F016
+      - F053
+      - F062
+      - F154
+      - F166
       - doc:decisions/007-cascade-delete-semantics
+  voice:
+    name: 语音与多模态
+    description: 语音合成管线（TTS）、流式分句与播放队列、猫猫独立声线、本地全感知、Apple 生态语音交互
+    anchors:
+      - F066
+      - F103
+      - F104
+      - F111
+      - F112
+      - F124
+  hub_ux:
+    name: Hub 前端体验
+    description: Hub 界面交互与布局、Thread 导航与搜索、Sidebar、Workspace、内嵌浏览器、终端集成、前端 UX 迭代
+    anchors:
+      - F006
+      - F007
+      - F010
+      - F017
+      - F018
+      - F019
+      - F026
+      - F029
+      - F057
+      - F063
+      - F068
+      - F069
+      - F071
+      - F072
+      - F080
+      - F089
+      - F095
+      - F099
+      - F120
+      - F121
+      - F131
+      - F147
+  governance:
+    name: 治理与流程
+    description: 愿景守护协议、SOP 自闭环、Design Gate、审计日志、Mission Control、开源运营、文档债务治理
+    anchors:
+      - F013
+      - F015
+      - F028
+      - F031
+      - F040
+      - F041
+      - F042
+      - F046
+      - F049
+      - F058
+      - F059
+      - F070
+      - F073
+      - F083
+      - F084
+      - F085
+      - F094
+      - F114
+      - F116
+      - F162

@@ -45,6 +45,15 @@ describe('buildFeynmanPromptLines', () => {
     assert.ok(!text.includes('结课门槛'), 'should NOT have hard completion threshold (non-LMS)');
   });
 
+  it('includes progressive disclosure: evidence for overview, spec for depth', () => {
+    const lines = buildFeynmanPromptLines(baseInput);
+    const text = lines.join('\n');
+    assert.ok(text.includes('feature spec'), 'should instruct reading feature spec');
+    assert.ok(text.includes('docs/features/'), 'should reference spec path');
+    assert.ok(text.includes('索引和补充佐证'), 'should position evidence as index/supplement');
+    assert.ok(text.includes('一手设计文档'), 'should position spec as primary source');
+  });
+
   it('includes anti-sycophancy guardrails (AC-A2-10)', () => {
     const lines = buildFeynmanPromptLines(baseInput);
     const text = lines.join('\n');

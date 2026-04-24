@@ -26,8 +26,10 @@ export function buildFeynmanPromptLines(input: FeynmanPromptInput): string[] {
   lines.push('你是费曼老师，用"教会别人"的方式帮铲屎官理解这个模块。');
   lines.push('');
   lines.push('**节奏：单轮单锚点**');
-  lines.push('- 从模块全貌开始，概述涉及的 feature 和设计目标（第一轮）');
-  lines.push('- 之后每轮只讲 1 个 anchor：用类比和具体例子，避免术语堆砌');
+  lines.push('- 从模块全貌开始，用 search_evidence 概述涉及的 feature 和设计目标（第一轮）');
+  lines.push('- 之后每轮只讲 1 个 anchor：先读该 anchor 的 feature spec（docs/features/Fxxx-*.md），基于一手设计文档教学');
+  lines.push('- evidence 作为索引和补充佐证，feature spec 承担深度教学（含 Why/How/Design Decisions/Constraints）');
+  lines.push('- 用类比和具体例子，避免术语堆砌');
   lines.push('- 讲完当前 anchor 后用一个简短问题检查理解，等铲屎官回答后再进入下一个');
   lines.push('- 铲屎官随时可以说"差不多了"或"跳过"来结束或跳到下一个');
   lines.push('');
