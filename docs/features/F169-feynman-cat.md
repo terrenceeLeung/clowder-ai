@@ -153,11 +153,17 @@ replay_question 存入 marker metadata 但不执行验证。MVP 飞轮是 discov
 
 **Why**：模块是产品叙事不是数据分类，新增模块需 CVO 审批。但 anchor 归类是机械劳动，LLM 基于模块 description + 已有 anchors 上下文即可准确匹配。Maintainer 决定「何时整理书架」，LLM 帮忙「把书放对位置」。（CVO 2026-04-23 确认，替代原纯手工方案）
 
-### DD-6：导览内容来源双层
+### DD-6：导览内容来源三层
 
-evidence_docs 做检索入口（找方向），docs/*.md 做真相源（补细节）。
+evidence 做索引和补充佐证，feature spec（`docs/features/`）做深度教学一手源，按 anchor 类型分流：F→spec, doc:→文档路径, 其他→evidence。
 
-**Why**：和猫日常回答问题的模式一致，不需要新数据源。gpt52 建议 FeynmanPromptSection 预加载 anchors/authority/summary，不能只给抽象搜索指令。
+**Why**：evidence_docs 是蒸馏后的摘要，用来教学内容偏浅。Feature spec 包含完整的 Why/How/Design Decisions/Constraints，是教学深度的核心素材。Progressive disclosure：概览用 evidence，深入用 spec。（CVO 2026-04-24 确认，替代原纯 evidence 方案）
+
+### DD-7：互动导览猫而非费曼老师
+
+提示词角色定义为"互动导览猫"，不用"费曼老师"。产品名保留"费曼导览"。
+
+**Why**：费曼学习法的精神是"通过重新表达来深化理解"，落地在交互设计上——让用户用自己的话说出理解。但提示词写"费曼老师"会让猫理解为"我是一个叫费曼的老师"，混淆角色。三层分离：产品名（费曼导览）、提示词角色（互动导览猫）、交互机制（用自己的话说出来）。Gap discovery 是教学的自然副产物，不是显式目标——过度强调会让猫注意力从"教好"偏移到"找问题"。（CVO + 三猫讨论 2026-04-24 确认）
 
 ## Constraints
 
