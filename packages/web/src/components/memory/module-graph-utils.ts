@@ -31,7 +31,7 @@ export interface EvidenceNodeData {
   [key: string]: unknown;
 }
 
-const NODE_WIDTH = 180;
+const NODE_WIDTH = 220;
 const NODE_HEIGHT = 60;
 
 const RELATION_STYLES: Record<string, { stroke: string; dash?: string }> = {
@@ -81,7 +81,7 @@ export function buildModuleFlowGraph(response: GraphResponse): { nodes: Node<Evi
 
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 60, marginx: 20, marginy: 20 });
+  g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 80, marginx: 20, marginy: 20 });
   for (const n of rfNodes) g.setNode(n.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
   for (const e of rfEdges) g.setEdge(e.source, e.target);
   dagre.layout(g);

@@ -22,7 +22,7 @@ function EvidenceNode({ data }: NodeProps<Node<EvidenceNodeData>>) {
   return (
     <div
       className="rounded-xl border-2 px-3 py-2 shadow-sm transition-shadow hover:shadow-md"
-      style={{ borderColor: colors.border, backgroundColor: colors.bg, width: 180, minHeight: 50 }}
+      style={{ borderColor: colors.border, backgroundColor: colors.bg, width: 220, minHeight: 50 }}
       data-testid={`graph-node-${data.anchor}`}
     >
       <Handle type="target" position={Position.Top} className="!h-1.5 !w-1.5 !border-0 !bg-transparent" />
@@ -108,7 +108,10 @@ export function ModuleGraph({ moduleId }: ModuleGraphProps) {
   return (
     <div data-testid="module-graph">
       <h3 className="mb-2 text-sm font-bold text-[#8B6F47]">{graphData?.moduleName}</h3>
-      <div className="h-[400px] w-full rounded-xl border border-[#E7DAC7] bg-[#FFFDF8]">
+      <div
+        className="w-full rounded-xl border border-[#E7DAC7] bg-[#FFFDF8]"
+        style={{ height: Math.min(700, Math.max(350, nodes.length * 28)) }}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -120,7 +123,7 @@ export function ModuleGraph({ moduleId }: ModuleGraphProps) {
           fitViewOptions={{ padding: 0.2 }}
           minZoom={0.3}
           maxZoom={1.5}
-          nodesDraggable={false}
+          nodesDraggable
           nodesConnectable={false}
           proOptions={{ hideAttribution: true }}
         />

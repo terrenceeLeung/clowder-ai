@@ -588,9 +588,30 @@ export function ChatContainer({ threadId }: ChatContainerProps) {
             )}
             {messages.length === 0 && !isLoadingHistory ? (
               <div className="text-center mt-20">
-                <PawIcon className="w-12 h-12 text-cocreator-light mx-auto mb-4" />
-                <p className="text-lg text-cafe-secondary mb-1">欢迎来到 Clowder AI!</p>
-                <p className="text-sm text-cafe-muted">输入 @布偶 召唤布偶猫开始聊天</p>
+                {(() => {
+                  const feynman = storeThreads.find((t) => t.id === threadId)?.feynmanState;
+                  if (feynman) {
+                    return (
+                      <>
+                        <PawIcon className="w-12 h-12 text-emerald-300 mx-auto mb-4" />
+                        <p className="text-lg text-cafe-secondary mb-1">费曼导览</p>
+                        <p className="text-sm text-cafe-muted mb-3">
+                          来，我给你讲讲这个模块。每个要点讲完后，试着用自己的话说出来——能讲清楚才算真懂。
+                          <br />
+                          过程中发现的知识盲区会被记录下来，知识库也会因为这次对话变得更好。
+                        </p>
+                        <p className="text-xs text-cafe-muted">输入任意消息开始，随时可以说「跳过」或「差不多了」</p>
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      <PawIcon className="w-12 h-12 text-cocreator-light mx-auto mb-4" />
+                      <p className="text-lg text-cafe-secondary mb-1">欢迎来到 Clowder AI!</p>
+                      <p className="text-sm text-cafe-muted">输入 @布偶 召唤布偶猫开始聊天</p>
+                    </>
+                  );
+                })()}
                 {showSetupCard && govStatus && (
                   <div className="mt-6 text-left">
                     <ProjectSetupCard
@@ -631,8 +652,8 @@ export function ChatContainer({ threadId }: ChatContainerProps) {
                     </div>
                   )}
                 {(() => {
-                  const isCurrentBootcamp = storeThreads.find((t) => t.id === threadId)?.bootcampState;
-                  if (isCurrentBootcamp) return null; // already in bootcamp thread
+                  const currentThread = storeThreads.find((t) => t.id === threadId);
+                  if (currentThread?.bootcampState || currentThread?.feynmanState) return null;
                   if (bootcampCount > 0) {
                     return (
                       <button

@@ -42,7 +42,7 @@ export function getProjectPaths(threads: Thread[]): string[] {
 
 /** Thread group for sidebar rendering */
 export interface ThreadGroup {
-  type: 'pinned' | 'recent' | 'project' | 'archived-container' | 'favorites' | 'system';
+  type: 'pinned' | 'recent' | 'project' | 'archived-container' | 'favorites' | 'system' | 'feynman';
   label: string;
   threads: Thread[];
   projectPath?: string;
@@ -95,8 +95,17 @@ export function sortAndGroupThreads(threads: Thread[], unreadIds?: Set<string>):
     groups.push({ type: 'pinned', label: '置顶', threads: pinned });
   }
 
+  // F169: Feynman tour threads
+  const feynmanThreads = threads
+    .filter((t) => !!t.feynmanState && t.id !== 'default' && !t.pinned)
+    .sort((a, b) => sortByUnreadThenActive(a, b, unreadIds));
+  if (feynmanThreads.length > 0) {
+    groups.push({ type: 'feynman', label: '费曼导览', threads: feynmanThreads });
+  }
+  const feynmanIds = new Set(feynmanThreads.map((t) => t.id));
+
   // 2. Regular threads grouped by project (each group sorted)
-  const regular = threads.filter((t) => !t.pinned && !t.favorited && t.id !== 'default');
+  const regular = threads.filter((t) => !t.pinned && !t.favorited && t.id !== 'default' && !feynmanIds.has(t.id));
   const projectGroups = groupByProject(regular, unreadIds);
   for (const [projectPath, projectThreads] of projectGroups) {
     groups.push({
@@ -158,14 +167,23 @@ export function sortAndGroupThreadsWithWorkspace(
   }
   const systemIds = new Set(systemThreads.map((t) => t.id));
 
-  // 2. Recent threads (cross-project, excluding pinned/default/system)
-  const recent = getRecentThreads(threads, config.recentLimit, now).filter((t) => !systemIds.has(t.id));
+  // F169: Feynman tour threads — dedicated section
+  const feynmanThreads = threads
+    .filter((t) => !!t.feynmanState && t.id !== 'default' && !t.pinned && !systemIds.has(t.id))
+    .sort((a, b) => sortByUnreadThenActive(a, b, unreadIds));
+  if (feynmanThreads.length > 0) {
+    groups.push({ type: 'feynman', label: '费曼导览', threads: feynmanThreads });
+  }
+  const feynmanIds = new Set(feynmanThreads.map((t) => t.id));
+
+  // 2. Recent threads (cross-project, excluding pinned/default/system/feynman)
+  const recent = getRecentThreads(threads, config.recentLimit, now).filter((t) => !systemIds.has(t.id) && !feynmanIds.has(t.id));
   if (recent.length > 0) {
     groups.push({ type: 'recent', label: '最近对话', threads: recent });
   }
 
   // 3. Project groups split into active/archived (excluding system threads)
-  const regular = threads.filter((t) => !t.pinned && !t.favorited && t.id !== 'default' && !systemIds.has(t.id));
+  const regular = threads.filter((t) => !t.pinned && !t.favorited && t.id !== 'default' && !systemIds.has(t.id) && !feynmanIds.has(t.id));
   const projectGroupEntries = groupByProject(regular, unreadIds);
   const allProjectGroups: ThreadGroup[] = projectGroupEntries.map(([projectPath, projectThreads]) => ({
     type: 'project' as const,

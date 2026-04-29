@@ -318,6 +318,8 @@ export interface Thread {
   bootcampState?: BootcampStateV1;
   /** F088 Phase G: Connector Hub thread state — marks this thread as an IM Hub. */
   connectorHubState?: ConnectorHubStateV1;
+  /** F169: Feynman teaching session state — knowledge tour per module. */
+  feynmanState?: FeynmanStateV1;
 }
 
 /** F087: Bootcamp state for CVO onboarding threads */
@@ -340,6 +342,15 @@ export interface ConnectorHubStateV1 {
   createdAt: number;
   /** G+ audit: timestamp of the most recent command exchange routed through this hub. */
   lastCommandAt?: number;
+}
+
+/** F169: Feynman tour session state */
+export interface FeynmanStateV1 {
+  v: 1;
+  module: string;
+  anchors: string[];
+  status: 'active' | 'completed';
+  startedAt: number;
 }
 
 export type ThreadRoutingScope = 'review' | 'architecture';

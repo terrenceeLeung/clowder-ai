@@ -662,7 +662,9 @@ export function ThreadSidebar({ onClose, className, onBootcampClick, onHubClick 
                     ? ('clock' as const)
                     : group.type === 'system'
                       ? ('system' as const)
-                      : undefined;
+                      : group.type === 'feynman'
+                        ? ('feynman' as const)
+                        : undefined;
 
             // Archived container: render nested project groups
             if (group.type === 'archived-container') {
