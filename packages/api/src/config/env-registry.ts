@@ -1382,6 +1382,22 @@ export const ENV_VARS: EnvDefinition[] = [
     runtimeEditable: true,
   },
   {
+    name: 'F102_API_FORMAT',
+    defaultValue: 'anthropic',
+    description: 'Phase G 摘要 API 格式 (anthropic/openai)，中转站用 openai',
+    category: 'evidence',
+    sensitive: false,
+    runtimeEditable: true,
+  },
+  {
+    name: 'F102_MODEL',
+    defaultValue: 'claude-opus-4-6',
+    description: 'Phase G 摘要用的模型 ID，搭配 F102_API_FORMAT 使用',
+    category: 'evidence',
+    sensitive: false,
+    runtimeEditable: true,
+  },
+  {
     name: 'EMBED_PORT',
     defaultValue: '9880',
     description: 'Embedding 服务端口（仅在 EMBED_URL 未设置时使用）',

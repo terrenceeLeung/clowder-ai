@@ -44,6 +44,8 @@ interface ProviderProfile {
   mode: 'api_key' | 'subscription';
   baseUrl: string;
   apiKey: string;
+  format?: 'anthropic' | 'openai';
+  model?: string;
 }
 
 // ─── System Prompt: natural language output ──────────────────────
@@ -287,30 +289,55 @@ export function createAbstractiveClient(
     }
 
     const userContent = buildUserPrompt(input);
+    const apiFormat = profile.format ?? 'anthropic';
+    const modelId = profile.model ?? 'claude-opus-4-6';
 
     try {
-      const res = await fetch(`${profile.baseUrl}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': profile.apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-6',
-          max_tokens: 8192,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: userContent }],
-        }),
-      });
+      const res =
+        apiFormat === 'openai'
+          ? await fetch(`${profile.baseUrl}/v1/chat/completions`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${profile.apiKey}`,
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: modelId,
+                max_tokens: 8192,
+                messages: [
+                  { role: 'system', content: SYSTEM_PROMPT },
+                  { role: 'user', content: userContent },
+                ],
+              }),
+            })
+          : await fetch(`${profile.baseUrl}/v1/messages`, {
+              method: 'POST',
+              headers: {
+                'x-api-key': profile.apiKey,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: modelId,
+                max_tokens: 8192,
+                system: SYSTEM_PROMPT,
+                messages: [{ role: 'user', content: userContent }],
+              }),
+            });
 
       if (!res.ok) {
         logger.error(`[abstractive-client] API error ${res.status}: ${res.statusText}`);
         return null;
       }
 
-      const body = (await res.json()) as { content: Array<{ type: string; text?: string }> };
-      const text = body.content?.find((c) => c.type === 'text')?.text;
+      let text: string | undefined;
+      if (apiFormat === 'openai') {
+        const body = (await res.json()) as { choices: Array<{ message: { content: string } }> };
+        text = body.choices?.[0]?.message?.content;
+      } else {
+        const body = (await res.json()) as { content: Array<{ type: string; text?: string }> };
+        text = body.content?.find((c) => c.type === 'text')?.text;
+      }
       if (!text) {
         logger.error('[abstractive-client] no text in response');
         return null;
