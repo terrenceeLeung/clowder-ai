@@ -68,6 +68,32 @@ Step 3: VERIFY — 逐项检查
   - 🔴 新增行为规则 → governance digest / shared-rules 注入更新了吗？
   - 🔴 产出了 SKILL.md 或改了 MCP tool description → 加载 `writing-skills`，用 T0 六要素审查质量（软硬同检）
 
+Step 3.5: FUNCTIONAL SMOKE TEST（运行态冒烟验证）
+  ① 分类：本次改动是否影响运行时可观察行为？
+     - API 端点 / UI 页面 / 集成流程 / 配置变更 / 数据流 → YES，继续
+     - 纯文档 / 类型定义 / 测试用例 / 重构 / lint 修复 → NO，跳到 Step 4
+  ② Redis 策略（三选一）：
+     a. 改动不涉及 Redis 数据 → --memory（完全隔离，无外部依赖）
+     b. 改动涉及 Redis 读写 → 隔离端口（如 REDIS_PORT=6397，独立数据目录 ~/.cat-cafe/redis-dev-6397/）
+     c. 需要 flushdb / 清除旧数据 → STOP，@co-creator 确认后才能操作（不可逆）
+  ③ 在当前 worktree 启动隔离环境：
+     API_SERVER_PORT=3013 FRONTEND_PORT=3014 ./scripts/start-dev.sh --memory
+     铁律：
+     - 禁止使用 3003/3004（runtime 端口）
+     - 禁止使用 3011/3012（alpha 端口）
+     - 禁止使用 6399（production Redis）
+     - 默认不加 --quick（让 start-dev.sh 完整构建，构建失败本身是信号）
+  ④ 走核心用户路径：
+     - UI 改动：浏览器打开 localhost:3014，走主路径
+     - API 改动：curl localhost:3013/api/xxx，验证请求/响应
+     - 集成改动：触发端到端流程，确认数据流通
+  ⑤ 记录证据：截图 / curl 输出 / 日志，标注 worktree path + 端口 + Redis 策略
+  ⑥ 关闭 dev server（Ctrl+C），确认隔离 Redis 进程也已关闭
+  🔴 不通过：核心路径走不通 / 报错 / 行为与 spec 不符 → 回去修代码，从 Step 3 重新开始
+
+  > 教训（LL-032）：F101 愿景守护失败——没人启动 dev 跑一遍，代码通过测试但功能不 work。
+  > 教训（LL-030）：静态检查只能证明"代码合法"，不能证明"行为正确"。
+
 Step 4: RUNTIME GUARD — 前端证据采集前先做运行态保护
   - 若会话在 `cat-cafe-runtime`，先探活：`curl -sf http://localhost:3004/health`
   - 服务已在线时直接复用，禁止在该会话执行 `pnpm start` / `pnpm runtime:start` / `./scripts/start-dev.sh`
@@ -153,6 +179,16 @@ Spec: feature spec or implementation note
 |---|------|------|----------|----------|
 | 1 | XXX  | ✅   | file.ts:L10 | test.spec.ts |
 
+### 运行态冒烟验证（Step 3.5）
+分类: [影响运行时 / 不影响运行时（跳过）]
+Redis 策略: [--memory / 隔离端口 REDIS_PORT=6397 / 需 flushdb（已获铲屎官确认）]
+启动命令: API_SERVER_PORT=3013 FRONTEND_PORT=3014 ./scripts/start-dev.sh --memory
+核心路径验证:
+| # | 用户路径 | 预期行为 | 实际结果 | 证据 |
+|---|---------|---------|---------|------|
+| 1 | XXX     | XXX     | ✅/❌   | 截图/curl 输出 |
+环境已关闭: ✅
+
 ### 设计稿对照（Step 5）
 glob designs/**/*.pen 匹配结果: [列出匹配文件或"无匹配"]
 对照状态: ✅ 已对照 / ⚠️ 无设计稿（有 UI 改动）/ ➖ 无 UI 改动
@@ -180,6 +216,8 @@ pnpm -r --if-present run build → exit 0 ✅
 | 产出后续要重写而非扩展 | 如果要重写，说明绕路了（Spike 除外） |
 | 前端功能没有截图证据 | ≤3 张截图 + 15s 录屏 + 映射表 |
 | 有 .pen 设计稿但没对照实现 | Step 5 自动 glob 检测，匹配到就强制对照，不靠记忆 |
+| 影响运行时的改动没跑 smoke test | Step 3.5：在 worktree 起隔离环境走核心路径，静态检查≠行为正确（LL-030） |
+| smoke test 用了 runtime/alpha 端口 | 禁止 3003/3004/3011/3012/6399，用隔离端口 3013/3014/6397 |
 | 为了截图在 runtime 会话里重跑 `pnpm start` | 先探活复用现有 runtime；确需重启必须显式授权 |
 | 拿 runtime 的 `3003/3004` 页面当成当前 worktree 的验证结果 | 报告里同时写明 `pwd/worktree` 和目标 URL；如果 URL 是 `3003/3004`，默认这是 runtime 证据，不是未合入改动证据 |
 | 截图/录屏/设计稿顺手掉进仓库根目录 | Step 7.5 必查；先移到 `${TMPDIR}/cat-cafe-evidence/...` 或正式归档目录，再继续 |
