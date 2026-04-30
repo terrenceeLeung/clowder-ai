@@ -290,6 +290,10 @@ export function createAbstractiveClient(
 
     const userContent = buildUserPrompt(input);
     const apiFormat = profile.format ?? 'anthropic';
+    if (apiFormat !== 'anthropic' && apiFormat !== 'openai') {
+      logger.error(`[abstractive-client] invalid API format: "${apiFormat}", expected "anthropic" or "openai"`);
+      return null;
+    }
     const modelId = profile.model ?? 'claude-opus-4-6';
 
     try {

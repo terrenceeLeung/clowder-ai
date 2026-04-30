@@ -84,8 +84,8 @@ Step 3.5: FUNCTIONAL SMOKE TEST（运行态冒烟验证）
      - 禁止使用 6399（production Redis）
      - 默认不加 --quick（让 start-dev.sh 完整构建，构建失败本身是信号）
   ④ 走核心用户路径：
-     - UI 改动：浏览器打开 localhost:3013，走主路径
-     - API 改动：curl localhost:3014/api/xxx，验证请求/响应
+     - UI 改动：浏览器打开 localhost:3014，走主路径
+     - API 改动：curl localhost:3013/api/xxx，验证请求/响应
      - 集成改动：触发端到端流程，确认数据流通
   ⑤ 记录证据：截图 / curl 输出 / 日志，标注 worktree path + 端口 + Redis 策略
   ⑥ 关闭 dev server（Ctrl+C），确认隔离 Redis 进程也已关闭
