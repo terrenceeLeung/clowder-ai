@@ -1,12 +1,12 @@
 ---
 feature_ids: [F181]
-related_features: [F069, F072]
-topics: [connector, commands, unread, history, thread, ux, im]
+related_features: []
+topics: [connector, commands, history, thread, ux, im]
 doc_kind: spec
 created: 2026-05-02
 ---
 
-# F181: Thread Re-entry Commands (/unread + /history)
+# F181: Thread Re-entry Commands (/history)
 
 > **Status**: spec | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
 
@@ -19,92 +19,92 @@ created: 2026-05-02
 铲屎官原话：
 > "我有一个诉求，我发现我在 IM 工具上和猫猫对话时，经常会写 threads 并发指挥。比如我在 thread a 发了一句话，我可能没等待 thread a 回复推送，我就切到 thread b 发别的。这里有两个问题，1. 我切到新线程 会忘记之前说过什么，或者猫猫回答了什么。2. 我切回原线程，先看上一次发送回复了什么，看不见。"
 
-现有基建已具备（F069 ThreadReadStateStore + MessageStore），缺的是用户侧触发入口。
-
 ## What
 
-在 ConnectorCommandLayer 增加两个 connector command，走现有 slash command 旁路（不进 invocation queue），利用已有数据层实现。
+在 ConnectorCommandLayer 增加 `/history` connector command，走现有 slash command 旁路（不进 invocation queue），以**对话轮次（Round）**为单位展示历史。
 
-### `/unread` — 查看本线程未读消息
+### 对话轮次（Round）定义
 
-- 触发：用户在 IM 输入 `/unread`
-- 行为：读 `ThreadReadStateStore.get(userId, threadId)` 拿 read cursor → `MessageStore.getByThreadAfter(threadId, lastReadMessageId)` 取未读消息 → 渲染回 IM
-- 输出格式：按时间排列，每条含发言者身份 + 时间 + 内容摘要（超长截断）
+一个 Round = 一条用户消息 + 它触发的所有猫回复（直到下一条用户消息）。
+
+```
+Round N:   [用户消息] → [猫A回复] [猫B回复] [猫A补充...]
+Round N+1: [用户消息] → [猫回复...]
+```
+
+多猫场景：用户发一条消息后，宪宪回了、砚砚也回了、A2A 互传——全属同一个 Round。
+
+### `/history` — 按轮次查看本线程对话历史
+
+- 触发：用户在 IM 输入 `/history` 或 `/history N`（N = 轮次数）
+- 默认 `/history` = `/history 1` = 最新一轮：最近一次猫猫们的全部答复 + 触发它的用户消息
+- `/history 2` = 最近 2 轮，以此类推
+- 上限：N ≤ 5
+- 输出格式：按时间排列，每条含发言者身份 + 时间 + 内容摘要（超长截断至 200 字）
 - 边界：
-  - 无未读 → 返回 "本线程没有未读消息"
-  - 未读过多（>10 条） → 只显示最近 10 条 + "还有 N 条更早的未读"
-  - 正在流式输出的消息（deliveryStatus='queued'）不计入未读
+  - 线程为空 → "本线程还没有消息"
+  - 正在流式输出的消息（deliveryStatus='queued'）不包含在结果中
+  - 最后一轮只有用户消息没有猫回复（猫还在处理中）→ 显示用户消息 + "⏳ 猫猫正在回复…"
 
-### `/history` — 查看本线程最近历史
+### 实现
 
-- 触发：用户在 IM 输入 `/history` 或 `/history N`（N = 条数，默认 5，最大 20）
-- 行为：读 `MessageStore` 取当前线程最近 N 条已完成消息 → 渲染回 IM
-- 输出格式：按时间排列，每条含发言者（用户/猫）+ 时间 + 内容摘要
-- 边界：
-  - 线程为空 → 返回 "本线程还没有消息"
-  - 正在流式输出的消息不包含在结果中
+- **Round 切分算法**：从 MessageStore 倒序遍历消息，遇到用户消息（catId === null && !source）则标记 Round 边界，收集 N 个 Round
+- **不依赖 ThreadReadStateStore**：纯读 MessageStore，零基建依赖
 
 ### 并发安全
 
-两个命令走 `ConnectorCommandLayer`（line 229 `startsWith('/')` 拦截），不进 `QueueProcessor` 的 invocation queue。与猫的流式输出完全并行：
+命令走 `ConnectorCommandLayer`（line 229 `startsWith('/')` 拦截），不进 `QueueProcessor` 的 invocation queue。与猫的流式输出完全并行：
 
 ```
-Path A (command):    /unread → ConnectorRouter → ConnectorCommandLayer → 读 store → 返回
+Path A (command):    /history → ConnectorRouter → ConnectorCommandLayer → 读 MessageStore → 返回
 Path B (invocation): 用户消息 → InvocationQueue → QueueProcessor → 猫 LLM → 流式输出
 两条路径在 ConnectorRouter 分叉，互不阻塞。
 ```
 
 ### 注册
 
-- `core-commands.ts`：注册 `/unread` 和 `/history`，category='connector', surface='connector'
+- `core-commands.ts`：注册 `/history`，category='connector', surface='connector'
 - `ConnectorCommandLayer`：
-  - 新增 `handleUnread(connectorId, externalChatId, userId)` handler
   - 新增 `handleHistory(connectorId, externalChatId, userId, args)` handler
-  - deps 扩展：需要 `readStateStore: IThreadReadStateStore` + `messageStore: IMessageStore`
+  - deps 扩展：需要 `messageStore: IMessageStore`
 
 ## Acceptance Criteria
 
-- [ ] AC-A1: `/unread` 在无未读时返回"无未读消息"提示
-- [ ] AC-A2: `/unread` 正确返回 read cursor 之后的已完成消息，按时间排列
-- [ ] AC-A3: `/unread` 不包含 deliveryStatus='queued' 的正在输出消息
-- [ ] AC-A4: `/unread` 超过 10 条时截断并提示剩余数量
-- [ ] AC-A5: `/history` 默认返回最近 5 条消息
-- [ ] AC-A6: `/history N` 支持自定义条数（1-20）
-- [ ] AC-A7: 两个命令在猫流式输出期间可并行执行，不阻塞不被阻塞
-- [ ] AC-A8: 有对应的单元测试
-- [ ] AC-A9: 飞书 + 企微适配器正常渲染命令输出
+- [ ] AC-1: `/history` 默认返回最近 1 个 Round（用户消息 + 全部猫回复）
+- [ ] AC-2: `/history N` 支持 N=1~5，超出范围提示
+- [ ] AC-3: Round 切分正确：以用户消息为边界，多猫回复归入同一 Round
+- [ ] AC-4: 正在流式输出的消息不包含在结果中
+- [ ] AC-5: 命令在猫流式输出期间可并行执行，不阻塞不被阻塞
+- [ ] AC-6: 有对应的单元测试
+- [ ] AC-7: 飞书 + 企微适配器正常渲染命令输出
 
 ## Dependencies
 
-- **Related**: F069（Thread Read State — 提供 read cursor 基建）
-- **Related**: F072（Mark All Read — 同一套 read state，验证基建可用）
+- 无硬依赖。纯读 MessageStore（已有）
 
 ## Risk
 
 | 风险 | 缓解 |
 |------|------|
-| MessageStore 缺少 getByThreadAfter 方法 | 检查现有接口，必要时扩展（F069 getUnreadSummaries 已有类似逻辑） |
-| 未读消息过多导致 IM 渲染超限 | 硬限 10 条 + 截断提示 |
+| Round 切分在 A2A 复杂场景下边界不清 | 简单规则：catId === null && !source 的消息 = 用户消息 = Round 边界 |
+| 长回复导致 IM 渲染超限 | 每条消息截断至 200 字，整体输出上限 |
 
 ## Open Questions
 
-| # | 问题 | 状态 |
-|---|------|------|
-| OQ-1 | `/unread` 执行后是否自动推进 read cursor（即看完就标已读）？ | ✅ 是，必须推进。IM 侧从无 cursor 推进逻辑，纯 IM 用户 cursor 永远为 null，不推进则功能无效 |
+（无开放问题）
 
 ## Key Decisions
 
 | # | 决策 | 理由 | 日期 |
 |---|------|------|------|
-| KD-1 | 走 ConnectorCommandLayer 旁路，不进 invocation queue | 用户查未读时往往猫正在输出，排队会导致"想看时看不了" | 2026-05-02 |
-| KD-2 | 复用 F069 ThreadReadStateStore，不新建数据层 | 基建已有，零架构变更 | 2026-05-02 |
-| KD-3 | 正在流式输出的消息（deliveryStatus='queued'）排除在外 | 语义正确："未读"="猫说完了但我没看到"，正在说的等它说完 | 2026-05-02 |
-| KD-4 | 多猫讨论后收敛为直线方案（/unread+/history），四层架构降级为 P1/P2 | 铲屎官指出"绕路了"——急性痛点是看不到回复，不是跨线程认知外挂 | 2026-05-02 |
-| KD-5 | `/unread` 必须自动推进 read cursor（ack 到返回的最后一条消息） | IM connector 从不调 read API，纯 IM 用户 cursor 永远为 null。不推进则 `/unread` 在 IM 场景下无效 | 2026-05-02 |
-| KD-6 | cursor 为 null 时 `/unread` 降级为 `/history` 语义（显示最近 N 条） | F069 冷启动兜底把 null cursor 当"全部已读"，直接返回空不符合用户预期 | 2026-05-02 |
+| KD-1 | 走 ConnectorCommandLayer 旁路，不进 invocation queue | 用户查历史时往往猫正在输出，排队会导致"想看时看不了" | 2026-05-02 |
+| KD-2 | 砍掉 `/unread`，只做 `/history` | IM 侧 read cursor 从不推进（只有 Hub 前端推），`/unread` 在纯 IM 场景下失效。`/history` 按轮次查看不依赖 cursor | 2026-05-02 |
+| KD-3 | 以"对话轮次 Round"为单位，不以消息条数 | 对齐用户认知模型："我问了什么、猫答了什么"。比 N 条消息更直觉 | 2026-05-02 |
+| KD-4 | 正在流式输出的消息排除在外 | 语义正确：history 是"已完成的对话"，正在进行的等它完成 | 2026-05-02 |
+| KD-5 | 多猫讨论（opus-47 + gpt55 + sonnet）→ 铲屎官收敛为直线方案，四层架构降级为后续增强 | 急性痛点是"看不到回复"，不是跨线程认知外挂 | 2026-05-02 |
 
 ## Timeline
 
 | 日期 | 事件 |
 |------|------|
-| 2026-05-02 | 立项。多猫讨论（opus-47 + gpt55 + sonnet）→ 铲屎官收敛为直线方案 |
+| 2026-05-02 | 立项。多猫讨论 → 铲屎官收敛 → 砍 /unread，/history 按轮次 |
