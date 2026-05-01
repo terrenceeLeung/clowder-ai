@@ -47,9 +47,7 @@ function stubThreadStore(data) {
 function stubMessageStore(messages = []) {
   return {
     getByThread: async (threadId, limit) => {
-      return messages
-        .filter((m) => m.threadId === threadId && !m.deletedAt)
-        .slice(-(limit ?? 50));
+      return messages.filter((m) => m.threadId === threadId && !m.deletedAt).slice(-(limit ?? 50));
     },
   };
 }
@@ -1756,9 +1754,7 @@ describe('F181: /history command', () => {
   });
 
   it('returns contextThreadId from binding', async () => {
-    const messages = [
-      { id: '001', threadId: 't1', catId: null, content: 'hello', timestamp: 1000 },
-    ];
+    const messages = [{ id: '001', threadId: 't1', catId: null, content: 'hello', timestamp: 1000 }];
     const layer = new ConnectorCommandLayer({
       bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
       threadStore: stubThreadStore(),

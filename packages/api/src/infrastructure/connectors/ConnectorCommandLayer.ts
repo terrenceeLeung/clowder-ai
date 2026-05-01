@@ -93,7 +93,9 @@ export interface ConnectorCommandLayerDeps {
       threadId: string,
       limit?: number,
       userId?: string,
-    ): Array<{ catId: string | null; content: string; timestamp: number; source?: string }> | Promise<Array<{ catId: string | null; content: string; timestamp: number; source?: string }>>;
+    ):
+      | Array<{ catId: string | null; content: string; timestamp: number; source?: string }>
+      | Promise<Array<{ catId: string | null; content: string; timestamp: number; source?: string }>>;
   };
 }
 
@@ -466,8 +468,7 @@ export class ConnectorCommandLayer {
       for (const msg of round) {
         const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
         const sender = msg.catId ? `🐱 ${msg.catId}` : '👤 你';
-        const content =
-          msg.content.length > MAX_CONTENT ? msg.content.slice(0, MAX_CONTENT) + '…' : msg.content;
+        const content = msg.content.length > MAX_CONTENT ? msg.content.slice(0, MAX_CONTENT) + '…' : msg.content;
         lines.push(`**${sender}** [${time}]: ${content}`);
       }
       lines.push('---');
