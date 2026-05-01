@@ -1,12 +1,18 @@
 // F179: Governance State Machine — knowledge lifecycle management
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
 import Database from 'better-sqlite3';
 import { GovernanceStateMachine } from '../dist/domains/knowledge/GovernanceStateMachine.js';
 import {
-  SCHEMA_V1, SCHEMA_V2, SCHEMA_V3_TABLE, SCHEMA_V3_FTS,
-  FTS_TRIGGER_STATEMENTS, PASSAGE_FTS_TRIGGER_STATEMENTS,
-  PRAGMA_SETUP, applyMigrations,
+  applyMigrations,
+  FTS_TRIGGER_STATEMENTS,
+  PASSAGE_FTS_TRIGGER_STATEMENTS,
+  PRAGMA_SETUP,
+  SCHEMA_V1,
+  SCHEMA_V2,
+  SCHEMA_V3_FTS,
+  SCHEMA_V3_TABLE,
 } from '../dist/domains/memory/schema.js';
 
 function freshDb() {
@@ -25,8 +31,12 @@ function freshDb() {
 
 function insertDoc(db, anchor, governanceStatus) {
   db.prepare(`INSERT INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at)
-              VALUES (?, 'pack-knowledge', 'active', ?, ?, ?)`)
-    .run(anchor, `Doc ${anchor}`, governanceStatus, new Date().toISOString());
+              VALUES (?, 'pack-knowledge', 'active', ?, ?, ?)`).run(
+    anchor,
+    `Doc ${anchor}`,
+    governanceStatus,
+    new Date().toISOString(),
+  );
 }
 
 describe('GovernanceStateMachine', () => {
@@ -148,11 +158,21 @@ describe('GovernanceStateMachine', () => {
 
     it('listByStatus filters by packId', () => {
       db.prepare(`INSERT INTO evidence_docs (anchor, kind, status, title, governance_status, pack_id, updated_at)
-                  VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, ?)`)
-        .run('dk:pk1', 'Pack 1 Doc', 'active', 'pack-a', new Date().toISOString());
+                  VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, ?)`).run(
+        'dk:pk1',
+        'Pack 1 Doc',
+        'active',
+        'pack-a',
+        new Date().toISOString(),
+      );
       db.prepare(`INSERT INTO evidence_docs (anchor, kind, status, title, governance_status, pack_id, updated_at)
-                  VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, ?)`)
-        .run('dk:pk2', 'Pack 2 Doc', 'active', 'pack-b', new Date().toISOString());
+                  VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, ?)`).run(
+        'dk:pk2',
+        'Pack 2 Doc',
+        'active',
+        'pack-b',
+        new Date().toISOString(),
+      );
 
       const result = gsm.listByStatus('active', 'pack-a');
       assert.ok(result.includes('dk:pk1'));

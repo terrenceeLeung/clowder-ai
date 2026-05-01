@@ -1,16 +1,17 @@
 // F179: MeowGrid E2E — end-to-end import + search validation (AC-011)
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, before, describe, it } from 'node:test';
 import Database from 'better-sqlite3';
+import { DomainPackManager } from '../dist/domains/knowledge/DomainPackManager.js';
+import { GovernanceStateMachine } from '../dist/domains/knowledge/GovernanceStateMachine.js';
 import { KnowledgeImporter } from '../dist/domains/knowledge/KnowledgeImporter.js';
+import { KnowledgeStorage } from '../dist/domains/knowledge/KnowledgeStorage.js';
 import { Normalizer } from '../dist/domains/knowledge/Normalizer.js';
 import { PiiDetector } from '../dist/domains/knowledge/PiiDetector.js';
-import { GovernanceStateMachine } from '../dist/domains/knowledge/GovernanceStateMachine.js';
-import { DomainPackManager } from '../dist/domains/knowledge/DomainPackManager.js';
-import { KnowledgeStorage } from '../dist/domains/knowledge/KnowledgeStorage.js';
 import { SqliteEvidenceStore } from '../dist/domains/memory/SqliteEvidenceStore.js';
 
 const FIXTURE_DIR = new URL('./__fixtures__/meowgrid/', import.meta.url).pathname;
@@ -131,7 +132,10 @@ describe('MeowGrid E2E — import + search (AC-011)', () => {
 
   it('all 4 documents imported successfully', () => {
     assert.equal(importResults.length, 4);
-    assert.ok(importResults.every((r) => r.status === 'created'), 'All imports should succeed');
+    assert.ok(
+      importResults.every((r) => r.status === 'created'),
+      'All imports should succeed',
+    );
     const totalChunks = importResults.reduce((sum, r) => sum + (r.chunkCount || 0), 0);
     assert.ok(totalChunks > 5, `Expected >5 chunks total, got ${totalChunks}`);
   });
@@ -151,18 +155,14 @@ describe('MeowGrid E2E — import + search (AC-011)', () => {
   it('FurBall Deadlock recovery procedure is searchable from ops manual later section', () => {
     const results = store.searchPassages('FurBall Deadlock', 5);
     assert.ok(results.length > 0, 'Should find FurBall Deadlock content');
-    const hasDeadlock = results.some((r) =>
-      r.content.includes('FurBall Deadlock') || r.content.includes('furball')
-    );
+    const hasDeadlock = results.some((r) => r.content.includes('FurBall Deadlock') || r.content.includes('furball'));
     assert.ok(hasDeadlock, 'Results should contain deadlock-related content');
   });
 
   it('FAQ answers are retrievable by question keywords', () => {
     const results = store.searchPassages('QUEUE_FULL', 5);
     assert.ok(results.length > 0, 'Should find NapQueue capacity content');
-    const hasSolution = results.some((r) =>
-      r.content.includes('QUEUE_FULL') || r.content.includes('max_queue_size')
-    );
+    const hasSolution = results.some((r) => r.content.includes('QUEUE_FULL') || r.content.includes('max_queue_size'));
     assert.ok(hasSolution, 'Results should contain NapQueue solution');
   });
 
@@ -191,7 +191,8 @@ describe('MeowGrid E2E — import + search (AC-011)', () => {
     const db = new Database(dbPath);
     const results = store.searchPassages('MeowGrid', 5);
     for (const r of results.filter((r) => r.passageKind === 'domain_chunk')) {
-      const doc = db.prepare('SELECT authority, doc_kind, governance_status FROM evidence_docs WHERE anchor = ?')
+      const doc = db
+        .prepare('SELECT authority, doc_kind, governance_status FROM evidence_docs WHERE anchor = ?')
         .get(r.docAnchor);
       assert.ok(doc, `Parent doc ${r.docAnchor} should exist`);
       assert.ok(doc.authority, 'Parent doc should have authority');
@@ -226,7 +227,9 @@ describe('MeowGrid E2E — import + search (AC-011)', () => {
     const avgPrecision = totalPrecision / queries.length;
 
     // Log baseline (no threshold per AC-011)
-    console.log(`[F179 Baseline] Recall@5: ${(avgRecall * 100).toFixed(1)}%, Precision@5: ${(avgPrecision * 100).toFixed(1)}%`);
+    console.log(
+      `[F179 Baseline] Recall@5: ${(avgRecall * 100).toFixed(1)}%, Precision@5: ${(avgPrecision * 100).toFixed(1)}%`,
+    );
     assert.ok(true, 'Baseline logged — no threshold enforced');
   });
 });

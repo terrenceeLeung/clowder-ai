@@ -1,6 +1,7 @@
 // F179: Normalizer — LLM-driven content processing (mock LLM)
-import { describe, it } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { Normalizer } from '../dist/domains/knowledge/Normalizer.js';
 
 function createMockLlm(response) {
@@ -138,7 +139,11 @@ describe('Normalizer', () => {
   });
 
   it('LLM error throws NormalizerError', async () => {
-    const llm = { async generate() { throw new Error('API timeout'); } };
+    const llm = {
+      async generate() {
+        throw new Error('API timeout');
+      },
+    };
     const normalizer = new Normalizer(llm, { version: '1.0.0', modelId: 'test' });
     await assert.rejects(
       () => normalizer.normalize(SAMPLE_MD, { sourcePath: '/docs/arch.md', sourceHash: 'abc123' }),

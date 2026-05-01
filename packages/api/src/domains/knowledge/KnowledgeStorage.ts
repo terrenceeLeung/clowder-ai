@@ -1,8 +1,8 @@
 // F179: Private knowledge file storage — .clowder/knowledge/ (gitignored, KD-3/KD-19)
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile, rm, access } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 
 interface RawMeta {
   originalName: string;

@@ -1,9 +1,10 @@
 // F179: Passage search enhancement — domain_chunk retrieval (AC-07)
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, before, describe, it } from 'node:test';
 import Database from 'better-sqlite3';
 import { SqliteEvidenceStore } from '../dist/domains/memory/SqliteEvidenceStore.js';
 
@@ -16,9 +17,13 @@ function seedDomainChunks(dbPath) {
     (anchor, kind, status, title, summary, pack_id, governance_status,
      doc_kind, authority, activation, updated_at)
     VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, 'active', ?, ?, 'query', ?)`).run(
-    'dk:ops-manual', 'MeowGrid Operations Manual',
+    'dk:ops-manual',
+    'MeowGrid Operations Manual',
     'Complete operations guide for MeowGrid distributed scheduler',
-    'default', 'operations', 'validated', now
+    'default',
+    'operations',
+    'validated',
+    now,
   );
 
   // Early section chunk
@@ -26,9 +31,15 @@ function seedDomainChunks(dbPath) {
     (doc_anchor, passage_id, content, position, created_at,
      passage_kind, heading_path, chunk_index, char_start, char_end)
     VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)`).run(
-    'dk:ops-manual', 'dk:ops-manual:c0',
+    'dk:ops-manual',
+    'dk:ops-manual:c0',
     'MeowGrid is a distributed task scheduling engine designed for high throughput.',
-    0, now, '["Operations Manual","Overview"]', 0, 0, 78
+    0,
+    now,
+    '["Operations Manual","Overview"]',
+    0,
+    0,
+    78,
   );
 
   // Late section chunk
@@ -36,9 +47,15 @@ function seedDomainChunks(dbPath) {
     (doc_anchor, passage_id, content, position, created_at,
      passage_kind, heading_path, chunk_index, char_start, char_end)
     VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)`).run(
-    'dk:ops-manual', 'dk:ops-manual:c3',
+    'dk:ops-manual',
+    'dk:ops-manual:c3',
     'To recover from a FurBall Deadlock, restart the Whisker Coordinator and flush the NapQueue buffer.',
-    3, now, '["Operations Manual","Troubleshooting","FurBall Deadlock Recovery"]', 3, 5000, 5098
+    3,
+    now,
+    '["Operations Manual","Troubleshooting","FurBall Deadlock Recovery"]',
+    3,
+    5000,
+    5098,
   );
 
   // Regular message passage (thread)
@@ -47,7 +64,12 @@ function seedDomainChunks(dbPath) {
   db.prepare(`INSERT INTO evidence_passages
     (doc_anchor, passage_id, content, speaker, position, created_at)
     VALUES (?, ?, ?, ?, ?, ?)`).run(
-    'thread-1', 'msg-1', 'Can you help me with the FurBall Deadlock issue?', 'user', 0, now
+    'thread-1',
+    'msg-1',
+    'Can you help me with the FurBall Deadlock issue?',
+    'user',
+    0,
+    now,
   );
 
   db.close();

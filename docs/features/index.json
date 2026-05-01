@@ -1097,6 +1097,24 @@
       "name": "Persistent MCP Agent-Key Auth — 跨 invocation 写权限",
       "status": "in-progress | **Owner**: Ragdoll（Ragdoll） | **Reviewer**: Maine Coon（Maine Coon） | **Priority**: P1",
       "file": "F178-persistent-mcp-agent-key-auth.md"
+    },
+    {
+      "id": "F179",
+      "name": "Domain Knowledge Governance — 领域知识治理",
+      "status": "spec | **Owner**: Ragdoll | **Priority**: P1",
+      "file": "F179-domain-knowledge-governance.md"
+    },
+    {
+      "id": "F179",
+      "name": "Phase 0 Implementation Plan",
+      "status": "unknown",
+      "file": "F179-phase0-plan.md"
+    },
+    {
+      "id": "F180",
+      "name": "BTW Side Question — Thread 内轻量旁路提问",
+      "status": "spec | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1",
+      "file": "F180-btw-side-question.md"
     }
   ]
 }

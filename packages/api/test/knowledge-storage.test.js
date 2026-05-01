@@ -1,9 +1,10 @@
 // F179: Private Knowledge Storage — .clowder/knowledge/ management
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, readFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, before, describe, it } from 'node:test';
 import { KnowledgeStorage } from '../dist/domains/knowledge/KnowledgeStorage.js';
 
 describe('KnowledgeStorage', () => {

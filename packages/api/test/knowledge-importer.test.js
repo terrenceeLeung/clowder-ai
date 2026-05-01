@@ -1,20 +1,26 @@
 // F179: KnowledgeImporter — orchestrator integration test
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
-import Database from 'better-sqlite3';
-import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, before, describe, it } from 'node:test';
+import Database from 'better-sqlite3';
+import { DomainPackManager } from '../dist/domains/knowledge/DomainPackManager.js';
+import { GovernanceStateMachine } from '../dist/domains/knowledge/GovernanceStateMachine.js';
 import { KnowledgeImporter } from '../dist/domains/knowledge/KnowledgeImporter.js';
+import { KnowledgeStorage } from '../dist/domains/knowledge/KnowledgeStorage.js';
 import { Normalizer } from '../dist/domains/knowledge/Normalizer.js';
 import { PiiDetector } from '../dist/domains/knowledge/PiiDetector.js';
-import { GovernanceStateMachine } from '../dist/domains/knowledge/GovernanceStateMachine.js';
-import { DomainPackManager } from '../dist/domains/knowledge/DomainPackManager.js';
-import { KnowledgeStorage } from '../dist/domains/knowledge/KnowledgeStorage.js';
 import {
-  SCHEMA_V1, SCHEMA_V2, SCHEMA_V3_TABLE, SCHEMA_V3_FTS,
-  FTS_TRIGGER_STATEMENTS, PASSAGE_FTS_TRIGGER_STATEMENTS,
-  PRAGMA_SETUP, applyMigrations,
+  applyMigrations,
+  FTS_TRIGGER_STATEMENTS,
+  PASSAGE_FTS_TRIGGER_STATEMENTS,
+  PRAGMA_SETUP,
+  SCHEMA_V1,
+  SCHEMA_V2,
+  SCHEMA_V3_FTS,
+  SCHEMA_V3_TABLE,
 } from '../dist/domains/memory/schema.js';
 
 function freshDb() {
@@ -63,7 +69,11 @@ const VALID_LLM_RESPONSE = {
 };
 
 function mockLlm() {
-  return { async generate() { return JSON.stringify(VALID_LLM_RESPONSE); } };
+  return {
+    async generate() {
+      return JSON.stringify(VALID_LLM_RESPONSE);
+    },
+  };
 }
 
 const SAMPLE_MD = `# Test Document
@@ -171,7 +181,9 @@ describe('KnowledgeImporter', () => {
   it('passages have heading_path and char positions', async () => {
     await writeFile(join(tmpRoot, 'docs', 'pos-test.md'), '# Position Test\n\nContent here.');
     const result = await importer.importFile(join(tmpRoot, 'docs', 'pos-test.md'));
-    const passages = db.prepare('SELECT heading_path, char_start, char_end FROM evidence_passages WHERE doc_anchor = ?').all(result.anchor);
+    const passages = db
+      .prepare('SELECT heading_path, char_start, char_end FROM evidence_passages WHERE doc_anchor = ?')
+      .all(result.anchor);
     assert.ok(passages.length > 0);
     const p = passages[0];
     assert.ok(p.heading_path);
@@ -180,7 +192,11 @@ describe('KnowledgeImporter', () => {
   });
 
   it('atomicity: normalizer failure leaves no residue (AC-013)', async () => {
-    const failLlm = { async generate() { throw new Error('LLM down'); } };
+    const failLlm = {
+      async generate() {
+        throw new Error('LLM down');
+      },
+    };
     const failNormalizer = new Normalizer(failLlm, { version: '1.0.0', modelId: 'fail' });
     const failImporter = new KnowledgeImporter({
       db,

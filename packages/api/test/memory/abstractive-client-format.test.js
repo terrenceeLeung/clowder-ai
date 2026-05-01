@@ -36,7 +36,13 @@ describe('createAbstractiveClient format dispatch', () => {
     globalThis.fetch = mockFetch;
     try {
       const client = createAbstractiveClient(
-        async () => ({ mode: 'api_key', baseUrl: 'https://relay.example', apiKey: 'sk-test', format: 'openai', model: 'gpt-4o' }),
+        async () => ({
+          mode: 'api_key',
+          baseUrl: 'https://relay.example',
+          apiKey: 'sk-test',
+          format: 'openai',
+          model: 'gpt-4o',
+        }),
         { info: () => {}, error: () => {} },
       );
       const result = await client(baseInput);
@@ -87,7 +93,13 @@ describe('createAbstractiveClient format dispatch', () => {
     try {
       const errors = [];
       const client = createAbstractiveClient(
-        async () => ({ mode: 'api_key', baseUrl: 'https://relay.example', apiKey: 'sk-test', format: 'openai', model: 'gpt-4o' }),
+        async () => ({
+          mode: 'api_key',
+          baseUrl: 'https://relay.example',
+          apiKey: 'sk-test',
+          format: 'openai',
+          model: 'gpt-4o',
+        }),
         { info: () => {}, error: (m) => errors.push(m) },
       );
       const result = await client(baseInput);

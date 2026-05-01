@@ -1,7 +1,7 @@
 // F179: LLM-driven content normalizer — 3-layer output (KD-5, AC-02)
 
 import { randomUUID } from 'node:crypto';
-import type { NormalizerLLM, NormalizerConfig, NormalizedDocument, NormalizedChunk } from './types.js';
+import type { NormalizedChunk, NormalizedDocument, NormalizerConfig, NormalizerLLM } from './types.js';
 
 const SYSTEM_PROMPT = `You are a document normalizer. Given a markdown document, extract structured metadata and split it into semantic chunks.
 
@@ -60,10 +60,7 @@ export class Normalizer {
     private readonly config: NormalizerConfig,
   ) {}
 
-  async normalize(
-    markdown: string,
-    meta: { sourcePath: string; sourceHash: string },
-  ): Promise<NormalizedDocument> {
+  async normalize(markdown: string, meta: { sourcePath: string; sourceHash: string }): Promise<NormalizedDocument> {
     if (!markdown || markdown.trim().length === 0) {
       throw new Error('Cannot normalize empty document');
     }
@@ -96,7 +93,7 @@ export class Normalizer {
       summary: parsed.summary,
       docKind: parsed.docKind,
       authority: VALID_AUTHORITIES.has(parsed.authority)
-        ? parsed.authority as NormalizedDocument['authority']
+        ? (parsed.authority as NormalizedDocument['authority'])
         : 'observed',
       extractionConfidence: Math.max(0, Math.min(1, parsed.extractionConfidence)),
       keywords: parsed.keywords,
@@ -109,7 +106,10 @@ export class Normalizer {
   }
 
   private parseResponse(raw: string): LlmResponse {
-    const cleaned = raw.replace(/^```json?\n?/m, '').replace(/\n?```$/m, '').trim();
+    const cleaned = raw
+      .replace(/^```json?\n?/m, '')
+      .replace(/\n?```$/m, '')
+      .trim();
     try {
       return JSON.parse(cleaned) as LlmResponse;
     } catch {

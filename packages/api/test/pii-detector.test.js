@@ -1,6 +1,7 @@
 // F179: PII Detector — regex-based detection for Phase 0
-import { describe, it } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { PiiDetector } from '../dist/domains/knowledge/PiiDetector.js';
 
 describe('PiiDetector', () => {

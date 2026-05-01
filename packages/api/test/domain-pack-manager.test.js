@@ -1,12 +1,18 @@
 // F179: Domain Pack Manager — CRUD for domain knowledge packs
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
 import Database from 'better-sqlite3';
 import { DomainPackManager } from '../dist/domains/knowledge/DomainPackManager.js';
 import {
-  SCHEMA_V1, SCHEMA_V2, SCHEMA_V3_TABLE, SCHEMA_V3_FTS,
-  FTS_TRIGGER_STATEMENTS, PASSAGE_FTS_TRIGGER_STATEMENTS,
-  PRAGMA_SETUP, applyMigrations,
+  applyMigrations,
+  FTS_TRIGGER_STATEMENTS,
+  PASSAGE_FTS_TRIGGER_STATEMENTS,
+  PRAGMA_SETUP,
+  SCHEMA_V1,
+  SCHEMA_V2,
+  SCHEMA_V3_FTS,
+  SCHEMA_V3_TABLE,
 } from '../dist/domains/memory/schema.js';
 
 function freshDb() {
@@ -66,8 +72,14 @@ describe('DomainPackManager', () => {
   it('list returns packs with doc counts', () => {
     // Add a doc to api-docs pack
     db.prepare(`INSERT INTO evidence_docs (anchor, kind, status, title, pack_id, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)`)
-      .run('dk:test-1', 'pack-knowledge', 'active', 'Test Doc', 'api-docs', new Date().toISOString());
+                VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'dk:test-1',
+      'pack-knowledge',
+      'active',
+      'Test Doc',
+      'api-docs',
+      new Date().toISOString(),
+    );
 
     const packs = mgr.list();
     assert.ok(packs.length >= 2);
@@ -83,8 +95,14 @@ describe('DomainPackManager', () => {
   it('rename updates pack name and evidence_docs pack_id', () => {
     mgr.create('old-name', 'Will be renamed');
     db.prepare(`INSERT INTO evidence_docs (anchor, kind, status, title, pack_id, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)`)
-      .run('dk:rename-test', 'pack-knowledge', 'active', 'Rename Test', 'old-name', new Date().toISOString());
+                VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'dk:rename-test',
+      'pack-knowledge',
+      'active',
+      'Rename Test',
+      'old-name',
+      new Date().toISOString(),
+    );
 
     mgr.rename('old-name', 'new-name');
 
@@ -109,8 +127,14 @@ describe('DomainPackManager', () => {
   it('remove throws for pack with active docs', () => {
     mgr.create('busy-pack');
     db.prepare(`INSERT INTO evidence_docs (anchor, kind, status, title, pack_id, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)`)
-      .run('dk:busy-test', 'pack-knowledge', 'active', 'Busy Doc', 'busy-pack', new Date().toISOString());
+                VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'dk:busy-test',
+      'pack-knowledge',
+      'active',
+      'Busy Doc',
+      'busy-pack',
+      new Date().toISOString(),
+    );
     assert.throws(() => mgr.remove('busy-pack'));
   });
 });

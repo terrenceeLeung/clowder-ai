@@ -1,17 +1,18 @@
 // F179: Schema V16 — evidence_passages extension + domain_packs table
-import { describe, it, before, after } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
 import Database from 'better-sqlite3';
 import {
+  applyMigrations,
   CURRENT_SCHEMA_VERSION,
+  FTS_TRIGGER_STATEMENTS,
+  PASSAGE_FTS_TRIGGER_STATEMENTS,
+  PRAGMA_SETUP,
   SCHEMA_V1,
   SCHEMA_V2,
-  SCHEMA_V3_TABLE,
   SCHEMA_V3_FTS,
-  PASSAGE_FTS_TRIGGER_STATEMENTS,
-  FTS_TRIGGER_STATEMENTS,
-  PRAGMA_SETUP,
-  applyMigrations,
+  SCHEMA_V3_TABLE,
 } from '../dist/domains/memory/schema.js';
 
 function createFreshDb() {
@@ -47,34 +48,52 @@ describe('Schema V16 — F179 Knowledge Governance', () => {
 
   describe('evidence_passages new columns', () => {
     it('passage_kind column exists with default "message"', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_passages)").all();
+      const info = db.prepare('PRAGMA table_info(evidence_passages)').all();
       const col = info.find((c) => c.name === 'passage_kind');
       assert.ok(col, 'passage_kind column must exist');
       assert.equal(col.dflt_value, "'message'");
     });
 
     it('heading_path column exists', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_passages)").all();
-      assert.ok(info.find((c) => c.name === 'heading_path'), 'heading_path column must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_passages)').all();
+      assert.ok(
+        info.find((c) => c.name === 'heading_path'),
+        'heading_path column must exist',
+      );
     });
 
     it('chunk_index column exists', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_passages)").all();
-      assert.ok(info.find((c) => c.name === 'chunk_index'), 'chunk_index column must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_passages)').all();
+      assert.ok(
+        info.find((c) => c.name === 'chunk_index'),
+        'chunk_index column must exist',
+      );
     });
 
     it('char_start and char_end columns exist', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_passages)").all();
-      assert.ok(info.find((c) => c.name === 'char_start'), 'char_start must exist');
-      assert.ok(info.find((c) => c.name === 'char_end'), 'char_end must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_passages)').all();
+      assert.ok(
+        info.find((c) => c.name === 'char_start'),
+        'char_start must exist',
+      );
+      assert.ok(
+        info.find((c) => c.name === 'char_end'),
+        'char_end must exist',
+      );
     });
 
     it('existing INSERT without new columns still works (AC-014)', () => {
       db.exec(`INSERT INTO evidence_docs (anchor, kind, status, title, updated_at)
                VALUES ('test-doc-1', 'thread', 'active', 'Test', '2026-05-01T00:00:00Z')`);
       db.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, speaker, position, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?)`)
-        .run('test-doc-1', 'msg-1', 'hello world', 'user', 0, '2026-05-01T00:00:00Z');
+                   VALUES (?, ?, ?, ?, ?, ?)`).run(
+        'test-doc-1',
+        'msg-1',
+        'hello world',
+        'user',
+        0,
+        '2026-05-01T00:00:00Z',
+      );
       const row = db.prepare('SELECT passage_kind FROM evidence_passages WHERE passage_id = ?').get('msg-1');
       assert.equal(row.passage_kind, 'message');
     });
@@ -83,9 +102,18 @@ describe('Schema V16 — F179 Knowledge Governance', () => {
       db.prepare(`INSERT INTO evidence_passages
                    (doc_anchor, passage_id, content, position, created_at,
                     passage_kind, heading_path, chunk_index, char_start, char_end)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .run('test-doc-1', 'chunk-1', 'domain knowledge content', 0, '2026-05-01T00:00:00Z',
-          'domain_chunk', '["Architecture","Overview"]', 0, 0, 24);
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        'test-doc-1',
+        'chunk-1',
+        'domain knowledge content',
+        0,
+        '2026-05-01T00:00:00Z',
+        'domain_chunk',
+        '["Architecture","Overview"]',
+        0,
+        0,
+        24,
+      );
       const row = db.prepare('SELECT * FROM evidence_passages WHERE passage_id = ?').get('chunk-1');
       assert.equal(row.passage_kind, 'domain_chunk');
       assert.equal(row.heading_path, '["Architecture","Overview"]');
@@ -102,37 +130,59 @@ describe('Schema V16 — F179 Knowledge Governance', () => {
 
   describe('evidence_docs new columns', () => {
     it('governance_status column exists', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_docs)").all();
-      assert.ok(info.find((c) => c.name === 'governance_status'), 'governance_status must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_docs)').all();
+      assert.ok(
+        info.find((c) => c.name === 'governance_status'),
+        'governance_status must exist',
+      );
     });
 
     it('extraction_confidence column exists', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_docs)").all();
-      assert.ok(info.find((c) => c.name === 'extraction_confidence'), 'extraction_confidence must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_docs)').all();
+      assert.ok(
+        info.find((c) => c.name === 'extraction_confidence'),
+        'extraction_confidence must exist',
+      );
     });
 
     it('doc_kind column exists', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_docs)").all();
-      assert.ok(info.find((c) => c.name === 'doc_kind'), 'doc_kind must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_docs)').all();
+      assert.ok(
+        info.find((c) => c.name === 'doc_kind'),
+        'doc_kind must exist',
+      );
     });
 
     it('normalizer_version and model_id columns exist', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_docs)").all();
-      assert.ok(info.find((c) => c.name === 'normalizer_version'), 'normalizer_version must exist');
-      assert.ok(info.find((c) => c.name === 'model_id'), 'model_id must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_docs)').all();
+      assert.ok(
+        info.find((c) => c.name === 'normalizer_version'),
+        'normalizer_version must exist',
+      );
+      assert.ok(
+        info.find((c) => c.name === 'model_id'),
+        'model_id must exist',
+      );
     });
 
     it('source_updated_at column exists', () => {
-      const info = db.prepare("PRAGMA table_info(evidence_docs)").all();
-      assert.ok(info.find((c) => c.name === 'source_updated_at'), 'source_updated_at must exist');
+      const info = db.prepare('PRAGMA table_info(evidence_docs)').all();
+      assert.ok(
+        info.find((c) => c.name === 'source_updated_at'),
+        'source_updated_at must exist',
+      );
     });
   });
 
   describe('domain_packs table', () => {
     it('domain_packs table exists and accepts inserts', () => {
       db.prepare(`INSERT INTO domain_packs (pack_id, name, description, created_at)
-                   VALUES (?, ?, ?, ?)`)
-        .run('default', 'Default Pack', 'Auto-created default domain pack', '2026-05-01T00:00:00Z');
+                   VALUES (?, ?, ?, ?)`).run(
+        'default',
+        'Default Pack',
+        'Auto-created default domain pack',
+        '2026-05-01T00:00:00Z',
+      );
       const row = db.prepare('SELECT * FROM domain_packs WHERE pack_id = ?').get('default');
       assert.equal(row.name, 'Default Pack');
     });
@@ -140,8 +190,7 @@ describe('Schema V16 — F179 Knowledge Governance', () => {
     it('domain_packs name is unique', () => {
       assert.throws(() => {
         db.prepare(`INSERT INTO domain_packs (pack_id, name, description, created_at)
-                     VALUES (?, ?, ?, ?)`)
-          .run('default-2', 'Default Pack', 'Duplicate name', '2026-05-01T00:00:00Z');
+                     VALUES (?, ?, ?, ?)`).run('default-2', 'Default Pack', 'Duplicate name', '2026-05-01T00:00:00Z');
       });
     });
   });
@@ -169,7 +218,8 @@ describe('Schema V16 — F179 Knowledge Governance', () => {
       // Insert pre-existing data
       db2.exec(`INSERT INTO evidence_docs (anchor, kind, status, title, updated_at)
                 VALUES ('old-doc', 'thread', 'active', 'Old Doc', '2026-04-01T00:00:00Z')`);
-      db2.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, speaker, position, created_at)
+      db2
+        .prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, speaker, position, created_at)
                     VALUES (?, ?, ?, ?, ?, ?)`)
         .run('old-doc', 'old-msg-1', 'pre-existing message', 'user', 0, '2026-04-01T00:00:00Z');
 
