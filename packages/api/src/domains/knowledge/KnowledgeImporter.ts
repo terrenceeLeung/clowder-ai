@@ -57,10 +57,9 @@ export class KnowledgeImporter {
 
     const rawHash = await this.deps.storage.saveRaw(content, filePath.split('/').pop() ?? 'unknown.md');
 
-    const packId = opts?.packId ?? this.deps.packs.ensureDefaultPack();
-    const now = new Date().toISOString();
-
     try {
+      const packId = opts?.packId ?? this.deps.packs.ensureDefaultPack();
+      const now = new Date().toISOString();
       const tx = this.deps.db.transaction(() => {
         if (existing) {
           try {

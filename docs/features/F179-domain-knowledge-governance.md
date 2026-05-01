@@ -175,7 +175,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - [ ] AC-04: anchor 使用导入时 UUID（dk:uuid），pack_id 为独立可变字段
 - [ ] AC-05: 原始文件存储在 gitignored 私有目录（.clowder/knowledge/ 创建时自动写入 .gitignore，git status 在任何 F179 操作后不显示该目录下的文件变更）
 - [ ] AC-06: 治理状态机独立运行（含 needs_review / rejected / failed 路径）
-- [ ] AC-07: Hybrid passage retrieval（BM25 + vec0）可用，长文档后半段 chunk 可被检索命中
+- [ ] AC-07: Passage retrieval — Phase 0: BM25 via FTS5 可用，长文档后半段 chunk 可被检索命中；Phase 1: 补 vec0 hybrid（passage 级 embedding pipeline 依赖 Phase 1 接入）
 - [ ] AC-08: PII/安全边界在开工前拍板（前置条件）
 - [ ] AC-09: Normalizer 输出带 normalizer_version / model_id，支持可复现性
 - [ ] AC-010: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据

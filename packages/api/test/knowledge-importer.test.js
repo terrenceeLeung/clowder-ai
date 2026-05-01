@@ -308,6 +308,40 @@ describe('KnowledgeImporter', () => {
     await rm(isoTmp, { recursive: true, force: true });
   });
 
+  it('P1-2b: ensureDefaultPack failure also cleans up raw files', async () => {
+    const isoTmp = await mkdtemp(join(tmpdir(), 'f179-pack-fail-'));
+    const isoDb = freshDb();
+    const isoStorage = new KnowledgeStorage(isoTmp);
+    await isoStorage.ensureDir();
+
+    const knDir = join(isoTmp, '.clowder', 'knowledge');
+    const initialEntries = (await readdir(knDir)).length;
+
+    // Drop domain_packs table so ensureDefaultPack throws
+    isoDb.exec('DROP TABLE IF EXISTS domain_packs');
+
+    const isoImporter = new KnowledgeImporter({
+      db: isoDb,
+      storage: isoStorage,
+      normalizer: new Normalizer(mockLlm(), { version: '1.0.0', modelId: 'mock' }),
+      governance: new GovernanceStateMachine(isoDb),
+      packs: new DomainPackManager(isoDb),
+      piiDetector: new PiiDetector(),
+    });
+
+    await writeFile(join(isoTmp, 'pack-fail.md'), '# Pack Fail\n\nContent.');
+    const result = await isoImporter.importFile(join(isoTmp, 'pack-fail.md'));
+    assert.equal(result.status, 'failed');
+
+    const afterEntries = (await readdir(knDir)).length;
+    assert.equal(afterEntries, initialEntries, 'No orphan raw files when ensureDefaultPack fails');
+
+    try {
+      isoDb.close();
+    } catch {}
+    await rm(isoTmp, { recursive: true, force: true });
+  });
+
   it('P2-1: imported doc has provenance metadata (AC-010)', async () => {
     await writeFile(join(tmpRoot, 'docs', 'prov-test.md'), '# Provenance Test\n\nContent.');
     const result = await importer.importFile(join(tmpRoot, 'docs', 'prov-test.md'));
