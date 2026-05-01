@@ -1,7 +1,7 @@
 // F179: KnowledgeImporter — orchestrator integration test
 
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
@@ -232,5 +232,91 @@ describe('KnowledgeImporter', () => {
     ]);
     assert.equal(results.length, 2);
     assert.ok(results.every((r) => r.status === 'created'));
+  });
+
+  it('P1-1: normalization failure does NOT mark old version stale', async () => {
+    const filePath = join(tmpRoot, 'docs', 'stale-guard.md');
+    await writeFile(filePath, '# Stale Guard\n\nVersion 1.');
+    const r1 = await importer.importFile(filePath);
+    assert.equal(r1.status, 'created');
+
+    const beforeStatus = db.prepare('SELECT governance_status FROM evidence_docs WHERE anchor = ?').get(r1.anchor);
+
+    const failImporter = new KnowledgeImporter({
+      db,
+      storage: new KnowledgeStorage(tmpRoot),
+      normalizer: new Normalizer(
+        {
+          async generate() {
+            throw new Error('LLM down');
+          },
+        },
+        { version: '1.0.0', modelId: 'fail' },
+      ),
+      governance: new GovernanceStateMachine(db),
+      packs: new DomainPackManager(db),
+      piiDetector: new PiiDetector(),
+    });
+
+    await writeFile(filePath, '# Stale Guard\n\nVersion 2 changed content.');
+    const r2 = await failImporter.importFile(filePath);
+    assert.equal(r2.status, 'failed');
+
+    const afterStatus = db.prepare('SELECT governance_status FROM evidence_docs WHERE anchor = ?').get(r1.anchor);
+    assert.equal(
+      afterStatus.governance_status,
+      beforeStatus.governance_status,
+      'Old version should NOT be marked stale when new import fails',
+    );
+  });
+
+  it('P1-2: DB transaction failure cleans up saved raw files', async () => {
+    const isoTmp = await mkdtemp(join(tmpdir(), 'f179-orphan-'));
+    const isoDb = freshDb();
+    const isoStorage = new KnowledgeStorage(isoTmp);
+    await isoStorage.ensureDir();
+
+    const knDir = join(isoTmp, '.clowder', 'knowledge');
+    const initialEntries = (await readdir(knDir)).length;
+
+    const sabotageLlm = {
+      async generate() {
+        isoDb.exec('DROP TABLE IF EXISTS evidence_passages');
+        return JSON.stringify(VALID_LLM_RESPONSE);
+      },
+    };
+
+    const isoImporter = new KnowledgeImporter({
+      db: isoDb,
+      storage: isoStorage,
+      normalizer: new Normalizer(sabotageLlm, { version: '1.0.0', modelId: 'mock' }),
+      governance: new GovernanceStateMachine(isoDb),
+      packs: new DomainPackManager(isoDb),
+      piiDetector: new PiiDetector(),
+    });
+
+    await writeFile(join(isoTmp, 'orphan-test.md'), '# Orphan Test\n\nContent.');
+    const result = await isoImporter.importFile(join(isoTmp, 'orphan-test.md'));
+    assert.equal(result.status, 'failed');
+
+    const afterEntries = (await readdir(knDir)).length;
+    assert.equal(afterEntries, initialEntries, 'No orphan raw files should remain after DB failure');
+
+    try {
+      isoDb.close();
+    } catch {}
+    await rm(isoTmp, { recursive: true, force: true });
+  });
+
+  it('P2-1: imported doc has provenance metadata (AC-010)', async () => {
+    await writeFile(join(tmpRoot, 'docs', 'prov-test.md'), '# Provenance Test\n\nContent.');
+    const result = await importer.importFile(join(tmpRoot, 'docs', 'prov-test.md'));
+    assert.equal(result.status, 'created');
+
+    const doc = db
+      .prepare('SELECT provenance_tier, provenance_source FROM evidence_docs WHERE anchor = ?')
+      .get(result.anchor);
+    assert.ok(doc.provenance_tier, 'Should have provenance_tier');
+    assert.ok(doc.provenance_source, 'Should have provenance_source');
   });
 });

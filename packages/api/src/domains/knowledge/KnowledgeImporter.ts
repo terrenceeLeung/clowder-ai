@@ -48,17 +48,6 @@ export class KnowledgeImporter {
       return { sourcePath, anchor: existing.anchor, status: 'skipped', reason: 'identical content' };
     }
 
-    // Mark old version stale if exists
-    if (existing) {
-      try {
-        this.deps.governance.transition(existing.anchor, 'stale');
-      } catch {
-        this.deps.db
-          .prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?')
-          .run('stale', existing.anchor);
-      }
-    }
-
     let normalized;
     try {
       normalized = await this.deps.normalizer.normalize(content, { sourcePath, sourceHash });
@@ -66,63 +55,82 @@ export class KnowledgeImporter {
       return { sourcePath, anchor: null, status: 'failed', reason: (err as Error).message };
     }
 
-    await this.deps.storage.saveRaw(content, filePath.split('/').pop() ?? 'unknown.md');
+    const rawHash = await this.deps.storage.saveRaw(content, filePath.split('/').pop() ?? 'unknown.md');
 
     const packId = opts?.packId ?? this.deps.packs.ensureDefaultPack();
     const now = new Date().toISOString();
 
-    const tx = this.deps.db.transaction(() => {
-      this.deps.db
-        .prepare(`
-        INSERT INTO evidence_docs
-        (anchor, kind, status, title, summary, keywords, source_path, source_hash,
-         pack_id, governance_status, extraction_confidence, doc_kind,
-         normalizer_version, model_id, authority, activation, updated_at)
-        VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, ?, ?,
-                ?, 'ingested', ?, ?, ?, ?, ?, 'query', ?)
-      `)
-        .run(
-          normalized.anchor,
-          normalized.title,
-          normalized.summary,
-          JSON.stringify(normalized.keywords),
-          sourcePath,
-          sourceHash,
-          packId,
-          normalized.extractionConfidence,
-          normalized.docKind,
-          normalized.normalizerVersion,
-          normalized.modelId,
-          normalized.authority,
-          now,
-        );
+    try {
+      const tx = this.deps.db.transaction(() => {
+        if (existing) {
+          try {
+            this.deps.governance.transition(existing.anchor, 'stale');
+          } catch {
+            this.deps.db
+              .prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?')
+              .run('stale', existing.anchor);
+          }
+        }
 
-      for (const chunk of normalized.chunks) {
         this.deps.db
           .prepare(`
-          INSERT INTO evidence_passages
-          (doc_anchor, passage_id, content, position, created_at,
-           passage_kind, heading_path, chunk_index, char_start, char_end)
-          VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)
+          INSERT INTO evidence_docs
+          (anchor, kind, status, title, summary, keywords, source_path, source_hash,
+           pack_id, governance_status, extraction_confidence, doc_kind,
+           normalizer_version, model_id, authority, activation,
+           provenance_tier, provenance_source, updated_at)
+          VALUES (?, 'pack-knowledge', 'active', ?, ?, ?, ?, ?,
+                  ?, 'ingested', ?, ?, ?, ?, ?, 'query',
+                  ?, ?, ?)
         `)
           .run(
             normalized.anchor,
-            chunk.chunkId,
-            chunk.contentMarkdown,
-            chunk.chunkIndex,
+            normalized.title,
+            normalized.summary,
+            JSON.stringify(normalized.keywords),
+            sourcePath,
+            sourceHash,
+            packId,
+            normalized.extractionConfidence,
+            normalized.docKind,
+            normalized.normalizerVersion,
+            normalized.modelId,
+            normalized.authority,
+            'imported',
+            sourcePath,
             now,
-            JSON.stringify(chunk.headingPath),
-            chunk.chunkIndex,
-            chunk.charStart,
-            chunk.charEnd,
           );
-      }
 
-      this.deps.governance.transition(normalized.anchor, 'normalized');
-      this.deps.governance.autoRoute(normalized.anchor, normalized.extractionConfidence);
-    });
+        for (const chunk of normalized.chunks) {
+          this.deps.db
+            .prepare(`
+            INSERT INTO evidence_passages
+            (doc_anchor, passage_id, content, position, created_at,
+             passage_kind, heading_path, chunk_index, char_start, char_end)
+            VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)
+          `)
+            .run(
+              normalized.anchor,
+              chunk.chunkId,
+              chunk.contentMarkdown,
+              chunk.chunkIndex,
+              now,
+              JSON.stringify(chunk.headingPath),
+              chunk.chunkIndex,
+              chunk.charStart,
+              chunk.charEnd,
+            );
+        }
 
-    tx();
+        this.deps.governance.transition(normalized.anchor, 'normalized');
+        this.deps.governance.autoRoute(normalized.anchor, normalized.extractionConfidence);
+      });
+
+      tx();
+    } catch (err) {
+      await this.deps.storage.deleteRaw(rawHash);
+      return { sourcePath, anchor: null, status: 'failed', reason: (err as Error).message };
+    }
 
     return {
       sourcePath,

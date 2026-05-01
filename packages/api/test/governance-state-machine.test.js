@@ -179,4 +179,18 @@ describe('GovernanceStateMachine', () => {
       assert.ok(!result.includes('dk:pk2'));
     });
   });
+
+  describe('P1-3: rejected status (AC-06)', () => {
+    it('needs_review → rejected is a valid transition', () => {
+      insertDoc(db, 'dk:rej1', 'needs_review');
+      gsm.transition('dk:rej1', 'rejected');
+      assert.equal(gsm.getStatus('dk:rej1'), 'rejected');
+    });
+
+    it('rejected is a terminal state', () => {
+      insertDoc(db, 'dk:rej2', 'rejected');
+      assert.throws(() => gsm.transition('dk:rej2', 'ingested'), /Invalid transition/);
+      assert.throws(() => gsm.transition('dk:rej2', 'active'), /Invalid transition/);
+    });
+  });
 });

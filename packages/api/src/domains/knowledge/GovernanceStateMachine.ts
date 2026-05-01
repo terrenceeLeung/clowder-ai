@@ -10,16 +10,18 @@ export type GovernanceStatus =
   | 'active'
   | 'stale'
   | 'retired'
+  | 'rejected'
   | 'failed';
 
 const VALID_TRANSITIONS: Record<GovernanceStatus, readonly GovernanceStatus[]> = {
   ingested: ['normalized', 'failed'],
   normalized: ['needs_review', 'approved'],
-  needs_review: ['approved', 'retired'],
+  needs_review: ['approved', 'rejected'],
   approved: ['active'],
   active: ['stale', 'retired'],
   stale: ['retired'],
   retired: [],
+  rejected: [],
   failed: ['ingested'],
 };
 
