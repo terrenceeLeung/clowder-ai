@@ -60,3 +60,4 @@ created: 2026-02-26
 | F175 | Unified Message Queue — 优先级排序 + 用户可控编排（urgent bypass 收口）| spec | @mindfn (community) | community [#575](https://github.com/zts212653/clowder-ai/pull/575) | [F175](features/F175-unified-message-queue.md) |
 | F177 | Harness Update — Close Gate 结构化判据 + 四心智专属护栏 | spec | Ragdoll | internal | [F177](features/F177-harness-update.md) |
 | F178 | Persistent MCP Agent-Key Auth — 跨 invocation 写权限（F061 Bug-H follow-up） | spec | Ragdoll | internal | [F178](features/F178-persistent-mcp-agent-key-auth.md) |
+| F179 | Domain Knowledge Governance — 领域知识治理 | spec | Ragdoll | community [#569](https://github.com/zts212653/clowder-ai/issues/569) | [F179](features/F179-domain-knowledge-governance.md) |
