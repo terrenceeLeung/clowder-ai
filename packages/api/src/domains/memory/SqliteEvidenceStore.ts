@@ -32,6 +32,16 @@ export interface PassageResult {
   createdAt?: string;
   /** AC-I8: surrounding passages within the context window */
   context?: PassageResult[];
+  /** F179: passage type — 'message' for thread/session, 'domain_chunk' for domain knowledge */
+  passageKind?: string;
+  /** F179: heading hierarchy from document root */
+  headingPath?: string[];
+  /** F179: chunk sequence number */
+  chunkIndex?: number;
+  /** F179: start character offset in source document */
+  charStart?: number;
+  /** F179: end character offset in source document */
+  charEnd?: number;
 }
 
 export interface EmbedDeps {
@@ -876,7 +886,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     query: string,
     limit = 10,
     timeFilter?: { dateFrom?: string; dateTo?: string },
-    options?: { contextWindow?: number },
+    options?: { contextWindow?: number; passageKind?: string },
   ): PassageResult[] {
     this.ensureOpen();
     const trimmed = query.trim();
@@ -892,18 +902,23 @@ export class SqliteEvidenceStore implements IEvidenceStore {
 
     try {
       let sql = `SELECT p.doc_anchor, p.passage_id, p.content, p.speaker, p.position, p.created_at,
+                  p.passage_kind, p.heading_path, p.chunk_index, p.char_start, p.char_end,
                   bm25(passage_fts) AS rank
            FROM passage_fts f
            JOIN evidence_passages p ON p.rowid = f.rowid
            WHERE passage_fts MATCH ?`;
       const params: unknown[] = [ftsQuery];
 
+      if (options?.passageKind) {
+        sql += ' AND p.passage_kind = ?';
+        params.push(options.passageKind);
+      }
+
       if (timeFilter?.dateFrom) {
         sql += ' AND p.created_at >= ?';
         params.push(timeFilter.dateFrom);
       }
       if (timeFilter?.dateTo) {
-        // Add 'T23:59:59' to make dateTo inclusive for the full day
         sql += ' AND p.created_at <= ?';
         params.push(timeFilter.dateTo.length === 10 ? `${timeFilter.dateTo}T23:59:59` : timeFilter.dateTo);
       }
@@ -918,6 +933,11 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         speaker: string | null;
         position: number | null;
         created_at: string | null;
+        passage_kind: string | null;
+        heading_path: string | null;
+        chunk_index: number | null;
+        char_start: number | null;
+        char_end: number | null;
         rank: number;
       }>;
 
@@ -929,6 +949,11 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         position: r.position ?? undefined,
         rank: r.rank,
         createdAt: r.created_at ?? undefined,
+        passageKind: r.passage_kind ?? undefined,
+        headingPath: r.heading_path ? JSON.parse(r.heading_path) : undefined,
+        chunkIndex: r.chunk_index ?? undefined,
+        charStart: r.char_start ?? undefined,
+        charEnd: r.char_end ?? undefined,
       }));
 
       // AC-I8: fetch surrounding passages within the context window
