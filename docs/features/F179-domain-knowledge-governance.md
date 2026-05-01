@@ -91,19 +91,19 @@ Source（来源）
         └── Section/Chunk（章节/片段）
 ```
 
-字段定义（按 Phase A/B/C 对齐，不做人为分期延后）：
+字段定义（按 Phase 0/1/2 对齐，不做人为分期延后）：
 
-**Phase A（Normalizer 一次 LLM 调用全出）：**
+**Phase 0（Normalizer 一次 LLM 调用全出）：**
 - 结构字段：`document_id`, `chunk_id`, `heading_path[]`, `chunk_index`, `content_markdown`, `plain_text`, `char_start`, `char_end`
 - 治理字段：`doc_kind`, `authority`(建议值), `activation`(默认 query), `provenance_tier`, `extraction_confidence`
 - 溯源字段：`source_id`, `source_locator`, `hash`, `normalized_at`, `source_updated_at`, `status`
 - 可复现字段：`normalizer_version`, `model_id`
 - 检索增强：`keywords[]`, `topics[]`, `language`, `token_count`, `dedupe_key`
 
-**Phase B（PDF/DOCX 支持 + Knowledge Hub 审核流程才需要）：**
+**Phase 1（PDF/DOCX 支持 + Knowledge Hub 审核流程才需要）：**
 - `preview_ref`, `page_no`, `citations/source_refs[]`, `last_reviewed`
 
-**Phase C（版本管理 + 冲突检测才需要）：**
+**Phase 2（版本管理 + 冲突检测才需要）：**
 - `subject_key`, `statement_type`, `version/effective_at`
 - `conflict_group_id`, `conflict_reason`, `conflict_score`
 
@@ -153,13 +153,13 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 
 ## Phased Implementation
 
-### Phase A: Foundation — Normalizer + Chunk-level Retrieval + Governance
+### Phase 0: Foundation — Normalizer + Chunk-level Retrieval + Governance
 
 **范围：**
 - 新增 KnowledgeImporter 模块：独立于 Pack 安装流程，共享 pack_id 隔离模型
 - 新增 Normalizer：LLM 驱动的内容理解，输出三层结构化元数据（带版本追踪）
 - 成本分级：短文档（≤2k tokens）全文处理，中文档 LLM 章节识别，长文档 heading-based 启发式分段 + LLM 摘要混合
-- chunk 数据进 evidence_passages，Phase A 即开启 hybrid 检索（BM25 + vec0），Normalizer 处理时同步生成 embedding
+- chunk 数据进 evidence_passages，Phase 0 即开启 hybrid 检索（BM25 + vec0），Normalizer 处理时同步生成 embedding
 - 治理状态机独立运行
 - 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
 - 原始文件存 gitignored 私有目录（.clowder/knowledge/），默认不导出
@@ -169,20 +169,22 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** UI 面板、多格式转换、外部 RAG、Skill 进化、conflict detection
 
 **验收标准：**
-- [ ] AC-A1: KnowledgeImporter 模块独立于 Pack 系统，共享 Evidence Store 存储层
-- [ ] AC-A2: Normalizer 处理 .md 文件，输出 source → document → passages 三层结构
-- [ ] AC-A3: evidence_passages 存储 chunk 级数据，支持 heading_path / chunk_index / char_start / char_end 定位
-- [ ] AC-A4: anchor 使用导入时 UUID（dk:uuid），pack_id 为独立可变字段
-- [ ] AC-A5: 原始文件存储在 gitignored 私有目录
-- [ ] AC-A6: 治理状态机独立运行（含 needs_review / rejected / failed 路径）
-- [ ] AC-A7: Hybrid passage retrieval（BM25 + vec0）可用，长文档后半段 chunk 可被检索命中
-- [ ] AC-A8: PII/安全边界在开工前拍板（前置条件）
-- [ ] AC-A9: Normalizer 输出带 normalizer_version / model_id，支持可复现性
-- [ ] AC-A10: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
-- [ ] AC-A11: Fixture demo Pack 端到端验收（长文后半段召回 + source attribution 定位 + snippet 可用性），含固定 query set 报告 Recall 和 Precision@5 baseline（不设硬阈值，作为 Phase B 优化基线）
-- [ ] AC-A12: Domain Pack CRUD（list/create/rename）+ 首次导入自动创建 default Domain Pack
+- [ ] AC-01: KnowledgeImporter 模块独立于 Pack 系统，共享 Evidence Store 存储层
+- [ ] AC-02: Normalizer 处理 .md 文件，输出 source → document → passages 三层结构
+- [ ] AC-03: evidence_passages 存储 chunk 级数据，支持 heading_path / chunk_index / char_start / char_end 定位
+- [ ] AC-04: anchor 使用导入时 UUID（dk:uuid），pack_id 为独立可变字段
+- [ ] AC-05: 原始文件存储在 gitignored 私有目录（.clowder/knowledge/ 创建时自动写入 .gitignore，git status 在任何 F179 操作后不显示该目录下的文件变更）
+- [ ] AC-06: 治理状态机独立运行（含 needs_review / rejected / failed 路径）
+- [ ] AC-07: Hybrid passage retrieval（BM25 + vec0）可用，长文档后半段 chunk 可被检索命中
+- [ ] AC-08: PII/安全边界在开工前拍板（前置条件）
+- [ ] AC-09: Normalizer 输出带 normalizer_version / model_id，支持可复现性
+- [ ] AC-010: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
+- [ ] AC-011: Fixture demo Pack 端到端验收——检索结果包含：命中 chunk 内容、父文档元数据（title/doc_kind/authority/activation）、原文定位（heading_path/char_start/char_end）、治理状态。含固定 query set 报告 Recall 和 Precision@5 baseline（不设硬阈值，作为 Phase 1 优化基线）。Fixture 使用虚构技术领域文档集（保证不在 LLM 训练数据中）
+- [ ] AC-012: Domain Pack CRUD（list/create/rename）+ 首次导入自动创建 default Domain Pack
+- [ ] AC-013: 导入事务原子性——raw file、evidence_docs row、evidence_passages rows、embedding rows 要么全部成功，要么可恢复（不产生半落库状态）
+- [ ] AC-014: evidence_passages schema 扩展不破坏现有 thread/session passage 的写入、检索和 hydrate 行为（兼容迁移）
 
-### Phase B: Knowledge Hub — 可视化导入与透视体验
+### Phase 1: Knowledge Hub — 可视化导入与透视体验
 
 **范围：**
 - Source Adapters：PDF/DOCX/URL → LLM 提取 → Normalizer
@@ -196,16 +198,16 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** 外部 RAG、Skill/workflow 进化、Knowledge Graph 可视化
 
 **验收标准：**
-- [ ] AC-B1: Import Wizard 引导用户完成文档导入
-- [ ] AC-B2: Knowledge Hub 展示 raw source ↔ normalized document ↔ chunk 透视链路
-- [ ] AC-B3: 低置信度项需用户确认，高置信度自动归档但提供 Import Summary 全局俯瞰视图
-- [ ] AC-B4: Retrieval Playground 输入问题精确命中对应 chunk
-- [ ] AC-B5: default Pack 超阈值后 LLM 自动生成分包建议（主题聚类 + 命名），用户确认后一键拆包
-- [ ] AC-B6: Knowledge Texture：不同 doc_kind 有视觉区分（底纹/色彩标识）
-- [ ] AC-B7: Import Summary 视图：入库前展示 chunk 总数、需确认数、已就绪数
-- [ ] AC-B8: Retrieval Playground 支持就地调优（Edit Metadata / Add Keyword），召回不对时当场补关键词
+- [ ] AC-11: Import Wizard 引导用户完成文档导入
+- [ ] AC-12: Knowledge Hub 展示 raw source ↔ normalized document ↔ chunk 透视链路
+- [ ] AC-13: 低置信度项需用户确认，高置信度自动归档但提供 Import Summary 全局俯瞰视图
+- [ ] AC-14: Retrieval Playground 输入问题精确命中对应 chunk
+- [ ] AC-15: default Pack 超阈值后 LLM 自动生成分包建议（主题聚类 + 命名），用户确认后一键拆包
+- [ ] AC-16: Knowledge Texture：不同 doc_kind 有视觉区分（底纹/色彩标识）
+- [ ] AC-17: Import Summary 视图：入库前展示 chunk 总数、需确认数、已就绪数
+- [ ] AC-18: Retrieval Playground 支持就地调优（Edit Metadata / Add Keyword），召回不对时当场补关键词
 
-### Phase C: Federation + Evolution — 外部知识联邦 + 知识进化
+### Phase 2: Federation + Evolution — 外部知识联邦 + 知识进化
 
 **范围：**
 - KnowledgeResolver 新增 external source registry
@@ -218,11 +220,11 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** active skill 自动生成、实时双向同步、企业权限图、自动语义冲突检测
 
 **验收标准：**
-- [ ] AC-C1: 同 subject_key 多版本文档，默认返回最新版 + 旧版本标注
-- [ ] AC-C2: Federated MVP：外部结果 citation-only 透传，不混排，含 ACL 校验 + cache TTL 策略
-- [ ] AC-C3: Mirror 路径：外部数据同步进本地走完整治理
-- [ ] AC-C4: 知识进化：稳定知识可生成 workflow/guardrail 草案（带 evidence chain + validation cases）供人审
-- [ ] AC-C5: Federated 结果禁止自动回流本地，必须显式 promote/mirror
+- [ ] AC-21: 同 subject_key 多版本文档，默认返回最新版 + 旧版本标注
+- [ ] AC-22: Federated MVP：外部结果 citation-only 透传，不混排，含 ACL 校验 + cache TTL 策略
+- [ ] AC-23: Mirror 路径：外部数据同步进本地走完整治理
+- [ ] AC-24: 知识进化：稳定知识可生成 workflow/guardrail 草案（带 evidence chain + validation cases）供人审
+- [ ] AC-25: Federated 结果禁止自动回流本地，必须显式 promote/mirror
 
 ## User Journey
 
@@ -260,9 +262,9 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 
 | 风险 | 缓解 |
 |------|------|
-| Normalizer 依赖外部 LLM，PII 泄露 | AC-A8：Phase A 前拍板安全边界 |
-| 非 Markdown 格式转换质量不可控 | Phase A 先支持 .md，Phase B 扩展；保留原文审计 |
-| Federated 混排信任校准复杂 | Phase C MVP 只做 citation-only 透传 |
+| Normalizer 依赖外部 LLM，PII 泄露 | AC-08：Phase 0 前拍板安全边界 |
+| 非 Markdown 格式转换质量不可控 | Phase 0 先支持 .md，Phase 1 扩展；保留原文审计 |
+| Federated 混排信任校准复杂 | Phase 2 MVP 只做 citation-only 透传 |
 | workflow 执行引擎不存在 | 知识进化定位为"生成草案"，不依赖执行引擎 |
 
 ## Open Questions
@@ -270,18 +272,18 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | # | 问题 | 状态 |
 |---|------|------|
 | OQ-1 | ~~PII 扫描策略~~ → 已收敛为 KD-12 | ✅ 已定 |
-| OQ-2 | Normalizer LLM 选型：本地 vs 云端？ | ⬜ 未定 |
-| OQ-3 | 非 .md 格式处理策略确认 | ⬜ 讨论中 |
-| OQ-4 | Visibility/ACL 模型：private / team-shared / exportable 与外部 connector ACL 组合 | ⬜ 未定 |
-| OQ-5 | 去重与更新策略：source_hash 冲突、URL refresh、同文档重复导入 | ⬜ 未定 |
-| OQ-6 | Normalizer 可复现性：模型版本、prompt 版本、schema 版本、重跑策略 | ⬜ 未定 |
-| OQ-7 | Federated cache/prompt policy：外部 snippet 可否缓存/注入模型上下文、TTL、是否允许进 prompt | ⬜ Phase C 前定 |
-| OQ-8 | 治理字段策略：authority/activation/extraction_confidence 哪些 LLM 建议、哪些人工确认、哪些系统默认 | ⬜ Phase A 设计时定 |
-| OQ-9 | 版本身份模型：source_id / document_id / version_id / subject_key 在 re-import / mirror / split-merge 下的稳定性规则 | ⬜ 未定 |
-| OQ-10 | Normalize 后的 markdown 仍可能含 PII，docs/imported/ 是否也默认 gitignored | ⬜ Phase A 设计时定 |
-| OQ-11 | Fixture demo Pack 选型：验收 Phase A 端到端的测试数据集 | ⬜ Phase A 施工前定 |
-| OQ-12 | Token budget：领域知识 RAG context 与 collaboration brief (#570) 的 prompt 空间竞争策略 | ⬜ Phase A 设计时定 |
-| OQ-13 | ~~CatCafeScanner 迁移路径~~ → 已收敛为 KD-14（Phase A 后 follow-up） | ✅ 已定 |
+| OQ-2 | ~~Normalizer LLM 选型~~ → 用户自配（KD-13 独立配置覆盖），不限定模型 | ✅ 已定 |
+| OQ-3 | ~~非 .md 格式~~ → Phase 0 只支持 .md，非 .md 返回明确错误提示，Phase 1 加 PDF/DOCX/URL | ✅ 已定 |
+| OQ-4 | ~~Visibility/ACL~~ → 单用户系统无 ACL。Private by default（gitignored），导出 Pack 是显式分享 | ✅ 已定 |
+| OQ-5 | ~~去重策略~~ → source_path 做身份匹配 + source_hash 做版本判断。路径相同+hash 相同→跳过；路径相同+hash 不同→新版本（旧标 stale）；复制+改名→Phase 2 LLM 语义去重 | ✅ 已定 |
+| OQ-6 | ~~Normalizer 可复现性~~ → 记录 normalizer_version/model_id/prompt_version 用于溯源（AC-09），不做重跑机制 | ✅ 已定 |
+| OQ-7 | ~~Federated cache/prompt~~ → KD-7 citation-only 已定：不缓存到 Evidence Store，不注入 prompt，不自动回流。Display-only | ✅ 已定 |
+| OQ-8 | ~~治理字段策略~~ → authority/doc_kind = LLM 建议+用户可改；activation = 系统默认 query；extraction_confidence = 系统输出不可改（驱动自动分流） | ✅ 已定 |
+| OQ-9 | ~~版本身份模型~~ → source_path 做源级身份，anchor(dk:uuid) 做版本级身份（每版本新 UUID），pack_id 做组织级身份（随时可改不影响数据）。迁移/拆包只改 pack_id | ✅ 已定 |
+| OQ-10 | ~~Normalized markdown 落盘路径~~ → Normalizer 输出直接写 SQLite，不生成独立文件，无需 gitignore | ✅ 已定 |
+| OQ-11 | ~~Fixture demo Pack 选型~~ → 虚构技术领域文档集（"MeowGrid 分布式调度引擎"运维手册），保证不在 LLM 训练数据中 | ✅ 已定 |
+| OQ-12 | ~~Token budget~~ → domain knowledge 通过 search_evidence 工具调用返回，不注入 system prompt，无 token 竞争 | ✅ 已定 |
+| OQ-13 | ~~CatCafeScanner 迁移路径~~ → 已收敛为 KD-14（Phase 0 后 follow-up） | ✅ 已定 |
 
 ## Key Decisions
 
@@ -297,12 +299,20 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | KD-8 | 领域知识默认 activation=query（always_on 保护） | 架构原则 3：领域知识不应默认注入每次对话，防止 context 膨胀和噪音 | 2026-05-01 |
 | KD-9 | 自动化边界：压缩体力活，不替人拍板 | 架构原则 5：Normalizer 建议分类/置信度，最终入库由人确认；wizard 引导但不自动决策 | 2026-05-01 |
 | KD-10 | evidence_passages 新增 passage_kind 字段 | 区分 thread/session message 与 domain_chunk，避免 hydrate/filter/ranking 语义混淆 | 2026-05-01 |
-| KD-11 | char_start/char_end 移入 Phase 0 | AC-A3 要求 chunk 定位，字段不能延后到 Phase 1（Design Gate P1-2） | 2026-05-01 |
-| KD-12 | PII 检测采用接口预留 + 分阶段实现：Phase A 默认正则检测（结构化 PII）+ 知情同意；Phase B 封装 Presidio 开源服务实现 | 接口隔离，不引入外部依赖到 Phase A；Presidio MIT 协议可本地部署，避免"检测 PII 又发外部"套娃 | 2026-05-01 |
-| KD-13 | Normalizer 使用独立 LLM 配置，不复用 CatAgent provider | 文档处理和对话是不同工作负载，用户应能选择不同模型（如便宜模型做批量处理）；独立配置也避免影响猫的对话体验 | 2026-05-01 |
-| KD-14 | CatCafeScanner 接 Normalizer 作为 Phase A 后 follow-up，不纳入 Phase A scope | scope 控制；Phase A 先证明 Normalizer 可用，follow-up 快速迭代切换 CatCafeScanner | 2026-05-01 |
+| KD-11 | char_start/char_end 移入 Phase 0 | AC-03 要求 chunk 定位，字段不能延后到 Phase 1（Design Gate P1-2） | 2026-05-01 |
+| KD-12 | PII 检测采用接口预留 + 分阶段实现：Phase 0 默认正则检测（结构化 PII）+ 知情同意；Phase 1 封装 Presidio 开源服务实现 | 接口隔离，不引入外部依赖到 Phase 0；Presidio MIT 协议可本地部署，避免"检测 PII 又发外部"套娃 | 2026-05-01 |
+| KD-13 | Normalizer 使用独立 LLM 配置（含 embedding 模型），不复用 CatAgent provider。Embedding 为可选配置，未配时退化为 BM25-only 检索 | 文档处理和对话是不同工作负载；embedding 可选保证无 API key 时仍可用 | 2026-05-01 |
+| KD-14 | CatCafeScanner 接 Normalizer 作为 Phase 0 后 follow-up，不纳入 Phase 0 scope | scope 控制；Phase 0 先证明 Normalizer 可用，follow-up 快速迭代切换 CatCafeScanner | 2026-05-01 |
 | KD-15 | 状态机精简：captured→ingested，删除 normalizing（job tracker 追踪）和 indexed（合并入 active），stale 不循环回起点（新版本从 ingested 开始） | 铲屎官 review：normalizing 是瞬态不需要正式状态；captured 语义不准确；循环回 captured 不合理 | 2026-05-01 |
-| KD-16 | Phase A 即开启 hybrid 检索（BM25 + vec0），不延后到 Phase B | vec0 基础设施已跑通，Normalizer 处理时同步生成 embedding 即可 | 2026-05-01 |
+| KD-16 | Phase 0 即开启 hybrid 检索（BM25 + vec0），不延后到 Phase 1 | vec0 基础设施已跑通，Normalizer 处理时同步生成 embedding 即可 | 2026-05-01 |
+| KD-17 | 导入事务原子性：raw file + doc row + passage rows + embedding rows 全部成功或可恢复 | 防止半落库状态（用户导入大文件时部分写入）；铲屎官确认为硬 AC | 2026-05-01 |
+| KD-18 | evidence_passages 扩展必须兼容迁移，不破坏现有 thread/session passage | 新增 passage_kind 等列使用 DEFAULT 值，FTS5 触发器增量更新 | 2026-05-01 |
+| KD-19 | 单用户系统无 ACL，导入知识默认 private（gitignored），分享通过显式导出 Pack | Cat Cafe 是单用户架构，多层 ACL 无意义 | 2026-05-01 |
+| KD-20 | 去重策略：source_path 身份匹配 + source_hash 版本判断。路径同+hash 同→跳过；路径同+hash 异→新版本旧标 stale | 文件路径是版本关联纽带，hash 判断内容变化；复制+改名靠 Phase 2 LLM 语义去重 | 2026-05-01 |
+| KD-21 | 治理字段策略：authority/doc_kind = LLM 建议+用户可改；activation = 系统默认 query；extraction_confidence = 系统不可改 | extraction_confidence 驱动自动分流（高→auto approve，低→needs_review），用户改的是知识判断不是置信度 | 2026-05-01 |
+| KD-22 | 版本身份三层模型：source_path（源级）+ anchor dk:uuid（版本级，每版本新 UUID）+ pack_id（组织级，可变不影响数据） | 迁移/拆包只改 pack_id，不影响 passages/索引；新版本新 UUID 保持旧版本可追溯 | 2026-05-01 |
+| KD-23 | Federated 结果不缓存、不注入 prompt、不自动回流，display-only | KD-7 citation-only 的具体化：外部结果只展示给用户，沉淀需显式 promote/mirror | 2026-05-01 |
+| KD-24 | Normalizer 可复现性仅记录版本信息用于溯源，不做重跑机制 | Normalizer 是格式转换不是实验，输出不对就重新导入走新版本流程 | 2026-05-01 |
 
 ## Timeline
 
@@ -313,12 +323,13 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-04-30 | 代码核查 + 设计方向评论发布（7 条 Phase 0 结论 + Phase 1/2 愿景） |
 | 2026-05-01 | F179 立项 + 第一轮三猫 Design Gate（gpt55+gpt52+opus-47）+ 铲屎官重写 spec |
 | 2026-05-01 | 第二轮三猫 Design Gate（gpt55+gemini+opus-46）：P1 全部解决，KD-4 全票通过 |
+| 2026-05-01 | 铲屎官接手 + 完备性审查（opus+gpt55）：OQ-10/11/12 关闭，新增 KD-17/18 + AC-013/014，embedding 可选 |
 
 ## Review Gate
 
-- Phase A: 架构级 → 跨猫 collaborative-thinking → 铲屎官拍板
-- Phase B: 前端 UI → 铲屎官确认 wireframe
-- Phase C: 架构级 → 猫猫讨论 + 铲屎官拍板
+- Phase 0: 架构级 → 跨猫 collaborative-thinking → 铲屎官拍板
+- Phase 1: 前端 UI → 铲屎官确认 wireframe
+- Phase 2: 架构级 → 猫猫讨论 + 铲屎官拍板
 
 ## Links
 
