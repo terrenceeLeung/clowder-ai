@@ -159,7 +159,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - 新增 KnowledgeImporter 模块：独立于 Pack 安装流程，共享 pack_id 隔离模型
 - 新增 Normalizer：LLM 驱动的内容理解，输出三层结构化元数据（带版本追踪）
 - 成本分级：短文档（≤2k tokens）全文处理，中文档 LLM 章节识别，长文档 heading-based 启发式分段 + LLM 摘要混合
-- chunk 数据进 evidence_passages，Phase 0 即开启 hybrid 检索（BM25 + vec0），Normalizer 处理时同步生成 embedding
+- chunk 数据进 evidence_passages，Phase 0 开启 BM25 passage 检索（via FTS5）；Phase 1 补 vec0 hybrid（passage 级 embedding pipeline）
 - 治理状态机独立运行
 - 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
 - 原始文件存 gitignored 私有目录（.clowder/knowledge/），默认不导出
@@ -304,7 +304,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | KD-13 | Normalizer 使用独立 LLM 配置（含 embedding 模型），不复用 CatAgent provider。Embedding 为可选配置，未配时退化为 BM25-only 检索 | 文档处理和对话是不同工作负载；embedding 可选保证无 API key 时仍可用 | 2026-05-01 |
 | KD-14 | CatCafeScanner 接 Normalizer 作为 Phase 0 后 follow-up，不纳入 Phase 0 scope | scope 控制；Phase 0 先证明 Normalizer 可用，follow-up 快速迭代切换 CatCafeScanner | 2026-05-01 |
 | KD-15 | 状态机精简：captured→ingested，删除 normalizing（job tracker 追踪）和 indexed（合并入 active），stale 不循环回起点（新版本从 ingested 开始） | 铲屎官 review：normalizing 是瞬态不需要正式状态；captured 语义不准确；循环回 captured 不合理 | 2026-05-01 |
-| KD-16 | Phase 0 即开启 hybrid 检索（BM25 + vec0），不延后到 Phase 1 | vec0 基础设施已跑通，Normalizer 处理时同步生成 embedding 即可 | 2026-05-01 |
+| KD-16 | Phase 0 开启 BM25 passage 检索（FTS5）；vec0 hybrid 延至 Phase 1（passage 级 embedding pipeline 依赖） | vec0 doc 级已跑通（F152），passage 级需 embedding 接入，Phase 0 先证明 chunk 索引可用 | 2026-05-02 |
 | KD-17 | 导入事务原子性：raw file + doc row + passage rows + embedding rows 全部成功或可恢复 | 防止半落库状态（用户导入大文件时部分写入）；铲屎官确认为硬 AC | 2026-05-01 |
 | KD-18 | evidence_passages 扩展必须兼容迁移，不破坏现有 thread/session passage | 新增 passage_kind 等列使用 DEFAULT 值，FTS5 触发器增量更新 | 2026-05-01 |
 | KD-19 | 单用户系统无 ACL，导入知识默认 private（gitignored），分享通过显式导出 Pack | Cat Cafe 是单用户架构，多层 ACL 无意义 | 2026-05-01 |
