@@ -91,47 +91,53 @@ Source（来源）
         └── Section/Chunk（章节/片段）
 ```
 
-字段定义（按 Phase 分批引入）：
+字段定义（按 Phase A/B/C 对齐，不做人为分期延后）：
 
-**Phase 0 必须有：**
+**Phase A（Normalizer 一次 LLM 调用全出）：**
 - 结构字段：`document_id`, `chunk_id`, `heading_path[]`, `chunk_index`, `content_markdown`, `plain_text`, `char_start`, `char_end`
 - 治理字段：`doc_kind`, `authority`(建议值), `activation`(默认 query), `provenance_tier`, `extraction_confidence`
-- 溯源字段：`source_id`, `source_locator`, `hash`, `normalized_at`
+- 溯源字段：`source_id`, `source_locator`, `hash`, `normalized_at`, `source_updated_at`, `status`
 - 可复现字段：`normalizer_version`, `model_id`
+- 检索增强：`keywords[]`, `topics[]`, `language`, `token_count`, `dedupe_key`
 
-**Phase 1 加入：**
-- `keywords[]`, `topics[]`, `language`, `token_count`
-- `source_updated_at`, `last_reviewed`, `status`
-- `dedupe_key`, `citations/source_refs[]`
+**Phase B（PDF/DOCX 支持 + Knowledge Hub 审核流程才需要）：**
+- `preview_ref`, `page_no`, `citations/source_refs[]`, `last_reviewed`
 
-**Phase 2 加入：**
+**Phase C（版本管理 + 冲突检测才需要）：**
 - `subject_key`, `statement_type`, `version/effective_at`
 - `conflict_group_id`, `conflict_reason`, `conflict_score`
-- `preview_ref`, `page_no`
 
 三类字段缺一不可：**结构字段**（分层检索）+ **治理字段**（排序审计）+ **溯源字段**（答案可追责）。
 
 ### 治理状态机（独立于 MarkerQueue）
 
-完整生命周期：`captured → normalizing → normalized → needs_review → approved/rejected → indexed → active → stale → retired`（失败路径：任意阶段 → `failed`）
+完整生命周期：`ingested → normalized → needs_review → approved → active → stale / retired`（异常路径：`failed`）
 
 MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）和异常路径（failed/rejected）它没有。独立状态机支撑知识的加工、反馈、版本更替等后续动作。
+
+状态说明：
+- **ingested**：用户导入完成，Normalizer 异步处理中（进度由 job tracker 追踪，不占生命周期状态）
+- **normalized**：Normalizer 完成，待审核或自动通过
+- **needs_review**：低置信度项，等人确认
+- **approved**：审核通过，待写入索引
+- **active**：已写入检索索引，可被查询命中
+- **stale**：source_hash 变化检测到，旧版本标记；新内容创建新版本从 ingested 开始
+- **retired**：用户主动下线，终态
+- **failed**：ingested 或 normalized 阶段出错，支持重试
 
 状态迁移所有权：
 
 | 迁移 | 触发者 | 可重试 |
 |------|--------|--------|
-| captured → normalizing | 系统（导入触发） | ✅ |
-| normalizing → normalized | 系统（Normalizer 完成） | ✅ |
-| normalizing → failed | 系统（Normalizer 出错） | ✅ 重跑 |
+| ingested → normalized | 系统（Normalizer 完成） | ✅ |
+| ingested → failed | 系统（Normalizer 出错） | ✅ 重跑 |
 | normalized → needs_review | 系统（低置信度）或策略（首次导入强制） | — |
 | normalized → approved | 系统（高置信度 + 策略允许自动通过） | — |
 | needs_review → approved/rejected | 人工 | — |
-| approved → indexed | 系统（写入检索索引） | ✅ |
-| indexed → active | 系统（索引生效） | — |
+| approved → active | 系统（写入检索索引） | ✅ |
 | active → stale | 系统（source_hash 变化检测）或人工标记 | — |
-| stale → captured | 系统（触发 re-import） | ✅ |
 | active → retired | 人工 | — |
+| stale 处理 | 新内容创建新版本（ingested），旧版本保留 stale 标记 | — |
 
 ## Reusable Infrastructure
 
@@ -153,7 +159,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - 新增 KnowledgeImporter 模块：独立于 Pack 安装流程，共享 pack_id 隔离模型
 - 新增 Normalizer：LLM 驱动的内容理解，输出三层结构化元数据（带版本追踪）
 - 成本分级：短文档（≤2k tokens）全文处理，中文档 LLM 章节识别，长文档 heading-based 启发式分段 + LLM 摘要混合
-- chunk 数据进 evidence_passages，Phase A 先做 lexical passage retrieval（BM25），vector schema 预留
+- chunk 数据进 evidence_passages，Phase A 即开启 hybrid 检索（BM25 + vec0），Normalizer 处理时同步生成 embedding
 - 治理状态机独立运行
 - 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
 - 原始文件存 gitignored 私有目录（.clowder/knowledge/），默认不导出
@@ -169,7 +175,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - [ ] AC-A4: anchor 使用导入时 UUID（dk:uuid），pack_id 为独立可变字段
 - [ ] AC-A5: 原始文件存储在 gitignored 私有目录
 - [ ] AC-A6: 治理状态机独立运行（含 needs_review / rejected / failed 路径）
-- [ ] AC-A7: Lexical passage retrieval（BM25）可用，长文档后半段 chunk 可被检索命中；vector schema 预留
+- [ ] AC-A7: Hybrid passage retrieval（BM25 + vec0）可用，长文档后半段 chunk 可被检索命中
 - [ ] AC-A8: PII/安全边界在开工前拍板（前置条件）
 - [ ] AC-A9: Normalizer 输出带 normalizer_version / model_id，支持可复现性
 - [ ] AC-A10: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
@@ -295,6 +301,8 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | KD-12 | PII 检测采用接口预留 + 分阶段实现：Phase A 默认正则检测（结构化 PII）+ 知情同意；Phase B 封装 Presidio 开源服务实现 | 接口隔离，不引入外部依赖到 Phase A；Presidio MIT 协议可本地部署，避免"检测 PII 又发外部"套娃 | 2026-05-01 |
 | KD-13 | Normalizer 使用独立 LLM 配置，不复用 CatAgent provider | 文档处理和对话是不同工作负载，用户应能选择不同模型（如便宜模型做批量处理）；独立配置也避免影响猫的对话体验 | 2026-05-01 |
 | KD-14 | CatCafeScanner 接 Normalizer 作为 Phase A 后 follow-up，不纳入 Phase A scope | scope 控制；Phase A 先证明 Normalizer 可用，follow-up 快速迭代切换 CatCafeScanner | 2026-05-01 |
+| KD-15 | 状态机精简：captured→ingested，删除 normalizing（job tracker 追踪）和 indexed（合并入 active），stale 不循环回起点（新版本从 ingested 开始） | 铲屎官 review：normalizing 是瞬态不需要正式状态；captured 语义不准确；循环回 captured 不合理 | 2026-05-01 |
+| KD-16 | Phase A 即开启 hybrid 检索（BM25 + vec0），不延后到 Phase B | vec0 基础设施已跑通，Normalizer 处理时同步生成 embedding 即可 | 2026-05-01 |
 
 ## Timeline
 
