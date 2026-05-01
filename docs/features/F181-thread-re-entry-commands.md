@@ -90,7 +90,7 @@ Path B (invocation): 用户消息 → InvocationQueue → QueueProcessor → 猫
 
 | # | 问题 | 状态 |
 |---|------|------|
-| OQ-1 | `/unread` 执行后是否自动推进 read cursor（即看完就标已读）？ | ⬜ 未定 |
+| OQ-1 | `/unread` 执行后是否自动推进 read cursor（即看完就标已读）？ | ✅ 是，必须推进。IM 侧从无 cursor 推进逻辑，纯 IM 用户 cursor 永远为 null，不推进则功能无效 |
 
 ## Key Decisions
 
@@ -100,6 +100,8 @@ Path B (invocation): 用户消息 → InvocationQueue → QueueProcessor → 猫
 | KD-2 | 复用 F069 ThreadReadStateStore，不新建数据层 | 基建已有，零架构变更 | 2026-05-02 |
 | KD-3 | 正在流式输出的消息（deliveryStatus='queued'）排除在外 | 语义正确："未读"="猫说完了但我没看到"，正在说的等它说完 | 2026-05-02 |
 | KD-4 | 多猫讨论后收敛为直线方案（/unread+/history），四层架构降级为 P1/P2 | 铲屎官指出"绕路了"——急性痛点是看不到回复，不是跨线程认知外挂 | 2026-05-02 |
+| KD-5 | `/unread` 必须自动推进 read cursor（ack 到返回的最后一条消息） | IM connector 从不调 read API，纯 IM 用户 cursor 永远为 null。不推进则 `/unread` 在 IM 场景下无效 | 2026-05-02 |
+| KD-6 | cursor 为 null 时 `/unread` 降级为 `/history` 语义（显示最近 N 条） | F069 冷启动兜底把 null cursor 当"全部已读"，直接返回空不符合用户预期 | 2026-05-02 |
 
 ## Timeline
 
