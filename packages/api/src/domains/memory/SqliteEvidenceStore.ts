@@ -908,7 +908,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
            JOIN evidence_passages p ON p.rowid = f.rowid
            LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
            WHERE passage_fts MATCH ?
-             AND (d.governance_status IS NULL OR d.governance_status != 'stale')`;
+             AND (d.governance_status IS NULL OR d.governance_status NOT IN ('stale', 'retired', 'rejected', 'failed'))`;
       const params: unknown[] = [ftsQuery];
 
       if (options?.passageKind) {
@@ -1050,7 +1050,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
            FROM evidence_passages p
            LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
            WHERE p.passage_id IN (${placeholders})
-             AND (d.governance_status IS NULL OR d.governance_status != 'stale')`;
+             AND (d.governance_status IS NULL OR d.governance_status NOT IN ('stale', 'retired', 'rejected', 'failed'))`;
       const params: unknown[] = [...missingIds];
 
       if (options?.passageKind) {
