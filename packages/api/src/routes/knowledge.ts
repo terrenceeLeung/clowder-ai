@@ -249,4 +249,55 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       return { packId: id, name };
     },
   );
+
+  // --- Pack graduation analysis (AC-15) ---
+
+  app.post<{ Params: { id: string } }>('/api/knowledge/packs/:id/graduate', async (request, reply) => {
+    const { id } = request.params;
+
+    const pack = db.prepare('SELECT pack_id, name FROM domain_packs WHERE pack_id = ?').get(id) as
+      | Record<string, unknown>
+      | undefined;
+    if (!pack) {
+      return reply.status(404).send({ error: 'Pack not found' });
+    }
+
+    const passages = db
+      .prepare(
+        `SELECT p.heading_path, p.content
+         FROM evidence_passages p
+         JOIN evidence_docs d ON d.anchor = p.doc_anchor
+         WHERE d.pack_id = ? AND p.passage_kind = 'domain_chunk'`,
+      )
+      .all(id) as Array<Record<string, unknown>>;
+
+    if (passages.length < 10) {
+      return reply.status(400).send({
+        error: 'Not enough chunks for graduation analysis',
+        chunkCount: passages.length,
+        threshold: 10,
+      });
+    }
+
+    const topicMap = new Map<string, number>();
+    for (const p of passages) {
+      const path = p.heading_path ? JSON.parse(p.heading_path as string) : [];
+      const topic = (path[0] as string) || 'Uncategorized';
+      topicMap.set(topic, (topicMap.get(topic) ?? 0) + 1);
+    }
+
+    const clusters = Array.from(topicMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([topic, count]) => ({
+        suggestedName: topic,
+        chunkCount: count,
+      }));
+
+    return {
+      packId: id,
+      packName: pack.name,
+      totalChunks: passages.length,
+      clusters,
+    };
+  });
 };
