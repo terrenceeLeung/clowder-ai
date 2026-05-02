@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import multipart from '@fastify/multipart';
 import type Database from 'better-sqlite3';
 import type { FastifyPluginAsync } from 'fastify';
@@ -41,8 +41,10 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
     const parts = request.parts();
     for await (const part of parts) {
       if (part.type === 'file') {
+        const safeName = basename(part.filename).replace(/[^\w.\-]/g, '_');
+        if (!safeName || safeName.startsWith('.')) continue;
         const buffer = await part.toBuffer();
-        const dest = join(uploadDir, part.filename);
+        const dest = join(uploadDir, safeName);
         await writeFile(dest, buffer);
         filePaths.push(dest);
       }
@@ -128,7 +130,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       return reply.status(400).send({ error: 'Query parameter q is required' });
     }
 
-    const limit = Math.min(Number(limitStr) || 10, 50);
+    const limit = Math.max(1, Math.min(Number(limitStr) || 10, 50));
 
     const rows = db
       .prepare(

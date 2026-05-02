@@ -190,6 +190,7 @@ import {
   workspaceGitRoutes,
   workspaceRoutes,
 } from './routes/index.js';
+import { knowledgeRoutes } from './routes/knowledge.js';
 import { knowledgeFeedRoutes } from './routes/knowledge-feed.js';
 import { marketplaceRoutes } from './routes/marketplace.js';
 import { previewRoutes } from './routes/preview.js';
@@ -1780,6 +1781,12 @@ async function main(): Promise<void> {
     markerQueue: memoryServices.markerQueue,
     db: memoryServices.store.getDb(),
     materializationService: memoryServices.materializationService,
+  });
+
+  // F179: Knowledge Hub routes
+  await app.register(knowledgeRoutes, {
+    db: memoryServices.store.getDb(),
+    projectRoot: findMonorepoRoot(process.cwd()),
   });
 
   // Memory governance (publish workflow)
