@@ -43,6 +43,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       if (part.type === 'file') {
         const safeName = basename(part.filename).replace(/[^\w.-]/g, '_');
         if (!safeName || safeName.startsWith('.')) continue;
+        if (!/\.(md|mdx|txt|markdown)$/i.test(safeName)) continue;
         const ext = safeName.includes('.') ? safeName.slice(safeName.lastIndexOf('.')) : '';
         const stem = safeName.includes('.') ? safeName.slice(0, safeName.lastIndexOf('.')) : safeName;
         const uniqueName = `${stem}-${randomUUID().slice(0, 8)}${ext}`;
@@ -90,7 +91,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       .prepare(
         `SELECT anchor, kind, status, title, summary, governance_status, updated_at,
                 keywords, doc_kind
-         FROM evidence_docs WHERE anchor = ?`,
+         FROM evidence_docs WHERE anchor = ? AND kind = 'pack-knowledge'`,
       )
       .get(anchor) as Record<string, unknown> | undefined;
 
