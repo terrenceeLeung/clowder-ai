@@ -117,7 +117,10 @@ describe('F179 Phase 1: Knowledge API routes', () => {
       db.prepare(`INSERT INTO evidence_docs
         (anchor, kind, status, title, summary, governance_status, updated_at)
         VALUES (?, 'pack-knowledge', 'active', ?, ?, 'approved', ?)`).run(
-        'dk:doc-list-1', 'Test Document', 'A test summary', now,
+        'dk:doc-list-1',
+        'Test Document',
+        'A test summary',
+        now,
       );
 
       app = Fastify();
@@ -150,20 +153,34 @@ describe('F179 Phase 1: Knowledge API routes', () => {
 
       db.prepare(`INSERT INTO evidence_docs
         (anchor, kind, status, title, summary, governance_status, updated_at)
-        VALUES (?, 'pack-knowledge', 'active', ?, ?, 'active', ?)`).run(
-        anchor, 'Detail Doc', 'Detail summary', now,
+        VALUES (?, 'pack-knowledge', 'active', ?, ?, 'active', ?)`).run(anchor, 'Detail Doc', 'Detail summary', now);
+
+      db.prepare(`INSERT INTO evidence_passages
+        (doc_anchor, passage_id, content, position, created_at, passage_kind, heading_path, chunk_index, char_start, char_end)
+        VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)`).run(
+        anchor,
+        'chunk-1',
+        'First section content',
+        0,
+        now,
+        '["Detail Doc","Section 1"]',
+        0,
+        0,
+        21,
       );
 
       db.prepare(`INSERT INTO evidence_passages
         (doc_anchor, passage_id, content, position, created_at, passage_kind, heading_path, chunk_index, char_start, char_end)
         VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)`).run(
-        anchor, 'chunk-1', 'First section content', 0, now, '["Detail Doc","Section 1"]', 0, 0, 21,
-      );
-
-      db.prepare(`INSERT INTO evidence_passages
-        (doc_anchor, passage_id, content, position, created_at, passage_kind, heading_path, chunk_index, char_start, char_end)
-        VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)`).run(
-        anchor, 'chunk-2', 'Second section content', 1, now, '["Detail Doc","Section 2"]', 1, 22, 43,
+        anchor,
+        'chunk-2',
+        'Second section content',
+        1,
+        now,
+        '["Detail Doc","Section 2"]',
+        1,
+        22,
+        43,
       );
 
       app = Fastify();
@@ -194,14 +211,17 @@ describe('F179 Phase 1: Knowledge API routes', () => {
       const now = new Date().toISOString();
       db.prepare(`INSERT INTO evidence_docs
         (anchor, kind, status, title, governance_status, updated_at)
-        VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?)`).run(
-        'dk:search-1', 'Searchable Doc', now,
-      );
+        VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?)`).run('dk:search-1', 'Searchable Doc', now);
 
       db.prepare(`INSERT INTO evidence_passages
         (doc_anchor, passage_id, content, position, created_at, passage_kind, chunk_index)
         VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?)`).run(
-        'dk:search-1', 'p-search-1', 'kubernetes container orchestration deployment', 0, now, 0,
+        'dk:search-1',
+        'p-search-1',
+        'kubernetes container orchestration deployment',
+        0,
+        now,
+        0,
       );
 
       app = Fastify();
@@ -308,9 +328,7 @@ describe('F179 Phase 1: Knowledge API routes', () => {
       const now = new Date().toISOString();
       db.prepare(`INSERT INTO evidence_docs
         (anchor, kind, status, title, governance_status, updated_at)
-        VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?)`).run(
-        anchor, 'Editable Doc', now,
-      );
+        VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?)`).run(anchor, 'Editable Doc', now);
 
       app = Fastify();
       await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });

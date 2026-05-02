@@ -1,6 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import multipart from '@fastify/multipart';
 import type Database from 'better-sqlite3';
 import type { FastifyPluginAsync } from 'fastify';
@@ -175,18 +175,16 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       }
 
       if (keywords !== undefined) {
-        db.prepare('UPDATE evidence_docs SET keywords = ? WHERE anchor = ?').run(
-          JSON.stringify(keywords),
-          anchor,
-        );
+        db.prepare('UPDATE evidence_docs SET keywords = ? WHERE anchor = ?').run(JSON.stringify(keywords), anchor);
       }
       if (docKind !== undefined) {
         db.prepare('UPDATE evidence_docs SET doc_kind = ? WHERE anchor = ?').run(docKind, anchor);
       }
 
-      const updated = db
-        .prepare('SELECT keywords, doc_kind FROM evidence_docs WHERE anchor = ?')
-        .get(anchor) as Record<string, unknown>;
+      const updated = db.prepare('SELECT keywords, doc_kind FROM evidence_docs WHERE anchor = ?').get(anchor) as Record<
+        string,
+        unknown
+      >;
 
       return {
         anchor,
@@ -234,21 +232,18 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
     return reply.status(201).send({ packId, name, description: description ?? null, createdAt: now });
   });
 
-  app.patch<{ Params: { id: string }; Body: { name: string } }>(
-    '/api/knowledge/packs/:id',
-    async (request, reply) => {
-      const { id } = request.params;
-      const { name } = request.body;
+  app.patch<{ Params: { id: string }; Body: { name: string } }>('/api/knowledge/packs/:id', async (request, reply) => {
+    const { id } = request.params;
+    const { name } = request.body;
 
-      const existing = db.prepare('SELECT pack_id FROM domain_packs WHERE pack_id = ?').get(id);
-      if (!existing) {
-        return reply.status(404).send({ error: 'Pack not found' });
-      }
+    const existing = db.prepare('SELECT pack_id FROM domain_packs WHERE pack_id = ?').get(id);
+    if (!existing) {
+      return reply.status(404).send({ error: 'Pack not found' });
+    }
 
-      db.prepare('UPDATE domain_packs SET name = ? WHERE pack_id = ?').run(name, id);
-      return { packId: id, name };
-    },
-  );
+    db.prepare('UPDATE domain_packs SET name = ? WHERE pack_id = ?').run(name, id);
+    return { packId: id, name };
+  });
 
   // --- Pack graduation analysis (AC-15) ---
 

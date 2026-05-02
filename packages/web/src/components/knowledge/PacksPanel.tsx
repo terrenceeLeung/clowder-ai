@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import type { DomainPack } from '@/stores/knowledgeStore';
+import { useKnowledgeStore } from '@/stores/knowledgeStore';
 
 export default function PacksPanel() {
   const { packs, createPack } = useKnowledgeStore();
@@ -40,9 +40,7 @@ export default function PacksPanel() {
         </button>
       </form>
 
-      {packs.length === 0 && (
-        <p className="py-4 text-center text-sm text-gray-500">No domain packs yet.</p>
-      )}
+      {packs.length === 0 && <p className="py-4 text-center text-sm text-gray-500">No domain packs yet.</p>}
 
       <div className="space-y-2">
         {packs.map((pack) => (
@@ -58,9 +56,7 @@ function PackCard({ pack }: { pack: DomainPack }) {
     <div className="flex items-center justify-between rounded-lg border px-4 py-3 dark:border-gray-700">
       <div>
         <p className="font-medium text-gray-900 dark:text-gray-100">{pack.name}</p>
-        {pack.description && (
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{pack.description}</p>
-        )}
+        {pack.description && <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{pack.description}</p>}
       </div>
       <div className="flex items-center gap-3 text-sm text-gray-500">
         <span>{pack.docCount} docs</span>

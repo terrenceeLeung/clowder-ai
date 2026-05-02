@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import type { KnowledgeDoc } from '@/stores/knowledgeStore';
+import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import DocDetail from './DocDetail';
 import ImportWizard from './ImportWizard';
 import PacksPanel from './PacksPanel';
@@ -26,9 +26,7 @@ const GOV_BADGE: Record<string, { bg: string; text: string }> = {
 function GovBadge({ status }: { status: string }) {
   const style = GOV_BADGE[status] ?? GOV_BADGE.stale;
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
-      {status}
-    </span>
+    <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>{status}</span>
   );
 }
 
@@ -41,9 +39,7 @@ function DocRow({ doc, onClick }: { doc: KnowledgeDoc; onClick: () => void }) {
     >
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-gray-900 dark:text-gray-100">{doc.title || doc.anchor}</p>
-        {doc.summary && (
-          <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{doc.summary}</p>
-        )}
+        {doc.summary && <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{doc.summary}</p>}
       </div>
       <div className="ml-4 flex shrink-0 items-center gap-2">
         <GovBadge status={doc.governanceStatus} />

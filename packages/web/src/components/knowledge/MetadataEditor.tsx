@@ -54,7 +54,9 @@ export default function MetadataEditor({ anchor, initialKeywords = [], initialDo
         >
           <option value="">— unset —</option>
           {DOC_KINDS.map((k) => (
-            <option key={k} value={k}>{k}</option>
+            <option key={k} value={k}>
+              {k}
+            </option>
           ))}
         </select>
       </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import type { PassageResult } from '@/stores/knowledgeStore';
+import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import { DocKindBadge } from './doc-kind-texture';
 import MetadataEditor from './MetadataEditor';
 

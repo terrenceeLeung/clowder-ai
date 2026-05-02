@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import type { ImportResult } from '@/stores/knowledgeStore';
+import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import ImportSummary from './ImportSummary';
 
 type Step = 'pick' | 'preview' | 'importing' | 'done';
@@ -75,7 +75,10 @@ export default function ImportWizard() {
           <h3 className="font-medium text-gray-900 dark:text-gray-100">Files to import ({files.length})</h3>
           <ul className="space-y-1">
             {files.map((f) => (
-              <li key={f.name} className="flex items-center justify-between rounded border px-3 py-2 text-sm dark:border-gray-700">
+              <li
+                key={f.name}
+                className="flex items-center justify-between rounded border px-3 py-2 text-sm dark:border-gray-700"
+              >
                 <span className="text-gray-800 dark:text-gray-200">{f.name}</span>
                 <span className="text-gray-400">{(f.size / 1024).toFixed(1)} KB</span>
               </li>

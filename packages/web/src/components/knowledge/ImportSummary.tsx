@@ -31,13 +31,9 @@ export default function ImportSummary({ results, onReset }: ImportSummaryProps) 
               key={r.sourcePath}
               className="flex items-center justify-between rounded border px-3 py-2 text-sm dark:border-gray-700"
             >
-              <span className="truncate text-gray-800 dark:text-gray-200">
-                {r.sourcePath.split('/').pop()}
-              </span>
+              <span className="truncate text-gray-800 dark:text-gray-200">{r.sourcePath.split('/').pop()}</span>
               <div className="flex items-center gap-2">
-                {r.chunkCount != null && (
-                  <span className="text-xs text-gray-400">{r.chunkCount} chunks</span>
-                )}
+                {r.chunkCount != null && <span className="text-xs text-gray-400">{r.chunkCount} chunks</span>}
                 <StatusBadge status={r.status} />
               </div>
             </li>
@@ -73,8 +69,6 @@ function StatusBadge({ status }: { status: string }) {
     skipped: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
   };
   return (
-    <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles[status] ?? styles.skipped}`}>
-      {status}
-    </span>
+    <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles[status] ?? styles.skipped}`}>{status}</span>
   );
 }
