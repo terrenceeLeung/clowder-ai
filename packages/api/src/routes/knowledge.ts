@@ -159,4 +159,58 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       })),
     };
   });
+
+  // --- Pack management ---
+
+  app.get('/api/knowledge/packs', async () => {
+    const rows = db
+      .prepare(
+        `SELECT p.pack_id, p.name, p.description, p.created_at,
+                COUNT(d.anchor) AS doc_count
+         FROM domain_packs p
+         LEFT JOIN evidence_docs d ON d.pack_id = p.pack_id
+         GROUP BY p.pack_id
+         ORDER BY p.created_at DESC`,
+      )
+      .all() as Array<Record<string, unknown>>;
+
+    return {
+      packs: rows.map((r) => ({
+        packId: r.pack_id,
+        name: r.name,
+        description: r.description,
+        createdAt: r.created_at,
+        docCount: r.doc_count,
+      })),
+    };
+  });
+
+  app.post<{ Body: { name: string; description?: string } }>('/api/knowledge/packs', async (request, reply) => {
+    const { name, description } = request.body;
+    const packId = `pack-${randomUUID().slice(0, 8)}`;
+    const now = new Date().toISOString();
+
+    db.prepare(
+      `INSERT INTO domain_packs (pack_id, name, description, created_at)
+       VALUES (?, ?, ?, ?)`,
+    ).run(packId, name, description ?? null, now);
+
+    return reply.status(201).send({ packId, name, description: description ?? null, createdAt: now });
+  });
+
+  app.patch<{ Params: { id: string }; Body: { name: string } }>(
+    '/api/knowledge/packs/:id',
+    async (request, reply) => {
+      const { id } = request.params;
+      const { name } = request.body;
+
+      const existing = db.prepare('SELECT pack_id FROM domain_packs WHERE pack_id = ?').get(id);
+      if (!existing) {
+        return reply.status(404).send({ error: 'Pack not found' });
+      }
+
+      db.prepare('UPDATE domain_packs SET name = ? WHERE pack_id = ?').run(name, id);
+      return { packId: id, name };
+    },
+  );
 };

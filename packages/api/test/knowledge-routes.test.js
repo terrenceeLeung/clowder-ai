@@ -222,4 +222,83 @@ describe('F179 Phase 1: Knowledge API routes', () => {
       await app.close();
     });
   });
+
+  describe('GET /api/knowledge/packs', () => {
+    it('returns list of domain packs', async () => {
+      db.prepare(
+        `INSERT OR IGNORE INTO domain_packs (pack_id, name, description, created_at)
+         VALUES (?, ?, ?, ?)`,
+      ).run('pack-test-1', 'Test Pack', 'A test pack', new Date().toISOString());
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({ method: 'GET', url: '/api/knowledge/packs' });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.ok(Array.isArray(body.packs));
+      const pack = body.packs.find((p) => p.packId === 'pack-test-1');
+      assert.ok(pack);
+      assert.equal(pack.name, 'Test Pack');
+
+      await app.close();
+    });
+  });
+
+  describe('POST /api/knowledge/packs', () => {
+    it('creates a new domain pack', async () => {
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/knowledge/packs',
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ name: 'New Pack', description: 'Created via API' }),
+      });
+
+      assert.equal(res.statusCode, 201);
+      const body = JSON.parse(res.body);
+      assert.ok(body.packId);
+      assert.equal(body.name, 'New Pack');
+
+      const row = db.prepare('SELECT * FROM domain_packs WHERE name = ?').get('New Pack');
+      assert.ok(row);
+
+      await app.close();
+    });
+  });
+
+  describe('PATCH /api/knowledge/packs/:id', () => {
+    it('renames a domain pack', async () => {
+      const packId = 'pack-rename-1';
+      db.prepare(
+        `INSERT OR IGNORE INTO domain_packs (pack_id, name, created_at)
+         VALUES (?, ?, ?)`,
+      ).run(packId, 'Old Name', new Date().toISOString());
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/packs/${packId}`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ name: 'New Name' }),
+      });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.equal(body.name, 'New Name');
+
+      const row = db.prepare('SELECT name FROM domain_packs WHERE pack_id = ?').get(packId);
+      assert.equal(row.name, 'New Name');
+
+      await app.close();
+    });
+  });
 });
