@@ -83,7 +83,7 @@ describe('side question (/btw)', () => {
       },
     };
     const agentRegistry = new AgentRegistry();
-    agentRegistry.register('codex', codexService);
+    agentRegistry.register('opus', codexService);
     const messageStore = new MessageStore();
     await messageStore.append({
       userId: 'default-user',
@@ -100,10 +100,10 @@ describe('side question (/btw)', () => {
       messageStore,
     });
 
-    const result = await router.answerSideQuestion('default-user', 'thread-1', '@codex F129 是什么？');
+    const result = await router.answerSideQuestion('default-user', 'thread-1', 'F129 是什么？');
 
     assert.equal(result.answer, 'F129 是 pack system。');
-    assert.equal(result.catId, 'codex');
+    assert.equal(result.catId, 'opus');
     assert.equal(serviceCalls.length, 1);
 
     const opts = serviceCalls[0].options;
@@ -136,13 +136,13 @@ describe('side question (/btw)', () => {
     const { MessageStore } = await import('../dist/domains/cats/services/stores/ports/MessageStore.js');
 
     const agentRegistry = new AgentRegistry();
-    agentRegistry.register('codex', {
+    agentRegistry.register('opus', {
       async *invoke() {
         // Simulate model calling a read-only tool, then answering
-        yield { type: 'tool_use', catId: 'codex', toolName: 'cat_cafe_search_evidence', timestamp: Date.now() };
-        yield { type: 'tool_result', catId: 'codex', content: 'F129 是 pack system', timestamp: Date.now() };
-        yield { type: 'text', catId: 'codex', content: '根据搜索结果：F129 是 pack system。', timestamp: Date.now() };
-        yield { type: 'done', catId: 'codex', timestamp: Date.now() };
+        yield { type: 'tool_use', catId: 'opus', toolName: 'cat_cafe_search_evidence', timestamp: Date.now() };
+        yield { type: 'tool_result', catId: 'opus', content: 'F129 是 pack system', timestamp: Date.now() };
+        yield { type: 'text', catId: 'opus', content: '根据搜索结果：F129 是 pack system。', timestamp: Date.now() };
+        yield { type: 'done', catId: 'opus', timestamp: Date.now() };
       },
     });
 
@@ -153,7 +153,7 @@ describe('side question (/btw)', () => {
     });
 
     // Should NOT throw — tool_use is expected with readonly MCP
-    const result = await router.answerSideQuestion('default-user', 'thread-1', '@codex F129 是什么？');
+    const result = await router.answerSideQuestion('default-user', 'thread-1', 'F129 是什么？');
     assert.equal(result.answer, '根据搜索结果：F129 是 pack system。');
     assert.equal(result.toolUseBlocked, false);
   });
