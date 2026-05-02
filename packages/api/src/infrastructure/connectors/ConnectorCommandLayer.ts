@@ -481,14 +481,12 @@ export class ConnectorCommandLayer {
 
     const selected = rounds.slice(-roundCount);
 
-    const MAX_CONTENT = 200;
     const lines: string[] = [];
     for (const round of selected) {
       for (const msg of round) {
         const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
         const sender = msg.catId ? `🐱 ${msg.catId}` : '👤 你';
-        const content = msg.content.length > MAX_CONTENT ? msg.content.slice(0, MAX_CONTENT) + '…' : msg.content;
-        lines.push(`**${sender}** [${time}]: ${content}`);
+        lines.push(`**${sender}** [${time}]: ${msg.content}`);
       }
       lines.push('---');
     }

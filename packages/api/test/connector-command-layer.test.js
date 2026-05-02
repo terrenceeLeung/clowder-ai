@@ -1736,7 +1736,7 @@ describe('F181: /history command', () => {
     assert.ok(result.response.includes('没有绑定'));
   });
 
-  it('truncates long content to 200 chars', async () => {
+  it('shows full content without truncation', async () => {
     const longContent = '字'.repeat(300);
     const messages = [
       { id: '001', threadId: 't1', catId: null, content: longContent, timestamp: 1000 },
@@ -1749,8 +1749,7 @@ describe('F181: /history command', () => {
       messageStore: stubMessageStore(messages),
     });
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
-    assert.ok(!result.response.includes('字'.repeat(300)), 'should truncate long content');
-    assert.ok(result.response.includes('…'), 'should have truncation marker');
+    assert.ok(result.response.includes('字'.repeat(300)), 'should show full content');
   });
 
   it('returns contextThreadId from binding', async () => {
