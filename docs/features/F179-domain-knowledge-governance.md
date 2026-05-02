@@ -9,7 +9,7 @@ community_issue: 569
 
 # F179: Domain Knowledge Governance — 领域知识治理
 
-> **Status**: spec | **Owner**: Ragdoll | **Priority**: P1
+> **Status**: in-progress | **Owner**: Ragdoll | **Priority**: P1
 
 ## Vision
 
@@ -169,20 +169,20 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** UI 面板、多格式转换、外部 RAG、Skill 进化、conflict detection
 
 **验收标准：**
-- [ ] AC-01: KnowledgeImporter 模块独立于 Pack 系统，共享 Evidence Store 存储层
-- [ ] AC-02: Normalizer 处理 .md 文件，输出 source → document → passages 三层结构
-- [ ] AC-03: evidence_passages 存储 chunk 级数据，支持 heading_path / chunk_index / char_start / char_end 定位
-- [ ] AC-04: anchor 使用导入时 UUID（dk:uuid），pack_id 为独立可变字段
-- [ ] AC-05: 原始文件存储在 gitignored 私有目录（.clowder/knowledge/ 创建时自动写入 .gitignore，git status 在任何 F179 操作后不显示该目录下的文件变更）
-- [ ] AC-06: 治理状态机独立运行（含 needs_review / rejected / failed 路径）
-- [ ] AC-07: Hybrid passage retrieval（BM25 + vec0）可用，长文档后半段 chunk 可被检索命中
-- [ ] AC-08: PII/安全边界在开工前拍板（前置条件）
-- [ ] AC-09: Normalizer 输出带 normalizer_version / model_id，支持可复现性
-- [ ] AC-010: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
+- [x] AC-01: KnowledgeImporter 模块独立于 Pack 系统，共享 Evidence Store 存储层
+- [x] AC-02: Normalizer 处理 .md 文件，输出 source → document → passages 三层结构
+- [x] AC-03: evidence_passages 存储 chunk 级数据，支持 heading_path / chunk_index / char_start / char_end 定位
+- [x] AC-04: anchor 使用导入时 UUID（dk:uuid），pack_id 为独立可变字段
+- [x] AC-05: 原始文件存储在 gitignored 私有目录（.clowder/knowledge/ 创建时自动写入 .gitignore，git status 在任何 F179 操作后不显示该目录下的文件变更）
+- [x] AC-06: 治理状态机独立运行（含 needs_review / rejected / failed 路径）
+- [x] AC-07: Hybrid passage retrieval（BM25 + vec0）可用，长文档后半段 chunk 可被检索命中
+- [x] AC-08: PII/安全边界在开工前拍板（前置条件）
+- [x] AC-09: Normalizer 输出带 normalizer_version / model_id，支持可复现性
+- [x] AC-010: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
 - [ ] AC-011: Fixture demo Pack 端到端验收——检索结果包含：命中 chunk 内容、父文档元数据（title/doc_kind/authority/activation）、原文定位（heading_path/char_start/char_end）、治理状态。含固定 query set 报告 Recall 和 Precision@5 baseline（不设硬阈值，作为 Phase 1 优化基线）。Fixture 使用虚构技术领域文档集（保证不在 LLM 训练数据中）
-- [ ] AC-012: Domain Pack CRUD（list/create/rename）+ 首次导入自动创建 default Domain Pack
-- [ ] AC-013: 导入事务原子性——raw file、evidence_docs row、evidence_passages rows、embedding rows 要么全部成功，要么可恢复（不产生半落库状态）
-- [ ] AC-014: evidence_passages schema 扩展不破坏现有 thread/session passage 的写入、检索和 hydrate 行为（兼容迁移）
+- [x] AC-012: Domain Pack CRUD（list/create/rename）+ 首次导入自动创建 default Domain Pack
+- [x] AC-013: 导入事务原子性——raw file、evidence_docs row、evidence_passages rows、embedding rows 要么全部成功，要么可恢复（不产生半落库状态）
+- [x] AC-014: evidence_passages schema 扩展不破坏现有 thread/session passage 的写入、检索和 hydrate 行为（兼容迁移）
 
 ### Phase 1: Knowledge Hub — 可视化导入与透视体验
 
@@ -324,6 +324,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-01 | F179 立项 + 第一轮三猫 Design Gate（gpt55+gpt52+opus-47）+ 铲屎官重写 spec |
 | 2026-05-01 | 第二轮三猫 Design Gate（gpt55+gemini+opus-46）：P1 全部解决，KD-4 全票通过 |
 | 2026-05-01 | 铲屎官接手 + 完备性审查（opus+gpt55）：OQ-10/11/12 关闭，新增 KD-17/18 + AC-013/014，embedding 可选 |
+| 2026-05-02 | Phase 0 实现完成 + 合入 main（PR #9）：13/14 AC ✅，AC-011 fixture 独立任务 |
 
 ## Review Gate
 
