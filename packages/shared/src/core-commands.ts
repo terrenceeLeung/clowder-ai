@@ -223,6 +223,14 @@ export const CORE_COMMANDS: readonly SlashCommandDefinition[] = [
     source: 'core',
   },
   {
+    name: '/history',
+    usage: '/history [N]',
+    description: '查看本线程最近对话（按轮次）',
+    category: 'connector',
+    surface: 'connector',
+    source: 'core',
+  },
+  {
     name: '/unbind',
     usage: '/unbind',
     description: '解除当前群组的 thread 绑定',

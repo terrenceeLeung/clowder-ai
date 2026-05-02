@@ -28,6 +28,7 @@ export interface CommandResult {
     | 'commands'
     | 'cats'
     | 'status'
+    | 'history'
     | 'focus'
     | 'ask'
     | 'not-command';
@@ -86,6 +87,16 @@ export interface ConnectorCommandLayerDeps {
   readonly catRoster?: Record<string, { displayName: string; available?: boolean }>;
   /** F142-B: unified command registry for /commands listing + skill detection + audit */
   readonly commandRegistry?: CommandRegistry;
+  /** F181: message store for /history round-based retrieval */
+  readonly messageStore?: {
+    getByThread(
+      threadId: string,
+      limit?: number,
+      userId?: string,
+    ):
+      | Array<{ catId: string | null; content: string; timestamp: number; source?: string }>
+      | Promise<Array<{ catId: string | null; content: string; timestamp: number; source?: string }>>;
+  };
 }
 
 export class ConnectorCommandLayer {
@@ -141,6 +152,8 @@ export class ConnectorCommandLayer {
         return this.handleCats(connectorId, externalChatId);
       case '/status':
         return this.handleStatus(connectorId, externalChatId);
+      case '/history':
+        return this.handleHistory(connectorId, externalChatId, userId, cmdArgs);
       case '/unbind':
         return this.handleUnbind(connectorId, externalChatId);
       case '/allow-group':
@@ -407,6 +420,86 @@ export class ConnectorCommandLayer {
     }
     await this.deps.threadStore.updatePreferredCats?.(binding.threadId, [String(resolved.catId)]);
     return { kind: 'focus', response: `🐱 已将首选猫设为 ${resolved.catId}` };
+  }
+
+  // ── F181: /history — round-based thread history ────────────────────────
+
+  private async handleHistory(
+    connectorId: string,
+    externalChatId: string,
+    userId: string,
+    args: string,
+  ): Promise<CommandResult> {
+    const binding = await this.deps.bindingStore.getByExternal(connectorId, externalChatId);
+    if (!binding) {
+      return { kind: 'history', response: '📍 当前没有绑定的 thread。用 /new 创建或发送消息自动创建。' };
+    }
+
+    const rawArg = args.trim();
+    if (rawArg && !/^[1-5]$/.test(rawArg)) {
+      return { kind: 'history', response: '❌ 用法: /history [1-5]（默认 1 轮）', contextThreadId: binding.threadId };
+    }
+    const roundCount = rawArg ? parseInt(rawArg, 10) : 1;
+
+    if (!this.deps.messageStore) {
+      return { kind: 'history', response: '❌ 消息存储不可用', contextThreadId: binding.threadId };
+    }
+
+    type Msg = Awaited<ReturnType<NonNullable<typeof this.deps.messageStore>['getByThread']>>[number];
+    const splitRounds = (msgs: Msg[]): Msg[][] => {
+      const result: Msg[][] = [];
+      let cur: Msg[] = [];
+      for (const m of msgs) {
+        if (m.catId === null && cur.length > 0) {
+          result.push(cur);
+          cur = [];
+        }
+        cur.push(m);
+      }
+      if (cur.length > 0) result.push(cur);
+      return result;
+    };
+
+    let fetchLimit = roundCount * 100;
+    let messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
+    if (messages.length === 0) {
+      return { kind: 'history', response: '📜 本线程还没有消息。', contextThreadId: binding.threadId };
+    }
+    let rounds = splitRounds(messages);
+    const MAX_FETCH = 5000;
+    const needsMore = (): boolean => {
+      if (messages.length < fetchLimit || fetchLimit >= MAX_FETCH) return false;
+      if (rounds.length < roundCount) return true;
+      const first = rounds[rounds.length - roundCount];
+      return first !== undefined && first[0].catId !== null;
+    };
+    while (needsMore()) {
+      fetchLimit = Math.min(fetchLimit * 2, MAX_FETCH);
+      messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
+      rounds = splitRounds(messages);
+    }
+
+    const selected = rounds.slice(-roundCount);
+
+    const MAX_CONTENT = 200;
+    const lines: string[] = [];
+    for (const round of selected) {
+      for (const msg of round) {
+        const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        const sender = msg.catId ? `🐱 ${msg.catId}` : '👤 你';
+        const content = msg.content.length > MAX_CONTENT ? msg.content.slice(0, MAX_CONTENT) + '…' : msg.content;
+        lines.push(`**${sender}** [${time}]: ${content}`);
+      }
+      lines.push('---');
+    }
+    if (lines[lines.length - 1] === '---') lines.pop();
+
+    const header = roundCount === 1 ? '📜 最近 1 轮对话：' : `📜 最近 ${selected.length} 轮对话：`;
+    return {
+      kind: 'history',
+      response: `${header}\n\n${lines.join('\n')}`,
+      contextThreadId: binding.threadId,
+    };
   }
 
   // ── F154: /ask — one-shot directed routing (KD-4: normal pipeline) ────
