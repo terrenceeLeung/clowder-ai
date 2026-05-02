@@ -958,8 +958,6 @@ export class AgentRouter {
         options.signal.addEventListener('abort', relayAbort, { once: true });
       }
     }
-    const timeout = setTimeout(() => controller.abort('Side question timeout (30s)'), SIDE_QUESTION_TIMEOUT_MS);
-
     const providerEnv = await buildSideQuestionProviderEnv(catId);
     const readonlyEnv: Record<string, string> = {
       ...providerEnv.callbackEnv,
@@ -1000,7 +998,6 @@ export class AgentRouter {
       deadlineTimer = setTimeout(() => resolve('timeout'), SIDE_QUESTION_TIMEOUT_MS);
     });
     const race = await Promise.race([collectAnswer().then(() => 'done' as const), hardDeadline]);
-    clearTimeout(timeout);
     clearTimeout(deadlineTimer!);
 
     if (race === 'timeout') {
