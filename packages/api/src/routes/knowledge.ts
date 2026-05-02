@@ -1,0 +1,162 @@
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import multipart from '@fastify/multipart';
+import type Database from 'better-sqlite3';
+import type { FastifyPluginAsync } from 'fastify';
+
+interface ImportResult {
+  sourcePath: string;
+  anchor: string | null;
+  status: 'created' | 'updated' | 'skipped' | 'failed';
+  reason?: string;
+  chunkCount?: number;
+}
+
+interface KnowledgeImporter {
+  importFile(filePath: string, opts?: { packId?: string }): Promise<ImportResult>;
+  importBatch(filePaths: string[], opts?: { packId?: string }): Promise<ImportResult[]>;
+}
+
+interface KnowledgeRoutesOptions {
+  importer?: KnowledgeImporter;
+  db: Database.Database;
+  projectRoot?: string;
+}
+
+export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async (app, opts) => {
+  const { importer, db, projectRoot = '/tmp' } = opts;
+
+  await app.register(multipart, { limits: { fileSize: 1_048_576, files: 10 } });
+
+  app.post('/api/knowledge/import', async (request, reply) => {
+    if (!importer) {
+      return reply.status(500).send({ error: 'Importer not configured' });
+    }
+
+    const uploadDir = join(projectRoot, '.knowledge-uploads', randomUUID());
+    await mkdir(uploadDir, { recursive: true });
+
+    const filePaths: string[] = [];
+    const parts = request.parts();
+    for await (const part of parts) {
+      if (part.type === 'file') {
+        const buffer = await part.toBuffer();
+        const dest = join(uploadDir, part.filename);
+        await writeFile(dest, buffer);
+        filePaths.push(dest);
+      }
+    }
+
+    const results = await importer.importBatch(filePaths);
+    return { results };
+  });
+
+  app.get('/api/knowledge/docs', async () => {
+    const rows = db
+      .prepare(
+        `SELECT anchor, kind, status, title, summary, governance_status, updated_at
+         FROM evidence_docs
+         WHERE kind = 'pack-knowledge'
+         ORDER BY updated_at DESC`,
+      )
+      .all() as Array<Record<string, unknown>>;
+
+    return {
+      docs: rows.map((r) => ({
+        anchor: r.anchor,
+        kind: r.kind,
+        status: r.status,
+        title: r.title,
+        summary: r.summary,
+        governanceStatus: r.governance_status,
+        updatedAt: r.updated_at,
+      })),
+    };
+  });
+
+  app.get<{ Params: { anchor: string } }>('/api/knowledge/docs/:anchor', async (request, reply) => {
+    const { anchor } = request.params;
+
+    const doc = db
+      .prepare(
+        `SELECT anchor, kind, status, title, summary, governance_status, updated_at
+         FROM evidence_docs WHERE anchor = ?`,
+      )
+      .get(anchor) as Record<string, unknown> | undefined;
+
+    if (!doc) {
+      return reply.status(404).send({ error: 'Document not found' });
+    }
+
+    const passages = db
+      .prepare(
+        `SELECT passage_id, content, position, heading_path, chunk_index,
+                char_start, char_end, created_at
+         FROM evidence_passages
+         WHERE doc_anchor = ?
+         ORDER BY position ASC`,
+      )
+      .all(anchor) as Array<Record<string, unknown>>;
+
+    return {
+      doc: {
+        anchor: doc.anchor,
+        kind: doc.kind,
+        status: doc.status,
+        title: doc.title,
+        summary: doc.summary,
+        governanceStatus: doc.governance_status,
+        updatedAt: doc.updated_at,
+      },
+      passages: passages.map((p) => ({
+        passageId: p.passage_id,
+        content: p.content,
+        position: p.position,
+        headingPath: p.heading_path ? JSON.parse(p.heading_path as string) : null,
+        chunkIndex: p.chunk_index,
+        charStart: p.char_start,
+        charEnd: p.char_end,
+        createdAt: p.created_at,
+      })),
+    };
+  });
+
+  app.get<{ Querystring: { q: string; limit?: string } }>('/api/knowledge/search', async (request, reply) => {
+    const { q, limit: limitStr } = request.query;
+    if (!q) {
+      return reply.status(400).send({ error: 'Query parameter q is required' });
+    }
+
+    const limit = Math.min(Number(limitStr) || 10, 50);
+
+    const rows = db
+      .prepare(
+        `SELECT p.passage_id, p.doc_anchor, p.content, p.position,
+                p.heading_path, p.chunk_index, p.char_start, p.char_end,
+                bm25(passage_fts) AS rank
+         FROM passage_fts f
+         JOIN evidence_passages p ON p.rowid = f.rowid
+         LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
+         WHERE passage_fts MATCH ?
+           AND (d.governance_status IS NULL
+                OR d.governance_status NOT IN ('stale','retired','rejected','failed'))
+         ORDER BY rank
+         LIMIT ?`,
+      )
+      .all(q, limit) as Array<Record<string, unknown>>;
+
+    return {
+      results: rows.map((r) => ({
+        passageId: r.passage_id,
+        docAnchor: r.doc_anchor,
+        content: r.content,
+        position: r.position,
+        headingPath: r.heading_path ? JSON.parse(r.heading_path as string) : null,
+        chunkIndex: r.chunk_index,
+        charStart: r.char_start,
+        charEnd: r.char_end,
+      })),
+    };
+  });
+};
