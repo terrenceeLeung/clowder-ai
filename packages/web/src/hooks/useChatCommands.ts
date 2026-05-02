@@ -124,7 +124,7 @@ function formatConfigForDisplay(config: ConfigSnapshot): string {
  * Returns true if the input was a command that was handled.
  */
 export function useChatCommands() {
-  const { addMessage } = useChatStore();
+  const { addMessage, addMessageToThread, patchMessage, patchThreadMessage } = useChatStore();
   const { cats } = useCatData();
 
   // Build dynamic mention pattern → catId resolver from cat data
@@ -162,6 +162,20 @@ export function useChatCommands() {
           content,
           timestamp: Date.now(),
         });
+      };
+      const addLocalMessage = (threadId: string, message: Parameters<typeof addMessage>[0]) => {
+        if (threadId === useChatStore.getState().currentThreadId || !addMessageToThread) {
+          addMessage(message);
+        } else {
+          addMessageToThread(threadId, message);
+        }
+      };
+      const patchLocalMessage = (threadId: string, messageId: string, patch: Parameters<typeof patchMessage>[1]) => {
+        if (threadId === useChatStore.getState().currentThreadId || !patchThreadMessage) {
+          patchMessage(messageId, patch);
+        } else {
+          patchThreadMessage(threadId, messageId, patch);
+        }
       };
       // /help — open Hub to commands tab (F12)
       if (trimmed === '/help') {
@@ -225,6 +239,61 @@ export function useChatCommands() {
           content: `未知 /config 子命令: ${configArgs}\n用法: /config 或 /config set <key> <value>`,
           timestamp: Date.now(),
         });
+        return true;
+      }
+
+      // /btw <question> — ask a one-off side question without routing through the main conversation
+      if (isCommandInvocation(trimmed, '/btw')) {
+        const question = trimmed.slice('/btw'.length).trim();
+        const threadId = getThreadId();
+
+        if (!question) {
+          addLocalMessage(threadId, {
+            id: `btw-usage-${Date.now()}`,
+            type: 'system',
+            variant: 'info',
+            content: '用法: /btw <旁路问题>\n例: /btw F129 和 F179 的关系是什么？',
+            timestamp: Date.now(),
+          });
+          return true;
+        }
+
+        const messageId = `btw-${Date.now()}`;
+        addLocalMessage(threadId, {
+          id: messageId,
+          type: 'system',
+          variant: 'info',
+          content: '[btw] 正在旁路询问...',
+          timestamp: Date.now(),
+        });
+
+        try {
+          const res = await apiFetch(`/api/threads/${encodeURIComponent(threadId)}/side-question`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question }),
+          });
+          const data = (await res.json().catch(() => null)) as {
+            answer?: string;
+            catId?: string;
+            catDisplayName?: string;
+            error?: string;
+          } | null;
+          if (!res.ok) {
+            throw new Error(data?.error ?? `Server error: ${res.status}`);
+          }
+          const label = data?.catDisplayName ?? data?.catId ?? '猫猫';
+          const answer = data?.answer?.trim() || '(空回复)';
+          patchLocalMessage(threadId, messageId, {
+            content: `[btw → ${label}] ${question}\n━━━━━━━━━\n${answer}`,
+            variant: 'info',
+          });
+        } catch (err) {
+          patchLocalMessage(threadId, messageId, {
+            content: `[btw] 旁路问题失败: ${err instanceof Error ? err.message : 'Unknown'}`,
+            variant: 'error',
+          });
+        }
         return true;
       }
 
@@ -942,7 +1011,7 @@ export function useChatCommands() {
 
       return false;
     },
-    [addMessage],
+    [addMessage, addMessageToThread, patchMessage, patchThreadMessage],
   );
 
   return { processCommand };

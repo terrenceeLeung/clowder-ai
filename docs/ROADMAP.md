@@ -61,5 +61,4 @@ created: 2026-02-26
 | F177 | Harness Update — Close Gate 结构化判据 + 四心智专属护栏 | spec | Ragdoll | internal | [F177](features/F177-harness-update.md) |
 | F178 | Persistent MCP Agent-Key Auth — 跨 invocation 写权限（F061 Bug-H follow-up） | spec | Ragdoll | internal | [F178](features/F178-persistent-mcp-agent-key-auth.md) |
 | F179 | Domain Knowledge Governance — 领域知识治理 | spec | Ragdoll | community [#569](https://github.com/zts212653/clowder-ai/issues/569) | [F179](features/F179-domain-knowledge-governance.md) |
-| F180 | BTW Side Question — Thread 内轻量旁路提问 | spec | 布偶猫 (Opus 4.6) | internal | [F180](features/F180-btw-side-question.md) |
-| F181 | Thread Re-entry Commands — /unread + /history 线程回入命令 | spec | 布偶猫 (Opus 4.6) | internal | [F181](features/F181-thread-re-entry-commands.md) |
+| F180 | BTW Side Question — Thread 内轻量旁路提问 | in-progress | Ragdoll | internal | [F180](features/F180-btw-side-question.md) |

@@ -22,6 +22,12 @@ import type { CatId, MessageContent } from '@cat-cafe/shared';
 import { catRegistry, escapeRegExp } from '@cat-cafe/shared';
 import type { SessionStore } from '@cat-cafe/shared/utils';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
+import {
+  resolveBuiltinClientForProvider,
+  resolveForClient,
+  validateRuntimeProviderBinding,
+} from '../../../../../config/account-resolver.js';
+import { resolveBoundAccountRefForCat } from '../../../../../config/cat-account-binding.js';
 import { getDefaultCatId, isCatAvailable } from '../../../../../config/cat-config-loader.js';
 import { createModuleLogger } from '../../../../../infrastructure/logger.js';
 import {
@@ -29,6 +35,8 @@ import {
   ROUTING_STRATEGY,
   ROUTING_TARGET_CATS,
 } from '../../../../../infrastructure/telemetry/genai-semconv.js';
+import { resolveActiveProjectRoot } from '../../../../../utils/active-project-root.js';
+import { assembleContext } from '../../context/ContextAssembler.js';
 import type { IntentResult } from '../../context/IntentParser.js';
 import { parseIntent, stripIntentTags } from '../../context/IntentParser.js';
 import { SessionManager } from '../../session/SessionManager.js';
@@ -43,9 +51,10 @@ import type { ITaskStore } from '../../stores/ports/TaskStore.js';
 import type { IThreadStore, ThreadRoutingPolicyV1, ThreadRoutingScope } from '../../stores/ports/ThreadStore.js';
 import { DEFAULT_THREAD_ID } from '../../stores/ports/ThreadStore.js';
 import type { IWorkflowSopStore } from '../../stores/ports/WorkflowSopStore.js';
-import type { AgentMessage, AgentService } from '../../types.js';
+import type { AgentMessage, AgentService, AgentServiceOptions } from '../../types.js';
 import type { InvocationRegistry } from '../invocation/InvocationRegistry.js';
 import type { TaskProgressStore } from '../invocation/TaskProgressStore.js';
+import { parseOpenCodeModel } from '../providers/opencode-config-template.js';
 import type { AgentRegistry } from '../registry/AgentRegistry.js';
 import type { PersistenceContext, RouteStrategyDeps } from '../routing/route-helpers.js';
 import { routeParallel } from '../routing/route-parallel.js';
@@ -54,10 +63,187 @@ import { routeSerial } from '../routing/route-serial.js';
 const log = createModuleLogger('agent-router');
 const routeTracer = trace.getTracer('cat-cafe-api', '0.1.0');
 
+const SIDE_QUESTION_TIMEOUT_MS = 30_000;
+const SIDE_QUESTION_CONTEXT_LIMIT = 60;
+const SIDE_QUESTION_CONTEXT_OPTIONS = {
+  maxMessages: 30,
+  maxContentLength: 1800,
+  maxTotalTokens: 8000,
+} as const;
+
 /** Parsed mention with position for ordering */
 interface ParsedMention {
   catId: CatId;
   position: number;
+}
+
+export interface SideQuestionResult {
+  catId: CatId;
+  catDisplayName: string;
+  answer: string;
+  contextMessageCount: number;
+  contextEstimatedTokens: number;
+  toolUseBlocked: boolean;
+  timedOut?: boolean;
+}
+
+export class SideQuestionToolUseError extends Error {
+  readonly code = 'SIDE_QUESTION_TOOL_USE';
+
+  constructor(toolName?: string) {
+    super(`旁路问题禁止调用工具${toolName ? `: ${toolName}` : ''}`);
+    this.name = 'SideQuestionToolUseError';
+  }
+}
+
+function getCatDisplayLabel(catId: CatId): string {
+  const config = catRegistry.tryGet(catId as string)?.config;
+  if (!config) return catId as string;
+  return config.nickname ? `${config.displayName}/${config.nickname}` : config.displayName;
+}
+
+function buildSideQuestionSystemPrompt(catId: CatId): string {
+  const config = catRegistry.tryGet(catId as string)?.config;
+  const identity = config
+    ? [
+        `你是 ${config.nickname ? `${config.displayName}/${config.nickname}（${config.name}）` : `${config.displayName}（${config.name}）`}。`,
+        `角色：${config.roleDescription}`,
+      ]
+    : [`你是 ${catId}。`];
+
+  return [
+    ...identity,
+    '',
+    '这是 /btw 旁路问题：你在一个轻量、单轮的上下文里回答，不接管主对话。',
+    '你可以使用只读工具（search_evidence、reflect、read_session_digest 等）查询知识，但不要使用任何写入类工具。',
+    '硬性限制：不要发消息，不要创建任务，不要 @ 路由给队友，不要修改文件或状态。',
+    '回答要短、直接、可行动。如果问题太复杂无法简短回答，提示用户”请走正常消息讨论”。',
+  ].join('\n');
+}
+
+function buildSideQuestionPrompt(question: string, contextText: string): string {
+  const parts = [
+    '<system-reminder>',
+    '这是旁路问题，不会写入主对话。请不要改变主线状态，只回答下面这个问题。',
+    '</system-reminder>',
+  ];
+  if (contextText) {
+    parts.push('', contextText);
+  }
+  parts.push('', '[旁路问题]', question, '[/旁路问题]');
+  return parts.join('\n');
+}
+
+async function buildSideQuestionProviderEnv(
+  catId: CatId,
+): Promise<Pick<AgentServiceOptions, 'callbackEnv' | 'accountEnv'>> {
+  const catConfig = catRegistry.tryGet(catId as string)?.config;
+  const provider = catConfig?.clientId;
+  const builtinClient = provider ? resolveBuiltinClientForProvider(provider) : null;
+  const projectRoot = resolveActiveProjectRoot(process.cwd());
+  const defaultModel = catConfig?.defaultModel?.trim() || undefined;
+  const effectiveAccountRef = resolveBoundAccountRefForCat(projectRoot, catId, catConfig);
+  const resolvedAccount = builtinClient ? resolveForClient(projectRoot, builtinClient, effectiveAccountRef) : null;
+
+  if (effectiveAccountRef && !resolvedAccount) {
+    throw new Error(`bound account "${effectiveAccountRef}" not found`);
+  }
+  if (provider && resolvedAccount) {
+    const compatibilityError = validateRuntimeProviderBinding(provider, resolvedAccount, defaultModel);
+    if (compatibilityError) throw new Error(compatibilityError);
+  }
+  if (resolvedAccount?.authType === 'api_key' && !resolvedAccount.apiKey) {
+    throw new Error(
+      `account "${resolvedAccount.id}" is configured as api_key but has no API key set — ` +
+        'add the key in Hub > account settings',
+    );
+  }
+
+  const protocolForProvider: Record<string, string> = {
+    anthropic: 'anthropic',
+    openai: 'openai',
+    google: 'google',
+    kimi: 'kimi',
+    dare: 'openai',
+    opencode: 'anthropic',
+    openrouter: 'openai',
+  };
+  let effectiveProtocol = provider ? (protocolForProvider[provider] ?? null) : null;
+  if (provider === 'opencode') {
+    const modelProviderHint = catConfig?.provider?.trim();
+    if (modelProviderHint && protocolForProvider[modelProviderHint]) {
+      effectiveProtocol = protocolForProvider[modelProviderHint];
+    } else {
+      const parsed = defaultModel ? parseOpenCodeModel(defaultModel) : null;
+      if (parsed && protocolForProvider[parsed.providerName]) {
+        effectiveProtocol = protocolForProvider[parsed.providerName];
+      }
+    }
+  }
+
+  const callbackEnv: Record<string, string> = {};
+  if (effectiveProtocol === 'anthropic') {
+    if (resolvedAccount?.authType === 'api_key') {
+      callbackEnv.CAT_CAFE_ANTHROPIC_PROFILE_MODE = 'api_key';
+      if (resolvedAccount.apiKey) callbackEnv.CAT_CAFE_ANTHROPIC_API_KEY = resolvedAccount.apiKey;
+      if (resolvedAccount.models?.length && provider !== 'opencode') {
+        callbackEnv.CAT_CAFE_ANTHROPIC_MODEL_OVERRIDE = resolvedAccount.models[0];
+      }
+      if (resolvedAccount.baseUrl) callbackEnv.CAT_CAFE_ANTHROPIC_BASE_URL = resolvedAccount.baseUrl;
+    } else {
+      callbackEnv.CAT_CAFE_ANTHROPIC_PROFILE_MODE = 'subscription';
+    }
+  } else if (effectiveProtocol === 'openai' || effectiveProtocol === 'openai-responses') {
+    if (resolvedAccount?.authType === 'api_key') {
+      callbackEnv.CODEX_AUTH_MODE = 'api_key';
+      if (resolvedAccount.apiKey) {
+        callbackEnv.OPENAI_API_KEY = resolvedAccount.apiKey;
+        callbackEnv.OPENROUTER_API_KEY = resolvedAccount.apiKey;
+      }
+      if (resolvedAccount.baseUrl) {
+        callbackEnv.OPENAI_BASE_URL = resolvedAccount.baseUrl;
+        callbackEnv.OPENAI_API_BASE = resolvedAccount.baseUrl;
+      }
+    } else if (effectiveAccountRef) {
+      callbackEnv.CODEX_AUTH_MODE = 'oauth';
+    }
+  } else if (effectiveProtocol === 'google') {
+    if (resolvedAccount?.authType === 'api_key' && resolvedAccount.apiKey) {
+      callbackEnv.GEMINI_API_KEY = resolvedAccount.apiKey;
+      callbackEnv.GOOGLE_API_KEY = resolvedAccount.apiKey;
+      callbackEnv.OPENROUTER_API_KEY = resolvedAccount.apiKey;
+      if (resolvedAccount.baseUrl) callbackEnv.GEMINI_BASE_URL = resolvedAccount.baseUrl;
+    }
+  } else if (effectiveProtocol === 'kimi') {
+    if (resolvedAccount?.authType === 'api_key' && resolvedAccount.apiKey) {
+      callbackEnv.CAT_CAFE_KIMI_PROFILE_MODE = 'api_key';
+      callbackEnv.CAT_CAFE_KIMI_API_KEY = resolvedAccount.apiKey;
+      callbackEnv.MOONSHOT_API_KEY = resolvedAccount.apiKey;
+      if (resolvedAccount.baseUrl) callbackEnv.CAT_CAFE_KIMI_BASE_URL = resolvedAccount.baseUrl;
+    } else {
+      callbackEnv.CAT_CAFE_KIMI_PROFILE_MODE = 'subscription';
+    }
+  }
+  if (provider === 'dare' && resolvedAccount?.authType === 'api_key') {
+    if (resolvedAccount.apiKey) callbackEnv.DARE_API_KEY = resolvedAccount.apiKey;
+    if (resolvedAccount.baseUrl) callbackEnv.DARE_ENDPOINT = resolvedAccount.baseUrl;
+  }
+
+  let accountEnv: Record<string, string> | undefined;
+  if (resolvedAccount?.envVars) {
+    const validEnvKey = /^[A-Z_][A-Za-z0-9_]*$/;
+    const filtered: Record<string, string> = {};
+    for (const [key, value] of Object.entries(resolvedAccount.envVars)) {
+      if (!validEnvKey.test(key) || key.startsWith('CAT_CAFE_')) continue;
+      filtered[key] = value;
+    }
+    if (Object.keys(filtered).length > 0) accountEnv = filtered;
+  }
+
+  return {
+    ...(Object.keys(callbackEnv).length > 0 ? { callbackEnv } : {}),
+    ...(accountEnv ? { accountEnv } : {}),
+  };
 }
 
 /**
@@ -713,6 +899,141 @@ export class AgentRouter {
       : await this.peekTargets(message, resolvedThreadId);
     const intent = parseIntent(message, targetCats.length);
     return { targetCats, intent, hasMentions };
+  }
+
+  /**
+   * Resolve the target cat for a side question without parsing @mentions.
+   * Chain: thread preferred → last replier → default cat.
+   */
+  private async resolveSideQuestionCat(threadId: string): Promise<CatId> {
+    if (this.threadStore) {
+      const thread = await this.threadStore.get(threadId);
+      const rawPref = Array.isArray(thread?.preferredCats) ? thread.preferredCats : [];
+      const validPreferred = this.filterRoutableCats(rawPref);
+      if (validPreferred.length > 0) return validPreferred[0];
+
+      const participants = await this.threadStore.getParticipantsWithActivity(threadId);
+      const lastReplier = participants
+        .filter((p) => p.messageCount > 0 && this.isRoutableCat(p.catId))
+        .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0))[0];
+      if (lastReplier) return lastReplier.catId;
+    }
+    const defaultCat = this.filterRoutableCats([getDefaultCatId()])[0];
+    if (!defaultCat) throw new Error('No available cat for side question');
+    return defaultCat;
+  }
+
+  /**
+   * Answer a one-off side question from the current thread context.
+   * This is the Clowder equivalent of Claude Code's /btw: no user message write,
+   * no queue/active invocation mutation, no callback MCP env, and no session resume.
+   */
+  async answerSideQuestion(
+    userId: string,
+    threadId: string,
+    question: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<SideQuestionResult> {
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion) {
+      throw new Error('Side question must not be empty');
+    }
+
+    const catId = await this.resolveSideQuestionCat(threadId);
+    if (!catId) {
+      throw new Error('No available cat for side question');
+    }
+
+    const service = this.services[catId as string];
+    if (!service) {
+      throw new Error(`No AgentService registered for "${catId}"`);
+    }
+
+    const messages = await this.messageStore.getByThread(threadId, SIDE_QUESTION_CONTEXT_LIMIT, userId);
+    const assembled = assembleContext(messages, SIDE_QUESTION_CONTEXT_OPTIONS);
+    const prompt = buildSideQuestionPrompt(trimmedQuestion, assembled.contextText);
+
+    const controller = new AbortController();
+    const relayAbort = () => controller.abort(options?.signal?.reason);
+    if (options?.signal) {
+      if (options.signal.aborted) {
+        relayAbort();
+      } else {
+        options.signal.addEventListener('abort', relayAbort, { once: true });
+      }
+    }
+    const providerEnv = await buildSideQuestionProviderEnv(catId);
+    const readonlyEnv: Record<string, string> = {
+      ...providerEnv.callbackEnv,
+      CAT_CAFE_READONLY: 'true',
+      CAT_CAFE_AGENT_KEY_SECRET: '',
+      CAT_CAFE_AGENT_KEY_FILE: '',
+    };
+    const invokeOptions: AgentServiceOptions = {
+      systemPrompt: buildSideQuestionSystemPrompt(catId),
+      signal: controller.signal,
+      ephemeral: true,
+      sandboxMode: 'read-only',
+      approvalPolicy: 'never',
+      ...providerEnv,
+      callbackEnv: readonlyEnv,
+    };
+
+    let answer = '';
+    const toolUseBlocked = false;
+    const errors: string[] = [];
+
+    const collectAnswer = async () => {
+      try {
+        for await (const msg of service.invoke(prompt, invokeOptions)) {
+          if (msg.type === 'text' && msg.content) {
+            answer = msg.textMode === 'replace' ? msg.content : answer + msg.content;
+          } else if (msg.type === 'error') {
+            errors.push(msg.error ?? msg.content ?? 'Unknown side question error');
+          }
+        }
+      } finally {
+        options?.signal?.removeEventListener('abort', relayAbort);
+      }
+    };
+
+    let deadlineTimer: ReturnType<typeof setTimeout>;
+    const hardDeadline = new Promise<'timeout'>((resolve) => {
+      deadlineTimer = setTimeout(() => resolve('timeout'), SIDE_QUESTION_TIMEOUT_MS);
+    });
+    let race: 'done' | 'timeout';
+    try {
+      race = await Promise.race([collectAnswer().then(() => 'done' as const), hardDeadline]);
+    } finally {
+      clearTimeout(deadlineTimer!);
+    }
+
+    if (race === 'timeout') {
+      controller.abort('Side question timeout (30s)');
+      return {
+        catId,
+        catDisplayName: getCatDisplayLabel(catId),
+        answer: answer.trim() || '⏱ 旁路问题超时（30s），这个问题不太适合 btw，请走正常消息深入讨论。',
+        contextMessageCount: assembled.messageCount,
+        contextEstimatedTokens: assembled.estimatedTokens,
+        toolUseBlocked,
+        timedOut: true,
+      };
+    }
+
+    const trimmedAnswer = answer.trim();
+    if (!trimmedAnswer && errors.length > 0) {
+      throw new Error(errors[errors.length - 1]);
+    }
+
+    return {
+      catId,
+      catDisplayName: getCatDisplayLabel(catId),
+      answer: trimmedAnswer,
+      contextMessageCount: assembled.messageCount,
+      contextEstimatedTokens: assembled.estimatedTokens,
+      toolUseBlocked,
+    };
   }
 
   /**
