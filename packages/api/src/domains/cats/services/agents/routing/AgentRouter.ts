@@ -898,6 +898,28 @@ export class AgentRouter {
   }
 
   /**
+   * Resolve the target cat for a side question without parsing @mentions.
+   * Chain: thread preferred → last replier → default cat.
+   */
+  private async resolveSideQuestionCat(threadId: string): Promise<CatId> {
+    if (this.threadStore) {
+      const thread = await this.threadStore.get(threadId);
+      const rawPref = Array.isArray(thread?.preferredCats) ? thread.preferredCats : [];
+      const validPreferred = this.filterRoutableCats(rawPref);
+      if (validPreferred.length > 0) return validPreferred[0];
+
+      const participants = await this.threadStore.getParticipantsWithActivity(threadId);
+      const lastReplier = participants
+        .filter((p) => p.messageCount > 0 && this.isRoutableCat(p.catId))
+        .sort((a, b) => (b.lastMessageAt ?? 0) - (a.lastMessageAt ?? 0))[0];
+      if (lastReplier) return lastReplier.catId;
+    }
+    const defaultCat = this.filterRoutableCats([getDefaultCatId()])[0];
+    if (!defaultCat) throw new Error('No available cat for side question');
+    return defaultCat;
+  }
+
+  /**
    * Answer a one-off side question from the current thread context.
    * This is the Clowder equivalent of Claude Code's /btw: no user message write,
    * no queue/active invocation mutation, no callback MCP env, and no session resume.
@@ -906,17 +928,14 @@ export class AgentRouter {
     userId: string,
     threadId: string,
     question: string,
-    options?: { targetCatId?: CatId; signal?: AbortSignal },
+    options?: { signal?: AbortSignal },
   ): Promise<SideQuestionResult> {
     const trimmedQuestion = question.trim();
     if (!trimmedQuestion) {
       throw new Error('Side question must not be empty');
     }
 
-    const targetCats = options?.targetCatId
-      ? this.filterRoutableCats([options.targetCatId])
-      : (await this.resolveTargetsAndIntent(trimmedQuestion, threadId, { persist: false })).targetCats;
-    const catId = targetCats[0];
+    const catId = await this.resolveSideQuestionCat(threadId);
     if (!catId) {
       throw new Error('No available cat for side question');
     }
@@ -942,7 +961,12 @@ export class AgentRouter {
     const timeout = setTimeout(() => controller.abort('Side question timeout (30s)'), SIDE_QUESTION_TIMEOUT_MS);
 
     const providerEnv = await buildSideQuestionProviderEnv(catId);
-    const readonlyEnv = { ...providerEnv.callbackEnv, CAT_CAFE_READONLY: 'true' };
+    const {
+      CAT_CAFE_AGENT_KEY_SECRET: _k,
+      CAT_CAFE_AGENT_KEY_FILE: _f,
+      ...strippedCallbackEnv
+    } = providerEnv.callbackEnv ?? {};
+    const readonlyEnv = { ...strippedCallbackEnv, CAT_CAFE_READONLY: 'true' };
     const invokeOptions: AgentServiceOptions = {
       systemPrompt: buildSideQuestionSystemPrompt(catId),
       signal: controller.signal,
@@ -957,32 +981,40 @@ export class AgentRouter {
     const toolUseBlocked = false;
     const errors: string[] = [];
 
-    try {
-      for await (const msg of service.invoke(prompt, invokeOptions)) {
-        if (msg.type === 'text' && msg.content) {
-          answer = msg.textMode === 'replace' ? msg.content : answer + msg.content;
-        } else if (msg.type === 'error') {
-          errors.push(msg.error ?? msg.content ?? 'Unknown side question error');
+    const collectAnswer = async () => {
+      try {
+        for await (const msg of service.invoke(prompt, invokeOptions)) {
+          if (msg.type === 'text' && msg.content) {
+            answer = msg.textMode === 'replace' ? msg.content : answer + msg.content;
+          } else if (msg.type === 'error') {
+            errors.push(msg.error ?? msg.content ?? 'Unknown side question error');
+          }
         }
+      } finally {
+        options?.signal?.removeEventListener('abort', relayAbort);
       }
-    } finally {
-      clearTimeout(timeout);
-      options?.signal?.removeEventListener('abort', relayAbort);
-    }
+    };
 
-    const trimmedAnswer = answer.trim();
-    const timedOut = controller.signal.aborted && controller.signal.reason === 'Side question timeout (30s)';
-    if (timedOut) {
+    const hardDeadline = new Promise<'timeout'>((resolve) => {
+      setTimeout(() => resolve('timeout'), SIDE_QUESTION_TIMEOUT_MS);
+    });
+    const race = await Promise.race([collectAnswer().then(() => 'done' as const), hardDeadline]);
+    clearTimeout(timeout);
+
+    if (race === 'timeout') {
+      controller.abort('Side question timeout (30s)');
       return {
         catId,
         catDisplayName: getCatDisplayLabel(catId),
-        answer: trimmedAnswer || '⏱ 旁路问题超时（30s），这个问题不太适合 btw，请走正常消息深入讨论。',
+        answer: answer.trim() || '⏱ 旁路问题超时（30s），这个问题不太适合 btw，请走正常消息深入讨论。',
         contextMessageCount: assembled.messageCount,
         contextEstimatedTokens: assembled.estimatedTokens,
         toolUseBlocked,
         timedOut: true,
       };
     }
+
+    const trimmedAnswer = answer.trim();
     if (!trimmedAnswer && errors.length > 0) {
       throw new Error(errors[errors.length - 1]);
     }

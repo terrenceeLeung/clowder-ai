@@ -159,7 +159,6 @@ const sideQuestionParamsSchema = z.object({
 
 const sideQuestionBodySchema = z.object({
   question: z.string().trim().min(1).max(8000),
-  targetCatId: z.string().min(1).max(100).optional(),
 });
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -251,9 +250,7 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
 
     activeSideQuestions.add(threadId);
     try {
-      return await router.answerSideQuestion(userId, threadId, bodyResult.data.question, {
-        targetCatId: bodyResult.data.targetCatId as CatId | undefined,
-      });
+      return await router.answerSideQuestion(userId, threadId, bodyResult.data.question);
     } catch (err) {
       if (err instanceof SideQuestionToolUseError) {
         reply.status(409);
