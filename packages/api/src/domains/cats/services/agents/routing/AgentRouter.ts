@@ -62,6 +62,7 @@ import { routeSerial } from '../routing/route-serial.js';
 const log = createModuleLogger('agent-router');
 const routeTracer = trace.getTracer('cat-cafe-api', '0.1.0');
 
+const SIDE_QUESTION_TIMEOUT_MS = 30_000;
 const SIDE_QUESTION_CONTEXT_LIMIT = 60;
 const SIDE_QUESTION_CONTEXT_OPTIONS = {
   maxMessages: 30,
@@ -82,6 +83,7 @@ export interface SideQuestionResult {
   contextMessageCount: number;
   contextEstimatedTokens: number;
   toolUseBlocked: boolean;
+  timedOut?: boolean;
 }
 
 export class SideQuestionToolUseError extends Error {
@@ -937,6 +939,7 @@ export class AgentRouter {
         options.signal.addEventListener('abort', relayAbort, { once: true });
       }
     }
+    const timeout = setTimeout(() => controller.abort('Side question timeout (30s)'), SIDE_QUESTION_TIMEOUT_MS);
 
     const providerEnv = await buildSideQuestionProviderEnv(catId);
     const readonlyEnv = { ...providerEnv.callbackEnv, CAT_CAFE_READONLY: 'true' };
@@ -963,10 +966,23 @@ export class AgentRouter {
         }
       }
     } finally {
+      clearTimeout(timeout);
       options?.signal?.removeEventListener('abort', relayAbort);
     }
 
     const trimmedAnswer = answer.trim();
+    const timedOut = controller.signal.aborted && controller.signal.reason === 'Side question timeout (30s)';
+    if (timedOut) {
+      return {
+        catId,
+        catDisplayName: getCatDisplayLabel(catId),
+        answer: trimmedAnswer || '⏱ 旁路问题超时（30s），这个问题不太适合 btw，请走正常消息深入讨论。',
+        contextMessageCount: assembled.messageCount,
+        contextEstimatedTokens: assembled.estimatedTokens,
+        toolUseBlocked,
+        timedOut: true,
+      };
+    }
     if (!trimmedAnswer && errors.length > 0) {
       throw new Error(errors[errors.length - 1]);
     }

@@ -217,6 +217,7 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
   }
 
   // POST /api/threads/:threadId/side-question - /btw: one-off, read-only answer outside main timeline
+  const activeSideQuestions = new Set<string>();
   app.post('/api/threads/:threadId/side-question', async (request, reply) => {
     const paramsResult = sideQuestionParamsSchema.safeParse(request.params);
     if (!paramsResult.success) {
@@ -236,6 +237,10 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
     }
 
     const { threadId } = paramsResult.data;
+    if (activeSideQuestions.has(threadId)) {
+      reply.status(409);
+      return { error: '已有旁路问题正在进行中，不支持嵌套（depth=1）', code: 'BTW_NESTED' };
+    }
     if (threadId !== 'default' && opts.threadStore) {
       const thread = await opts.threadStore.get(threadId);
       if (!thread || thread.deletedAt) {
@@ -244,6 +249,7 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
       }
     }
 
+    activeSideQuestions.add(threadId);
     try {
       return await router.answerSideQuestion(userId, threadId, bodyResult.data.question, {
         targetCatId: bodyResult.data.targetCatId as CatId | undefined,
@@ -256,6 +262,8 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
       log.warn({ err, threadId }, 'side question failed');
       reply.status(500);
       return { error: err instanceof Error ? err.message : 'Side question failed' };
+    } finally {
+      activeSideQuestions.delete(threadId);
     }
   });
 
