@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useKnowledgeStore } from '@/stores/knowledgeStore';
 import type { KnowledgeDoc } from '@/stores/knowledgeStore';
+import DocDetail from './DocDetail';
+import ImportWizard from './ImportWizard';
+import PacksPanel from './PacksPanel';
+import RetrievalPlayground from './RetrievalPlayground';
 
 const TABS = [
   { key: 'browse', label: 'Browse' },
@@ -28,9 +32,13 @@ function GovBadge({ status }: { status: string }) {
   );
 }
 
-function DocRow({ doc }: { doc: KnowledgeDoc }) {
+function DocRow({ doc, onClick }: { doc: KnowledgeDoc; onClick: () => void }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
+    >
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-gray-900 dark:text-gray-100">{doc.title || doc.anchor}</p>
         {doc.summary && (
@@ -41,12 +49,13 @@ function DocRow({ doc }: { doc: KnowledgeDoc }) {
         <GovBadge status={doc.governanceStatus} />
         <span className="text-xs text-gray-400">{new Date(doc.updatedAt).toLocaleDateString()}</span>
       </div>
-    </div>
+    </button>
   );
 }
 
 export default function KnowledgeHub() {
   const { docs, activeTab, loading, setActiveTab, fetchDocs, fetchPacks } = useKnowledgeStore();
+  const [selectedAnchor, setSelectedAnchor] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDocs();
@@ -74,29 +83,27 @@ export default function KnowledgeHub() {
         ))}
       </div>
 
-      {activeTab === 'browse' && (
+      {activeTab === 'browse' && selectedAnchor && (
+        <DocDetail anchor={selectedAnchor} onBack={() => setSelectedAnchor(null)} />
+      )}
+
+      {activeTab === 'browse' && !selectedAnchor && (
         <div className="space-y-2">
           {loading && <p className="text-sm text-gray-500">Loading...</p>}
           {!loading && docs.length === 0 && (
             <p className="py-8 text-center text-gray-500">No documents imported yet.</p>
           )}
           {docs.map((doc) => (
-            <DocRow key={doc.anchor} doc={doc} />
+            <DocRow key={doc.anchor} doc={doc} onClick={() => setSelectedAnchor(doc.anchor)} />
           ))}
         </div>
       )}
 
-      {activeTab === 'import' && (
-        <p className="py-8 text-center text-gray-500">Import wizard coming soon.</p>
-      )}
+      {activeTab === 'import' && <ImportWizard />}
 
-      {activeTab === 'search' && (
-        <p className="py-8 text-center text-gray-500">Search playground coming soon.</p>
-      )}
+      {activeTab === 'search' && <RetrievalPlayground />}
 
-      {activeTab === 'packs' && (
-        <p className="py-8 text-center text-gray-500">Pack management coming soon.</p>
-      )}
+      {activeTab === 'packs' && <PacksPanel />}
     </div>
   );
 }
