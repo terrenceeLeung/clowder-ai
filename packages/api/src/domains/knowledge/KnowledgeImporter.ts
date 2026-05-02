@@ -36,7 +36,12 @@ export class KnowledgeImporter {
   constructor(private readonly deps: ImporterDeps) {}
 
   async importFile(filePath: string, opts?: { packId?: string }): Promise<ImportResult> {
-    const content = await readFile(filePath, 'utf-8');
+    let content: string;
+    try {
+      content = await readFile(filePath, 'utf-8');
+    } catch (err) {
+      return { sourcePath: filePath, anchor: null, status: 'failed', reason: (err as Error).message };
+    }
     const sourceHash = createHash('sha256').update(content).digest('hex');
     const sourcePath = filePath;
 
