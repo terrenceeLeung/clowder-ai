@@ -207,6 +207,16 @@ export interface AgentServiceOptions {
   };
   /** F127: Extra --config key=value pairs to pass to the CLI. */
   cliConfigArgs?: readonly string[];
+  /** Best-effort provider hint for side-channel/read-only invocations that must not call tools. */
+  disableTools?: boolean;
+  /** When true, provider-specific Cat Cafe MCP wiring is skipped even if callbackEnv carries auth env vars. */
+  disableMcp?: boolean;
+  /** Best-effort provider hint to avoid persisting provider-side session state. */
+  ephemeral?: boolean;
+  /** Provider sandbox override for one-off constrained invocations. */
+  sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access';
+  /** Provider approval policy override for one-off constrained invocations. */
+  approvalPolicy?: string;
   /** F153 Phase B: Parent OTel span for creating CLI session child span */
   parentSpan?: Span;
 }

@@ -244,8 +244,8 @@ export class CodexAgentService implements AgentService {
     const imagePaths = extractImagePaths(options?.contentBlocks, options?.uploadDir);
     const imageArgs = imagePaths.flatMap((path) => ['--image', path]);
 
-    const sandboxMode = getCodexSandboxMode();
-    const approvalPolicy = getCodexApprovalPolicy();
+    const sandboxMode = options?.sandboxMode ?? getCodexSandboxMode();
+    const approvalPolicy = options?.approvalPolicy ?? getCodexApprovalPolicy();
     const effortLevel = getCatEffort(this.catId as string, undefined, 'openai');
     const reasoningArgs = ['--config', `model_reasoning_effort="${effortLevel}"`];
     const approvalArgs = ['--config', `approval_policy="${approvalPolicy}"`];
@@ -258,7 +258,9 @@ export class CodexAgentService implements AgentService {
           `model_auto_compact_token_limit=${ctxConfig.autoCompactTokenLimit}`,
         ]
       : [];
-    const catCafeMcpArgs = buildCatCafeMcpConfigArgs(options?.workingDirectory, options?.callbackEnv);
+    const catCafeMcpArgs = options?.disableMcp
+      ? []
+      : buildCatCafeMcpConfigArgs(options?.workingDirectory, options?.callbackEnv);
     const gitRepoArgs = buildGitRepoArgs(options?.workingDirectory);
     // User-defined CLI args from the member editor (#567) — passed as-is, no implicit wrapping.
     // Each entry is split by whitespace (e.g. "--config model_reasoning_effort=\"low\"").
@@ -341,6 +343,7 @@ export class CodexAgentService implements AgentService {
       return out;
     };
 
+    const ephemeralArgs = !options?.sessionId && options?.ephemeral ? ['--ephemeral'] : [];
     const args: string[] = options?.sessionId
       ? [
           'exec',
@@ -353,6 +356,7 @@ export class CodexAgentService implements AgentService {
           ...dedup(approvalArgs),
           ...dedup(customProviderArgs),
           ...userConfigArgs,
+          ...ephemeralArgs,
           ...gitRepoArgs,
           ...catCafeMcpArgs,
           ...imageArgs,
@@ -371,6 +375,7 @@ export class CodexAgentService implements AgentService {
           ...dedup(approvalArgs),
           ...dedup(customProviderArgs),
           ...userConfigArgs,
+          ...ephemeralArgs,
           ...gitRepoArgs,
           ...catCafeMcpArgs,
           ...imageArgs,

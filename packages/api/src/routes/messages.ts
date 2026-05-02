@@ -29,6 +29,7 @@ import type { InvocationQueue } from '../domains/cats/services/agents/invocation
 import type { InvocationRegistry } from '../domains/cats/services/agents/invocation/InvocationRegistry.js';
 import type { InvocationTracker } from '../domains/cats/services/agents/invocation/InvocationTracker.js';
 import type { QueueProcessor } from '../domains/cats/services/agents/invocation/QueueProcessor.js';
+import { SideQuestionToolUseError } from '../domains/cats/services/agents/routing/AgentRouter.js';
 import type { PersistenceContext } from '../domains/cats/services/agents/routing/route-helpers.js';
 import { resetStreak } from '../domains/cats/services/agents/routing/WorklistRegistry.js';
 import {
@@ -152,6 +153,15 @@ const getMessagesSchema = z.object({
   threadId: z.string().min(1).max(100).optional(),
 });
 
+const sideQuestionParamsSchema = z.object({
+  threadId: z.string().min(1).max(100),
+});
+
+const sideQuestionBodySchema = z.object({
+  question: z.string().trim().min(1).max(8000),
+  targetCatId: z.string().min(1).max(100).optional(),
+});
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILES = 5;
 
@@ -205,6 +215,49 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
       gameAutoPlayer.stopAllLoops();
     });
   }
+
+  // POST /api/threads/:threadId/side-question - /btw: one-off, read-only answer outside main timeline
+  app.post('/api/threads/:threadId/side-question', async (request, reply) => {
+    const paramsResult = sideQuestionParamsSchema.safeParse(request.params);
+    if (!paramsResult.success) {
+      reply.status(400);
+      return { error: 'Invalid thread id', details: paramsResult.error.issues };
+    }
+    const bodyResult = sideQuestionBodySchema.safeParse(request.body);
+    if (!bodyResult.success) {
+      reply.status(400);
+      return { error: 'Invalid request body', details: bodyResult.error.issues };
+    }
+
+    const userId = resolveUserId(request, { defaultUserId: 'default-user' });
+    if (!userId) {
+      reply.status(401);
+      return { error: 'Identity required (session cookie or X-Cat-Cafe-User header)' };
+    }
+
+    const { threadId } = paramsResult.data;
+    if (threadId !== 'default' && opts.threadStore) {
+      const thread = await opts.threadStore.get(threadId);
+      if (!thread || thread.deletedAt) {
+        reply.status(404);
+        return { error: '对话不存在', code: 'THREAD_NOT_FOUND' };
+      }
+    }
+
+    try {
+      return await router.answerSideQuestion(userId, threadId, bodyResult.data.question, {
+        targetCatId: bodyResult.data.targetCatId as CatId | undefined,
+      });
+    } catch (err) {
+      if (err instanceof SideQuestionToolUseError) {
+        reply.status(409);
+        return { error: err.message, code: err.code };
+      }
+      log.warn({ err, threadId }, 'side question failed');
+      reply.status(500);
+      return { error: err instanceof Error ? err.message : 'Side question failed' };
+    }
+  });
 
   // POST /api/messages - 发送消息（WebSocket 广播）
   app.post('/api/messages', async (request, reply) => {

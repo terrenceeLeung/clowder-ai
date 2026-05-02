@@ -31,6 +31,14 @@ export const CORE_COMMANDS: readonly SlashCommandDefinition[] = [
     surface: 'web',
     source: 'core',
   },
+  {
+    name: '/btw',
+    usage: '/btw <旁路问题>',
+    description: '不打断主对话，向当前 thread 上下文问一个旁路问题',
+    category: 'general',
+    surface: 'web',
+    source: 'core',
+  },
   // --- memory ---
   {
     name: '/remember',
