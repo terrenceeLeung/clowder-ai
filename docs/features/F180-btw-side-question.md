@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # F180: BTW Side Question — Thread 内轻量旁路提问
 
-> **Status**: spec | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
+> **Status**: in-progress | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
 
 ## Why
 
@@ -52,13 +52,13 @@ created: 2026-05-01
 
 ## Acceptance Criteria
 
-### Phase A（核心旁路通道）
-- [ ] AC-A1: Hub 输入 `/btw F129 push 做到哪了？` → 当前猫回答，带 BTW 视觉标记
-- [ ] AC-A2: btw 回答不出现在 thread 消息历史（刷新后消失）
-- [ ] AC-A3: btw 回答不进入 thread memory summary / decisions / digest
-- [ ] AC-A4: btw 可使用只读工具（search_evidence 等）查询知识，禁止写入类工具
-- [ ] AC-A5: btw 内再输入 `/btw` 被拒绝（深度=1）
-- [ ] AC-A6: btw 请求超时 30s 后优雅降级，不影响主线
+### Phase A（核心旁路通道）✅
+- [x] AC-A1: Hub 输入 `/btw F129 push 做到哪了？` → 当前猫回答，带 BTW 视觉标记
+- [x] AC-A2: btw 回答不出现在 thread 消息历史（刷新后消失）
+- [x] AC-A3: btw 回答不进入 thread memory summary / decisions / digest
+- [x] AC-A4: btw 可使用只读工具（search_evidence 等）查询知识，禁止写入类工具
+- [x] AC-A5: btw 内再输入 `/btw` 被拒绝（深度=1）
+- [x] AC-A6: btw 请求超时 30s 后优雅降级，不影响主线
 
 ### Phase B: Web UX 优化（未排期）
 
@@ -101,6 +101,7 @@ created: 2026-05-01
 |------|------|
 | 2026-05-01 | 立项（三猫讨论收敛） |
 | 2026-05-02 | CC 源码对比 → 修订 KD-3/5/6（工具策略 + 上下文 + 轮次） |
+| 2026-05-02 | Phase A merged (PR #14) — 6 轮 review，含 agent-key 封堵、timer 清理、nesting guard scoping |
 
 ## Links
 
