@@ -51,11 +51,11 @@ export class KnowledgeImporter {
 
     const existing = this.deps.db
       .prepare(
-        'SELECT anchor, source_hash, governance_status FROM evidence_docs WHERE source_path = ? ORDER BY updated_at DESC LIMIT 1',
+        "SELECT anchor, source_hash, governance_status FROM evidence_docs WHERE source_hash = ? AND kind = 'pack-knowledge' ORDER BY updated_at DESC LIMIT 1",
       )
-      .get(sourcePath) as { anchor: string; source_hash: string; governance_status: string } | undefined;
+      .get(sourceHash) as { anchor: string; source_hash: string; governance_status: string } | undefined;
 
-    if (existing && existing.source_hash === sourceHash) {
+    if (existing) {
       return { sourcePath, anchor: existing.anchor, status: 'skipped', reason: 'identical content' };
     }
 
@@ -72,16 +72,6 @@ export class KnowledgeImporter {
       const packId = opts?.packId ?? this.deps.packs.ensureDefaultPack();
       const now = new Date().toISOString();
       const tx = this.deps.db.transaction(() => {
-        if (existing) {
-          try {
-            this.deps.governance.transition(existing.anchor, 'stale');
-          } catch {
-            this.deps.db
-              .prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?')
-              .run('stale', existing.anchor);
-          }
-        }
-
         this.deps.db
           .prepare(`
           INSERT INTO evidence_docs

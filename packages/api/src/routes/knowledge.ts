@@ -182,7 +182,9 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       const { anchor } = request.params;
       const { keywords, docKind } = request.body;
 
-      const existing = db.prepare('SELECT anchor FROM evidence_docs WHERE anchor = ?').get(anchor);
+      const existing = db
+        .prepare("SELECT anchor FROM evidence_docs WHERE anchor = ? AND kind = 'pack-knowledge'")
+        .get(anchor);
       if (!existing) {
         return reply.status(404).send({ error: 'Document not found' });
       }
@@ -326,13 +328,14 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         db.prepare('INSERT INTO domain_packs (pack_id, name, created_at) VALUES (?, ?, ?)').run(newId, split.name, now);
         let movedDocs = 0;
         for (const topic of split.topics) {
+          const escaped = topic.replace(/[%_]/g, (c) => `\\${c}`);
           const docs = db
             .prepare(
               `SELECT DISTINCT d.anchor FROM evidence_docs d
                JOIN evidence_passages p ON p.doc_anchor = d.anchor
-               WHERE d.pack_id = ? AND p.heading_path LIKE ?`,
+               WHERE d.pack_id = ? AND p.heading_path LIKE ? ESCAPE '\\'`,
             )
-            .all(id, `%"${topic}"%`) as Array<{ anchor: string }>;
+            .all(id, `%"${escaped}"%`) as Array<{ anchor: string }>;
           for (const doc of docs) {
             db.prepare('UPDATE evidence_docs SET pack_id = ? WHERE anchor = ?').run(newId, doc.anchor);
             movedDocs++;
