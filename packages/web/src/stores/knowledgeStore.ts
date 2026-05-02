@@ -29,6 +29,7 @@ export interface PassageResult {
   chunkIndex: number;
   charStart: number;
   charEnd: number;
+  docKind?: string;
 }
 
 export interface ImportResult {

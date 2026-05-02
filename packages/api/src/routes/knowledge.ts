@@ -134,7 +134,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       .prepare(
         `SELECT p.passage_id, p.doc_anchor, p.content, p.position,
                 p.heading_path, p.chunk_index, p.char_start, p.char_end,
-                bm25(passage_fts) AS rank
+                d.doc_kind, bm25(passage_fts) AS rank
          FROM passage_fts f
          JOIN evidence_passages p ON p.rowid = f.rowid
          LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
@@ -156,9 +156,45 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         chunkIndex: r.chunk_index,
         charStart: r.char_start,
         charEnd: r.char_end,
+        docKind: r.doc_kind ?? null,
       })),
     };
   });
+
+  // --- Document metadata edit (AC-18) ---
+
+  app.patch<{ Params: { anchor: string }; Body: { keywords?: string[]; docKind?: string } }>(
+    '/api/knowledge/docs/:anchor',
+    async (request, reply) => {
+      const { anchor } = request.params;
+      const { keywords, docKind } = request.body;
+
+      const existing = db.prepare('SELECT anchor FROM evidence_docs WHERE anchor = ?').get(anchor);
+      if (!existing) {
+        return reply.status(404).send({ error: 'Document not found' });
+      }
+
+      if (keywords !== undefined) {
+        db.prepare('UPDATE evidence_docs SET keywords = ? WHERE anchor = ?').run(
+          JSON.stringify(keywords),
+          anchor,
+        );
+      }
+      if (docKind !== undefined) {
+        db.prepare('UPDATE evidence_docs SET doc_kind = ? WHERE anchor = ?').run(docKind, anchor);
+      }
+
+      const updated = db
+        .prepare('SELECT keywords, doc_kind FROM evidence_docs WHERE anchor = ?')
+        .get(anchor) as Record<string, unknown>;
+
+      return {
+        anchor,
+        keywords: updated.keywords ? JSON.parse(updated.keywords as string) : [],
+        docKind: updated.doc_kind ?? null,
+      };
+    },
+  );
 
   // --- Pack management ---
 

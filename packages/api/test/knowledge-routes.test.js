@@ -301,4 +301,41 @@ describe('F179 Phase 1: Knowledge API routes', () => {
       await app.close();
     });
   });
+
+  describe('PATCH /api/knowledge/docs/:anchor (AC-18)', () => {
+    it('updates document metadata (keywords, doc_kind)', async () => {
+      const anchor = 'dk:meta-edit-1';
+      const now = new Date().toISOString();
+      db.prepare(`INSERT INTO evidence_docs
+        (anchor, kind, status, title, governance_status, updated_at)
+        VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?)`).run(
+        anchor, 'Editable Doc', now,
+      );
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/docs/${encodeURIComponent(anchor)}`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({
+          keywords: ['kubernetes', 'deployment'],
+          docKind: 'runbook',
+        }),
+      });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.deepEqual(body.keywords, ['kubernetes', 'deployment']);
+      assert.equal(body.docKind, 'runbook');
+
+      const row = db.prepare('SELECT keywords, doc_kind FROM evidence_docs WHERE anchor = ?').get(anchor);
+      assert.equal(row.doc_kind, 'runbook');
+      assert.deepEqual(JSON.parse(row.keywords), ['kubernetes', 'deployment']);
+
+      await app.close();
+    });
+  });
 });

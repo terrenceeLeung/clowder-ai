@@ -2,10 +2,14 @@
 
 import { useCallback, useState } from 'react';
 import { useKnowledgeStore } from '@/stores/knowledgeStore';
+import type { PassageResult } from '@/stores/knowledgeStore';
+import { DocKindBadge } from './doc-kind-texture';
+import MetadataEditor from './MetadataEditor';
 
 export default function RetrievalPlayground() {
   const [query, setQuery] = useState('');
   const { searchResults, searchPassages, loading } = useKnowledgeStore();
+  const [editingAnchor, setEditingAnchor] = useState<string | null>(null);
 
   const onSearch = useCallback(
     (e: React.FormEvent) => {
@@ -14,6 +18,11 @@ export default function RetrievalPlayground() {
     },
     [query, searchPassages],
   );
+
+  const reSearch = useCallback(() => {
+    setEditingAnchor(null);
+    if (query.trim()) searchPassages(query.trim());
+  }, [query, searchPassages]);
 
   return (
     <div className="space-y-4">
@@ -42,17 +51,54 @@ export default function RetrievalPlayground() {
 
       <div className="space-y-2">
         {searchResults.map((r) => (
-          <div key={r.passageId} className="rounded-lg border p-3 dark:border-gray-700">
-            {r.headingPath && r.headingPath.length > 0 && (
-              <p className="mb-1 text-xs text-gray-400">{r.headingPath.join(' > ')}</p>
-            )}
-            <p className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">{r.content}</p>
-            <p className="mt-1 text-xs text-gray-400">
-              doc: {r.docAnchor} &middot; chunk #{r.chunkIndex}
-            </p>
-          </div>
+          <SearchResultCard
+            key={r.passageId}
+            result={r}
+            isEditing={editingAnchor === r.docAnchor}
+            onEdit={() => setEditingAnchor(r.docAnchor)}
+            onSave={reSearch}
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+function SearchResultCard({
+  result: r,
+  isEditing,
+  onEdit,
+  onSave,
+}: {
+  result: PassageResult;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="rounded-lg border p-3 dark:border-gray-700">
+      {r.headingPath && r.headingPath.length > 0 && (
+        <p className="mb-1 text-xs text-gray-400">{r.headingPath.join(' > ')}</p>
+      )}
+      <p className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">{r.content}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <DocKindBadge kind={r.docKind} />
+        <span className="text-xs text-gray-400">
+          doc: {r.docAnchor} &middot; chunk #{r.chunkIndex}
+        </span>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="ml-auto text-xs text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Edit
+        </button>
+      </div>
+      {isEditing && (
+        <div className="mt-2">
+          <MetadataEditor anchor={r.docAnchor} onSave={onSave} />
+        </div>
+      )}
     </div>
   );
 }
