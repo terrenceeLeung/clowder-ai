@@ -1783,10 +1783,28 @@ async function main(): Promise<void> {
     materializationService: memoryServices.materializationService,
   });
 
-  // F179: Knowledge Hub routes
+  // F179: Knowledge Hub routes (with Phase 0 importer wiring)
+  const knowledgeDb = memoryServices.store.getDb();
+  const knowledgeRoot = findMonorepoRoot(process.cwd());
+  const { KnowledgeImporter } = await import('./domains/knowledge/KnowledgeImporter.js');
+  const { KnowledgeStorage } = await import('./domains/knowledge/KnowledgeStorage.js');
+  const { GovernanceStateMachine } = await import('./domains/knowledge/GovernanceStateMachine.js');
+  const { DomainPackManager } = await import('./domains/knowledge/DomainPackManager.js');
+  const { Normalizer } = await import('./domains/knowledge/Normalizer.js');
+  const { PiiDetector } = await import('./domains/knowledge/PiiDetector.js');
+  const { HeadingNormalizerLLM } = await import('./domains/knowledge/HeadingNormalizerLLM.js');
+  const knowledgeImporter = new KnowledgeImporter({
+    db: knowledgeDb,
+    storage: new KnowledgeStorage(knowledgeRoot),
+    normalizer: new Normalizer(new HeadingNormalizerLLM(), { version: '1.0.0-heading', modelId: 'heading-splitter' }),
+    governance: new GovernanceStateMachine(knowledgeDb),
+    packs: new DomainPackManager(knowledgeDb),
+    piiDetector: new PiiDetector(),
+  });
   await app.register(knowledgeRoutes, {
-    db: memoryServices.store.getDb(),
-    projectRoot: findMonorepoRoot(process.cwd()),
+    db: knowledgeDb,
+    projectRoot: knowledgeRoot,
+    importer: knowledgeImporter,
   });
 
   // Memory governance (publish workflow)

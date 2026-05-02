@@ -135,21 +135,26 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
 
     const limit = Math.max(1, Math.min(Number(limitStr) || 10, 50));
 
-    const rows = db
-      .prepare(
-        `SELECT p.passage_id, p.doc_anchor, p.content, p.position,
-                p.heading_path, p.chunk_index, p.char_start, p.char_end,
-                d.doc_kind, bm25(passage_fts) AS rank
-         FROM passage_fts f
-         JOIN evidence_passages p ON p.rowid = f.rowid
-         LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
-         WHERE passage_fts MATCH ?
-           AND (d.governance_status IS NULL
-                OR d.governance_status NOT IN ('stale','retired','rejected','failed'))
-         ORDER BY rank
-         LIMIT ?`,
-      )
-      .all(q, limit) as Array<Record<string, unknown>>;
+    let rows: Array<Record<string, unknown>>;
+    try {
+      rows = db
+        .prepare(
+          `SELECT p.passage_id, p.doc_anchor, p.content, p.position,
+                  p.heading_path, p.chunk_index, p.char_start, p.char_end,
+                  d.doc_kind, bm25(passage_fts) AS rank
+           FROM passage_fts f
+           JOIN evidence_passages p ON p.rowid = f.rowid
+           JOIN evidence_docs d ON d.anchor = p.doc_anchor
+           WHERE passage_fts MATCH ?
+             AND d.kind = 'pack-knowledge'
+             AND d.governance_status NOT IN ('stale','retired','rejected','failed')
+           ORDER BY rank
+           LIMIT ?`,
+        )
+        .all(q, limit) as Array<Record<string, unknown>>;
+    } catch {
+      return { results: [] };
+    }
 
     return {
       results: rows.map((r) => ({
@@ -300,4 +305,39 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
       clusters,
     };
   });
+
+  app.post<{ Params: { id: string }; Body: { splits: Array<{ name: string; topics: string[] }> } }>(
+    '/api/knowledge/packs/:id/graduate/confirm',
+    async (request, reply) => {
+      const { id } = request.params;
+      const { splits } = request.body ?? {};
+      if (!Array.isArray(splits) || splits.length === 0)
+        return reply.status(400).send({ error: 'splits array is required' });
+      if (!db.prepare('SELECT pack_id FROM domain_packs WHERE pack_id = ?').get(id))
+        return reply.status(404).send({ error: 'Pack not found' });
+
+      const created: Array<{ packId: string; name: string; movedDocs: number }> = [];
+      const now = new Date().toISOString();
+      for (const split of splits) {
+        const newId = `pack-${randomUUID().slice(0, 8)}`;
+        db.prepare('INSERT INTO domain_packs (pack_id, name, created_at) VALUES (?, ?, ?)').run(newId, split.name, now);
+        let movedDocs = 0;
+        for (const topic of split.topics) {
+          const docs = db
+            .prepare(
+              `SELECT DISTINCT d.anchor FROM evidence_docs d
+               JOIN evidence_passages p ON p.doc_anchor = d.anchor
+               WHERE d.pack_id = ? AND p.heading_path LIKE ?`,
+            )
+            .all(id, `%"${topic}"%`) as Array<{ anchor: string }>;
+          for (const doc of docs) {
+            db.prepare('UPDATE evidence_docs SET pack_id = ? WHERE anchor = ?').run(newId, doc.anchor);
+            movedDocs++;
+          }
+        }
+        created.push({ packId: newId, name: split.name, movedDocs });
+      }
+      return { sourcePack: id, created };
+    },
+  );
 };
