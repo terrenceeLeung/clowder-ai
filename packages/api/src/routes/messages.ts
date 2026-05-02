@@ -236,7 +236,8 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
     }
 
     const { threadId } = paramsResult.data;
-    if (activeSideQuestions.has(threadId)) {
+    const sideQuestionKey = `${userId}:${threadId}`;
+    if (activeSideQuestions.has(sideQuestionKey)) {
       reply.status(409);
       return { error: '已有旁路问题正在进行中，不支持嵌套（depth=1）', code: 'BTW_NESTED' };
     }
@@ -248,7 +249,7 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
       }
     }
 
-    activeSideQuestions.add(threadId);
+    activeSideQuestions.add(sideQuestionKey);
     try {
       return await router.answerSideQuestion(userId, threadId, bodyResult.data.question);
     } catch (err) {
@@ -260,7 +261,7 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
       reply.status(500);
       return { error: err instanceof Error ? err.message : 'Side question failed' };
     } finally {
-      activeSideQuestions.delete(threadId);
+      activeSideQuestions.delete(sideQuestionKey);
     }
   });
 

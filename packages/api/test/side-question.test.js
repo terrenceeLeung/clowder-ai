@@ -158,6 +158,91 @@ describe('side question (/btw)', () => {
     assert.equal(result.toolUseBlocked, false);
   });
 
+  it('nesting guard is scoped per-user: different users on same thread can run concurrently', async () => {
+    const { MessageStore } = await import('../dist/domains/cats/services/stores/ports/MessageStore.js');
+    const { InvocationRegistry } = await import(
+      '../dist/domains/cats/services/agents/invocation/InvocationRegistry.js'
+    );
+    const { messagesRoutes } = await import('../dist/routes/messages.js');
+
+    const messageStore = new MessageStore();
+    await messageStore.append({
+      userId: 'user-a',
+      catId: null,
+      content: 'hello',
+      mentions: [],
+      timestamp: 1000,
+      threadId: 'thread-shared',
+    });
+
+    let resolveFirst;
+    const firstBlocks = new Promise((r) => {
+      resolveFirst = r;
+    });
+    let callCount = 0;
+    const router = {
+      async answerSideQuestion(userId, threadId, question) {
+        callCount++;
+        if (userId === 'user-a') await firstBlocks;
+        return {
+          catId: 'opus',
+          catDisplayName: 'Ragdoll',
+          answer: `answer for ${userId}`,
+          contextMessageCount: 1,
+          contextEstimatedTokens: 10,
+          toolUseBlocked: false,
+        };
+      },
+    };
+
+    const app = Fastify();
+    await app.register(messagesRoutes, {
+      registry: new InvocationRegistry(),
+      messageStore,
+      socketManager: { broadcastAgentMessage: () => {} },
+      router,
+    });
+    await app.ready();
+
+    const reqA = app.inject({
+      method: 'POST',
+      url: '/api/threads/thread-shared/side-question',
+      headers: { 'content-type': 'application/json', 'x-cat-cafe-user': 'user-a' },
+      payload: { question: 'q1' },
+    });
+
+    // Wait a tick so user-a's request enters the handler and blocks
+    await new Promise((r) => setTimeout(r, 50));
+
+    const resB = await app.inject({
+      method: 'POST',
+      url: '/api/threads/thread-shared/side-question',
+      headers: { 'content-type': 'application/json', 'x-cat-cafe-user': 'user-b' },
+      payload: { question: 'q2' },
+    });
+
+    // user-b should succeed (not 409) even though user-a is still in-flight
+    assert.equal(resB.statusCode, 200);
+    assert.equal(JSON.parse(resB.body).answer, 'answer for user-b');
+
+    // Same user same thread should get 409
+    const resDup = await app.inject({
+      method: 'POST',
+      url: '/api/threads/thread-shared/side-question',
+      headers: { 'content-type': 'application/json', 'x-cat-cafe-user': 'user-b' },
+      payload: { question: 'q3' },
+    });
+    // user-b already finished so this should also succeed (guard cleared in finally)
+    assert.equal(resDup.statusCode, 200);
+
+    resolveFirst();
+    const resA = await reqA;
+    assert.equal(resA.statusCode, 200);
+    assert.equal(callCount, 3);
+
+    await app.close();
+  });
+
   it('buildSideQuestionProviderEnv uses parseOpenCodeModel for google/ model prefix', async () => {
     const { parseOpenCodeModel } = await import(
       '../dist/domains/cats/services/agents/providers/opencode-config-template.js'
