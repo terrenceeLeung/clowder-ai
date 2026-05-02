@@ -1774,7 +1774,6 @@ describe('F181: /history command', () => {
         messages.push({ id: `r${round}-${reply}`, threadId: 't1', catId: 'opus', content: `Reply ${reply}`, timestamp: ts++ });
       }
     }
-    // 5 rounds × 31 messages = 155 total — exceeds old limit=100
     assert.equal(messages.length, 155);
     const layer = new ConnectorCommandLayer({
       bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
@@ -1784,6 +1783,29 @@ describe('F181: /history command', () => {
     });
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
     assert.ok(result.response.includes('Round 1 question'), 'should include oldest round');
+    assert.ok(result.response.includes('Round 5 question'), 'should include newest round');
+    assert.ok(result.response.includes('5 轮'), 'header should say 5 rounds');
+  });
+
+  it('P2-1: /history 5 with extreme long rounds (150 msgs/round) uses retry', async () => {
+    const messages = [];
+    let ts = 1000;
+    for (let round = 0; round < 5; round++) {
+      messages.push({ id: `u${round}`, threadId: 't1', catId: null, content: `Round ${round + 1} question`, timestamp: ts++ });
+      for (let reply = 0; reply < 149; reply++) {
+        messages.push({ id: `r${round}-${reply}`, threadId: 't1', catId: 'opus', content: `Reply ${reply}`, timestamp: ts++ });
+      }
+    }
+    // 5 rounds × 150 messages = 750 total — exceeds initial roundCount*100=500
+    assert.equal(messages.length, 750);
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
+    assert.ok(result.response.includes('Round 1 question'), 'retry should fetch oldest round');
     assert.ok(result.response.includes('Round 5 question'), 'should include newest round');
     assert.ok(result.response.includes('5 轮'), 'header should say 5 rounds');
   });

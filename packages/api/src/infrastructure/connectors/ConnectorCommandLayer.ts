@@ -445,21 +445,33 @@ export class ConnectorCommandLayer {
       return { kind: 'history', response: '❌ 消息存储不可用', contextThreadId: binding.threadId };
     }
 
-    const messages = await this.deps.messageStore.getByThread(binding.threadId, roundCount * 100, userId);
+    type Msg = Awaited<ReturnType<NonNullable<typeof this.deps.messageStore>['getByThread']>>[number];
+    const splitRounds = (msgs: Msg[]): Msg[][] => {
+      const result: Msg[][] = [];
+      let cur: Msg[] = [];
+      for (const m of msgs) {
+        if (m.catId === null && cur.length > 0) {
+          result.push(cur);
+          cur = [];
+        }
+        cur.push(m);
+      }
+      if (cur.length > 0) result.push(cur);
+      return result;
+    };
+
+    let fetchLimit = roundCount * 100;
+    let messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
     if (messages.length === 0) {
       return { kind: 'history', response: '📜 本线程还没有消息。', contextThreadId: binding.threadId };
     }
-
-    const rounds: Array<typeof messages> = [];
-    let currentRound: typeof messages = [];
-    for (const msg of messages) {
-      if (msg.catId === null && currentRound.length > 0) {
-        rounds.push(currentRound);
-        currentRound = [];
-      }
-      currentRound.push(msg);
+    let rounds = splitRounds(messages);
+    const MAX_FETCH = 5000;
+    while (rounds.length < roundCount && messages.length >= fetchLimit && fetchLimit < MAX_FETCH) {
+      fetchLimit = Math.min(fetchLimit * 2, MAX_FETCH);
+      messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
+      rounds = splitRounds(messages);
     }
-    if (currentRound.length > 0) rounds.push(currentRound);
 
     const selected = rounds.slice(-roundCount);
 
