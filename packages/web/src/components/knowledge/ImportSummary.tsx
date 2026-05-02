@@ -14,10 +14,9 @@ export default function ImportSummary({ results, onReset }: ImportSummaryProps) 
   const updated = results.filter((r) => r.status === 'updated').length;
   const failed = results.filter((r) => r.status === 'failed').length;
   const totalChunks = results.reduce((sum, r) => sum + (r.chunkCount ?? 0), 0);
-  const needsReview = results.filter((r) => r.status !== 'failed' && (r.confidence ?? 0) < CONFIDENCE_THRESHOLD).length;
-  const autoApproved = results.filter(
-    (r) => r.status !== 'failed' && (r.confidence ?? 0) >= CONFIDENCE_THRESHOLD,
-  ).length;
+  const ingested = results.filter((r) => r.status === 'created' || r.status === 'updated');
+  const needsReview = ingested.filter((r) => (r.confidence ?? 0) < CONFIDENCE_THRESHOLD).length;
+  const autoApproved = ingested.filter((r) => (r.confidence ?? 0) >= CONFIDENCE_THRESHOLD).length;
 
   return (
     <div className="space-y-4">
