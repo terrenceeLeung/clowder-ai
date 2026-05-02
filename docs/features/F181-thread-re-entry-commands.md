@@ -8,7 +8,7 @@ created: 2026-05-02
 
 # F181: Thread Re-entry Commands (/history)
 
-> **Status**: complete | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
+> **Status**: done | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1 | **Completed**: 2026-05-02
 
 ## Why
 
@@ -109,3 +109,26 @@ Path B (invocation): 用户消息 → InvocationQueue → QueueProcessor → 猫
 |------|------|
 | 2026-05-02 | 立项。多猫讨论 → 铲屎官收敛 → 砍 /unread，/history 按轮次 |
 | 2026-05-02 | /history connector command merged (PR #11). AC 7/7 ✅. AC-4 satisfied by architecture (messages appended after streaming completes). |
+| 2026-05-02 | 愿景守护 (gpt55) 放行。Feature done. |
+
+## Reflection Capsule
+
+### What Worked
+- Round-based design aligned with user mental model ("我问了什么、猫答了什么")
+- Hub thread / conversation thread separation prevented command self-pollution (ISSUE-8 design)
+- AC-4 satisfied by architecture without extra code (messages stored after streaming)
+
+### What Failed
+- Smoke test setup took multiple attempts (port conflicts, missing cat-catalog, computer reboots)
+- Initially missed getByThread wiring in gateway adapter — caught only by real IM smoke test
+- AC-4 marked "未完成" without verifying architecture — should have checked MessageStore append timing earlier
+
+### Trigger Missed
+- Cloud codex P2 (system message round splitting) — valid mechanism, deferred as P3. Should have filtered isSystemUserMessage in adapter from the start
+
+### Doc Links
+- Spec: docs/features/F181-thread-re-entry-commands.md
+- PR: #11
+
+### Rule Update Target
+- None needed. Existing SOP worked well (worktree → TDD → quality-gate → review → merge-gate)
