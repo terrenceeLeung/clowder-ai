@@ -198,14 +198,14 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** 外部 RAG、Skill/workflow 进化、Knowledge Graph 可视化
 
 **验收标准：**
-- [ ] AC-11: Import Wizard 引导用户完成文档导入
-- [ ] AC-12: Knowledge Hub 展示 raw source ↔ normalized document ↔ chunk 透视链路
-- [ ] AC-13: 低置信度项需用户确认，高置信度自动归档但提供 Import Summary 全局俯瞰视图
-- [ ] AC-14: Retrieval Playground 输入问题精确命中对应 chunk
-- [ ] AC-15: default Pack 超阈值后 LLM 自动生成分包建议（主题聚类 + 命名），用户确认后一键拆包
-- [ ] AC-16: Knowledge Texture：不同 doc_kind 有视觉区分（底纹/色彩标识）
-- [ ] AC-17: Import Summary 视图：入库前展示 chunk 总数、需确认数、已就绪数
-- [ ] AC-18: Retrieval Playground 支持就地调优（Edit Metadata / Add Keyword），召回不对时当场补关键词
+- [x] AC-11: Import Wizard 引导用户完成文档导入
+- [x] AC-12: Knowledge Hub 展示 raw source ↔ normalized document ↔ chunk 透视链路
+- [x] AC-13: 低置信度项需用户确认，高置信度自动归档但提供 Import Summary 全局俯瞰视图
+- [x] AC-14: Retrieval Playground 输入问题精确命中对应 chunk
+- [x] AC-15: default Pack 超阈值后 LLM 自动生成分包建议（主题聚类 + 命名），用户确认后一键拆包
+- [x] AC-16: Knowledge Texture：不同 doc_kind 有视觉区分（底纹/色彩标识）
+- [x] AC-17: Import Summary 视图：入库前展示 chunk 总数、需确认数、已就绪数
+- [x] AC-18: Retrieval Playground 支持就地调优（Edit Metadata / Add Keyword），召回不对时当场补关键词
 
 ### Phase 2: Federation + Evolution — 外部知识联邦 + 知识进化
 
@@ -325,6 +325,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-01 | 第二轮三猫 Design Gate（gpt55+gemini+opus-46）：P1 全部解决，KD-4 全票通过 |
 | 2026-05-01 | 铲屎官接手 + 完备性审查（opus+gpt55）：OQ-10/11/12 关闭，新增 KD-17/18 + AC-013/014，embedding 可选 |
 | 2026-05-02 | Phase 0 实现完成 + 合入 main（PR #9）：13/14 AC ✅，AC-011 fixture 独立任务 |
+| 2026-05-03 | Phase 1 合入 main（PR #13）：8/8 AC ✅，Knowledge Hub 全功能上线（缅因猫 6 轮 review + 云端 review 2 轮） |
 
 ## Review Gate
 
