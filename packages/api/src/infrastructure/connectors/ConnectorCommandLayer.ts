@@ -435,16 +435,17 @@ export class ConnectorCommandLayer {
       return { kind: 'history', response: '📍 当前没有绑定的 thread。用 /new 创建或发送消息自动创建。' };
     }
 
-    const roundCount = args.trim() ? parseInt(args.trim(), 10) : 1;
-    if (isNaN(roundCount) || roundCount < 1 || roundCount > 5) {
+    const rawArg = args.trim();
+    if (rawArg && !/^[1-5]$/.test(rawArg)) {
       return { kind: 'history', response: '❌ 用法: /history [1-5]（默认 1 轮）', contextThreadId: binding.threadId };
     }
+    const roundCount = rawArg ? parseInt(rawArg, 10) : 1;
 
     if (!this.deps.messageStore) {
       return { kind: 'history', response: '❌ 消息存储不可用', contextThreadId: binding.threadId };
     }
 
-    const messages = await this.deps.messageStore.getByThread(binding.threadId, 100, userId);
+    const messages = await this.deps.messageStore.getByThread(binding.threadId, roundCount * 100, userId);
     if (messages.length === 0) {
       return { kind: 'history', response: '📜 本线程还没有消息。', contextThreadId: binding.threadId };
     }

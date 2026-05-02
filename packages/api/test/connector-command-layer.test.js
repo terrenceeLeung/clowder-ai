@@ -1764,4 +1764,49 @@ describe('F181: /history command', () => {
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
     assert.equal(result.contextThreadId, 't1');
   });
+
+  it('P2-1: /history 5 with >100 messages still returns all 5 rounds', async () => {
+    const messages = [];
+    let ts = 1000;
+    for (let round = 0; round < 5; round++) {
+      messages.push({ id: `u${round}`, threadId: 't1', catId: null, content: `Round ${round + 1} question`, timestamp: ts++ });
+      for (let reply = 0; reply < 30; reply++) {
+        messages.push({ id: `r${round}-${reply}`, threadId: 't1', catId: 'opus', content: `Reply ${reply}`, timestamp: ts++ });
+      }
+    }
+    // 5 rounds × 31 messages = 155 total — exceeds old limit=100
+    assert.equal(messages.length, 155);
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
+    assert.ok(result.response.includes('Round 1 question'), 'should include oldest round');
+    assert.ok(result.response.includes('Round 5 question'), 'should include newest round');
+    assert.ok(result.response.includes('5 轮'), 'header should say 5 rounds');
+  });
+
+  it('P2-2: rejects dirty input like "2foo"', async () => {
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore([]),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 2foo');
+    assert.ok(result.response.includes('1-5'), 'should reject dirty input');
+  });
+
+  it('P2-2: rejects trailing garbage like "2 anything"', async () => {
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore([]),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 2 anything');
+    assert.ok(result.response.includes('1-5'), 'should reject trailing garbage');
+  });
 });
