@@ -1810,6 +1810,29 @@ describe('F181: /history command', () => {
     assert.ok(result.response.includes('5 轮'), 'header should say 5 rounds');
   });
 
+  it('P2-1: first selected round is complete (not truncated mid-round)', async () => {
+    const messages = [];
+    let ts = 1000;
+    for (let round = 0; round < 5; round++) {
+      messages.push({ id: `q${round}`, threadId: 't1', catId: null, content: `Q${round + 1}`, timestamp: ts++ });
+      for (let reply = 0; reply < 200; reply++) {
+        messages.push({ id: `a${round}-${reply}`, threadId: 't1', catId: 'opus', content: `A${round + 1}.${reply}`, timestamp: ts++ });
+      }
+    }
+    // 5 rounds × 201 = 1005 total. Initial limit=500, retry at 1000 gets 1000 msgs
+    // starting at A1.5 → rounds.length=5 but first round incomplete without this fix
+    assert.equal(messages.length, 1005);
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
+    assert.ok(result.response.includes('Q1'), 'first round must start with user question Q1');
+    assert.ok(result.response.includes('Q5'), 'should include latest round');
+  });
+
   it('P2-2: rejects dirty input like "2foo"', async () => {
     const layer = new ConnectorCommandLayer({
       bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),

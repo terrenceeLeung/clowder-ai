@@ -467,7 +467,13 @@ export class ConnectorCommandLayer {
     }
     let rounds = splitRounds(messages);
     const MAX_FETCH = 5000;
-    while (rounds.length < roundCount && messages.length >= fetchLimit && fetchLimit < MAX_FETCH) {
+    const needsMore = (): boolean => {
+      if (messages.length < fetchLimit || fetchLimit >= MAX_FETCH) return false;
+      if (rounds.length < roundCount) return true;
+      const first = rounds[rounds.length - roundCount];
+      return first !== undefined && first[0].catId !== null;
+    };
+    while (needsMore()) {
       fetchLimit = Math.min(fetchLimit * 2, MAX_FETCH);
       messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
       rounds = splitRounds(messages);
