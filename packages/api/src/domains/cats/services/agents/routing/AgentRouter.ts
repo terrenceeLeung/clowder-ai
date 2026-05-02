@@ -1001,8 +1001,12 @@ export class AgentRouter {
     const hardDeadline = new Promise<'timeout'>((resolve) => {
       deadlineTimer = setTimeout(() => resolve('timeout'), SIDE_QUESTION_TIMEOUT_MS);
     });
-    const race = await Promise.race([collectAnswer().then(() => 'done' as const), hardDeadline]);
-    clearTimeout(deadlineTimer!);
+    let race: 'done' | 'timeout';
+    try {
+      race = await Promise.race([collectAnswer().then(() => 'done' as const), hardDeadline]);
+    } finally {
+      clearTimeout(deadlineTimer!);
+    }
 
     if (race === 'timeout') {
       controller.abort('Side question timeout (30s)');

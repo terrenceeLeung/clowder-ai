@@ -225,20 +225,20 @@ describe('side question (/btw)', () => {
     assert.equal(resB.statusCode, 200);
     assert.equal(JSON.parse(resB.body).answer, 'answer for user-b');
 
-    // Same user same thread should get 409
-    const resDup = await app.inject({
+    // Same user in-flight should get 409 (user-a is still blocked)
+    const resDupA = await app.inject({
       method: 'POST',
       url: '/api/threads/thread-shared/side-question',
-      headers: { 'content-type': 'application/json', 'x-cat-cafe-user': 'user-b' },
+      headers: { 'content-type': 'application/json', 'x-cat-cafe-user': 'user-a' },
       payload: { question: 'q3' },
     });
-    // user-b already finished so this should also succeed (guard cleared in finally)
-    assert.equal(resDup.statusCode, 200);
+    assert.equal(resDupA.statusCode, 409);
+    assert.equal(JSON.parse(resDupA.body).code, 'BTW_NESTED');
 
     resolveFirst();
     const resA = await reqA;
     assert.equal(resA.statusCode, 200);
-    assert.equal(callCount, 3);
+    assert.equal(callCount, 2);
 
     await app.close();
   });
