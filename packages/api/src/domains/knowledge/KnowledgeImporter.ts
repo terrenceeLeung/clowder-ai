@@ -18,6 +18,10 @@ export interface ImportResult {
   piiDetected?: boolean;
 }
 
+export interface PassageEmbedder {
+  embed(texts: string[]): Promise<Float32Array[]>;
+}
+
 interface ImporterDeps {
   db: Database.Database;
   storage: KnowledgeStorage;
@@ -25,6 +29,7 @@ interface ImporterDeps {
   governance: GovernanceStateMachine;
   packs: DomainPackManager;
   piiDetector: IPiiDetector;
+  embedder?: PassageEmbedder;
 }
 
 export class KnowledgeImporter {
@@ -129,6 +134,24 @@ export class KnowledgeImporter {
     } catch (err) {
       await this.deps.storage.deleteRaw(rawHash);
       return { sourcePath, anchor: null, status: 'failed', reason: (err as Error).message };
+    }
+
+    if (this.deps.embedder && normalized.chunks.length > 0) {
+      try {
+        const texts = normalized.chunks.map((c) => c.contentMarkdown);
+        const vectors = await this.deps.embedder.embed(texts);
+        const del = this.deps.db.prepare('DELETE FROM passage_vectors WHERE passage_id = ?');
+        const ins = this.deps.db.prepare('INSERT INTO passage_vectors (passage_id, embedding) VALUES (?, ?)');
+        const embedTx = this.deps.db.transaction(() => {
+          for (let i = 0; i < normalized.chunks.length; i++) {
+            del.run(normalized.chunks[i].chunkId);
+            ins.run(normalized.chunks[i].chunkId, vectors[i]);
+          }
+        });
+        embedTx();
+      } catch {
+        // Fail-open: embedding failure doesn't block import
+      }
     }
 
     return {

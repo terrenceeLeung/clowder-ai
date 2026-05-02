@@ -546,3 +546,17 @@ export function ensureVectorTable(db: Database.Database, dim: number): boolean {
     return false; // sqlite-vec not loaded — fail-open
   }
 }
+
+export function ensurePassageVectorTable(db: Database.Database, dim: number): boolean {
+  try {
+    db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS passage_vectors USING vec0(
+        passage_id TEXT PRIMARY KEY,
+        embedding float[${dim}]
+      )
+    `);
+    return true;
+  } catch {
+    return false;
+  }
+}

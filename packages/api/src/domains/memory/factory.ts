@@ -22,7 +22,7 @@ import { MarkerQueue } from './MarkerQueue.js';
 import { MaterializationService } from './MaterializationService.js';
 import { ReflectionService } from './ReflectionService.js';
 import { SqliteEvidenceStore } from './SqliteEvidenceStore.js';
-import { ensureVectorTable } from './schema.js';
+import { ensurePassageVectorTable, ensureVectorTable } from './schema.js';
 import { VectorStore } from './VectorStore.js';
 
 export interface MemoryServices {
@@ -96,6 +96,7 @@ export async function createMemoryServices(config: MemoryConfig): Promise<Memory
       const sqliteVecMod = await import('sqlite-vec');
       sqliteVecMod.load(store.getDb());
       const ok = ensureVectorTable(store.getDb(), embedConfig.embedDim);
+      ensurePassageVectorTable(store.getDb(), embedConfig.embedDim);
       if (ok) {
         vectorStore = new VectorStore(store.getDb(), embedConfig.embedDim);
       }

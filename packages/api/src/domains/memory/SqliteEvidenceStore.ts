@@ -994,6 +994,102 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     }
   }
 
+  /**
+   * F179 AC-07: Hybrid passage retrieval — BM25 + vec0 NN → RRF fusion.
+   * Ensures long-document tail chunks are retrievable via vector similarity
+   * even when BM25 keyword match fails.
+   */
+  async searchPassagesHybrid(query: string, limit = 10, options?: { passageKind?: string }): Promise<PassageResult[]> {
+    this.ensureOpen();
+    if (!this.db) return [];
+
+    const bm25Results = this.searchPassages(query, Math.min(Math.max(limit * 4, 20), 100), undefined, {
+      passageKind: options?.passageKind,
+    });
+
+    if (!this.embedDeps || this.embedDeps.mode !== 'on') {
+      return bm25Results.slice(0, limit);
+    }
+
+    let nnPassages: Array<{ passage_id: string; distance: number }>;
+    try {
+      const queryVec = await this.embedDeps.embedding.embed([query]);
+      const pool = Math.min(Math.max(limit * 4, 20), 100);
+      nnPassages = this.db
+        .prepare(
+          `SELECT passage_id, distance
+           FROM passage_vectors
+           WHERE embedding MATCH ?
+           ORDER BY distance
+           LIMIT ?`,
+        )
+        .all(queryVec[0], pool) as Array<{ passage_id: string; distance: number }>;
+    } catch {
+      return bm25Results.slice(0, limit);
+    }
+
+    const RRF_K = 60;
+    const scores = new Map<string, number>();
+
+    for (let i = 0; i < bm25Results.length; i++) {
+      scores.set(bm25Results[i].passageId, (scores.get(bm25Results[i].passageId) ?? 0) + 1 / (RRF_K + i));
+    }
+    for (let i = 0; i < nnPassages.length; i++) {
+      scores.set(nnPassages[i].passage_id, (scores.get(nnPassages[i].passage_id) ?? 0) + 1 / (RRF_K + i));
+    }
+
+    const bm25Map = new Map(bm25Results.map((r) => [r.passageId, r]));
+
+    const missingIds = [...scores.keys()].filter((id) => !bm25Map.has(id));
+    if (missingIds.length > 0) {
+      const placeholders = missingIds.map(() => '?').join(',');
+      let sql = `SELECT doc_anchor, passage_id, content, speaker, position, created_at,
+                  passage_kind, heading_path, chunk_index, char_start, char_end
+           FROM evidence_passages WHERE passage_id IN (${placeholders})`;
+      const params: unknown[] = [...missingIds];
+
+      if (options?.passageKind) {
+        sql += ' AND passage_kind = ?';
+        params.push(options.passageKind);
+      }
+
+      const rows = this.db.prepare(sql).all(...params) as Array<{
+        doc_anchor: string;
+        passage_id: string;
+        content: string;
+        speaker: string | null;
+        position: number | null;
+        created_at: string | null;
+        passage_kind: string | null;
+        heading_path: string | null;
+        chunk_index: number | null;
+        char_start: number | null;
+        char_end: number | null;
+      }>;
+      for (const r of rows) {
+        bm25Map.set(r.passage_id, {
+          docAnchor: r.doc_anchor,
+          passageId: r.passage_id,
+          content: r.content,
+          speaker: r.speaker ?? undefined,
+          position: r.position ?? undefined,
+          createdAt: r.created_at ?? undefined,
+          passageKind: r.passage_kind ?? undefined,
+          headingPath: r.heading_path ? JSON.parse(r.heading_path) : undefined,
+          chunkIndex: r.chunk_index ?? undefined,
+          charStart: r.char_start ?? undefined,
+          charEnd: r.char_end ?? undefined,
+        });
+      }
+    }
+
+    return [...scores.entries()]
+      .filter(([id]) => bm25Map.has(id))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([id]) => bm25Map.get(id)!);
+  }
+
   close(): void {
     if (this.db?.open) {
       this.db.close();
