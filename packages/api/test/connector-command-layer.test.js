@@ -1769,9 +1769,21 @@ describe('F181: /history command', () => {
     const messages = [];
     let ts = 1000;
     for (let round = 0; round < 5; round++) {
-      messages.push({ id: `u${round}`, threadId: 't1', catId: null, content: `Round ${round + 1} question`, timestamp: ts++ });
+      messages.push({
+        id: `u${round}`,
+        threadId: 't1',
+        catId: null,
+        content: `Round ${round + 1} question`,
+        timestamp: ts++,
+      });
       for (let reply = 0; reply < 30; reply++) {
-        messages.push({ id: `r${round}-${reply}`, threadId: 't1', catId: 'opus', content: `Reply ${reply}`, timestamp: ts++ });
+        messages.push({
+          id: `r${round}-${reply}`,
+          threadId: 't1',
+          catId: 'opus',
+          content: `Reply ${reply}`,
+          timestamp: ts++,
+        });
       }
     }
     assert.equal(messages.length, 155);
@@ -1791,9 +1803,21 @@ describe('F181: /history command', () => {
     const messages = [];
     let ts = 1000;
     for (let round = 0; round < 5; round++) {
-      messages.push({ id: `u${round}`, threadId: 't1', catId: null, content: `Round ${round + 1} question`, timestamp: ts++ });
+      messages.push({
+        id: `u${round}`,
+        threadId: 't1',
+        catId: null,
+        content: `Round ${round + 1} question`,
+        timestamp: ts++,
+      });
       for (let reply = 0; reply < 149; reply++) {
-        messages.push({ id: `r${round}-${reply}`, threadId: 't1', catId: 'opus', content: `Reply ${reply}`, timestamp: ts++ });
+        messages.push({
+          id: `r${round}-${reply}`,
+          threadId: 't1',
+          catId: 'opus',
+          content: `Reply ${reply}`,
+          timestamp: ts++,
+        });
       }
     }
     // 5 rounds × 150 messages = 750 total — exceeds initial roundCount*100=500
@@ -1816,7 +1840,13 @@ describe('F181: /history command', () => {
     for (let round = 0; round < 5; round++) {
       messages.push({ id: `q${round}`, threadId: 't1', catId: null, content: `Q${round + 1}`, timestamp: ts++ });
       for (let reply = 0; reply < 200; reply++) {
-        messages.push({ id: `a${round}-${reply}`, threadId: 't1', catId: 'opus', content: `A${round + 1}.${reply}`, timestamp: ts++ });
+        messages.push({
+          id: `a${round}-${reply}`,
+          threadId: 't1',
+          catId: 'opus',
+          content: `A${round + 1}.${reply}`,
+          timestamp: ts++,
+        });
       }
     }
     // 5 rounds × 201 = 1005 total. Initial limit=500, retry at 1000 gets 1000 msgs
