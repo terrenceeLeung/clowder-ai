@@ -22,7 +22,6 @@ import type { CatId, MessageContent } from '@cat-cafe/shared';
 import { catRegistry, escapeRegExp } from '@cat-cafe/shared';
 import type { SessionStore } from '@cat-cafe/shared/utils';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
-import { parseOpenCodeModel } from '../providers/opencode-config-template.js';
 import {
   resolveBuiltinClientForProvider,
   resolveForClient,
@@ -55,6 +54,7 @@ import type { IWorkflowSopStore } from '../../stores/ports/WorkflowSopStore.js';
 import type { AgentMessage, AgentService, AgentServiceOptions } from '../../types.js';
 import type { InvocationRegistry } from '../invocation/InvocationRegistry.js';
 import type { TaskProgressStore } from '../invocation/TaskProgressStore.js';
+import { parseOpenCodeModel } from '../providers/opencode-config-template.js';
 import type { AgentRegistry } from '../registry/AgentRegistry.js';
 import type { PersistenceContext, RouteStrategyDeps } from '../routing/route-helpers.js';
 import { routeParallel } from '../routing/route-parallel.js';
