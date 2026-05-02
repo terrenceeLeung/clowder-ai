@@ -69,7 +69,7 @@ function makeChunk(
   tokenCount: number;
   dedupeKey: string;
 } {
-  const plain = content.replace(/[#*_`~\[\]]/g, '').trim();
+  const plain = content.replace(/[#*_`~[\]]/g, '').trim();
   return {
     headingPath: [...headingPath],
     contentMarkdown: content.trim(),

@@ -38,6 +38,7 @@ export interface ImportResult {
   status: 'created' | 'updated' | 'skipped' | 'failed';
   chunkCount?: number;
   reason?: string;
+  confidence?: number;
 }
 
 interface KnowledgeState {

@@ -322,6 +322,143 @@ describe('F179 Phase 1: Knowledge API routes', () => {
     });
   });
 
+  describe('POST /api/knowledge/packs/:id/graduate (AC-15)', () => {
+    it('returns cluster analysis when pack has enough chunks', async () => {
+      const packId = 'pack-grad-1';
+      const now = new Date().toISOString();
+      db.prepare('INSERT OR IGNORE INTO domain_packs (pack_id, name, created_at) VALUES (?, ?, ?)').run(
+        packId,
+        'Grad Pack',
+        now,
+      );
+
+      const docAnchor = 'dk:grad-doc-1';
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at, pack_id)
+         VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?, ?)`,
+      ).run(docAnchor, 'Grad Doc', now, packId);
+
+      for (let i = 0; i < 12; i++) {
+        const topic = i < 7 ? 'Kubernetes' : 'Docker';
+        db.prepare(
+          `INSERT INTO evidence_passages
+           (doc_anchor, passage_id, content, position, created_at, passage_kind, heading_path, chunk_index, char_start, char_end)
+           VALUES (?, ?, ?, ?, ?, 'domain_chunk', ?, ?, ?, ?)`,
+        ).run(
+          docAnchor,
+          `grad-p-${i}`,
+          `chunk ${i}`,
+          i,
+          now,
+          JSON.stringify([topic, `Section ${i}`]),
+          i,
+          i * 10,
+          (i + 1) * 10,
+        );
+      }
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({ method: 'POST', url: `/api/knowledge/packs/${packId}/graduate` });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.equal(body.packId, packId);
+      assert.equal(body.totalChunks, 12);
+      assert.ok(Array.isArray(body.clusters));
+      assert.equal(body.clusters.length, 2);
+      assert.equal(body.clusters[0].suggestedName, 'Kubernetes');
+      assert.equal(body.clusters[0].chunkCount, 7);
+
+      await app.close();
+    });
+
+    it('rejects graduation when fewer than 10 chunks', async () => {
+      const packId = 'pack-grad-small';
+      db.prepare('INSERT OR IGNORE INTO domain_packs (pack_id, name, created_at) VALUES (?, ?, ?)').run(
+        packId,
+        'Small Pack',
+        new Date().toISOString(),
+      );
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({ method: 'POST', url: `/api/knowledge/packs/${packId}/graduate` });
+
+      assert.equal(res.statusCode, 400);
+      const body = JSON.parse(res.body);
+      assert.ok(body.error.includes('Not enough'));
+
+      await app.close();
+    });
+  });
+
+  describe('POST /api/knowledge/packs/:id/graduate/confirm (AC-15)', () => {
+    it('splits a pack into new packs and moves docs', async () => {
+      const packId = 'pack-split-1';
+      const now = new Date().toISOString();
+      db.prepare('INSERT OR IGNORE INTO domain_packs (pack_id, name, created_at) VALUES (?, ?, ?)').run(
+        packId,
+        'Splittable',
+        now,
+      );
+
+      const docA = 'dk:split-a';
+      const docB = 'dk:split-b';
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at, pack_id)
+         VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?, ?)`,
+      ).run(docA, 'Doc A', now, packId);
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at, pack_id)
+         VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?, ?)`,
+      ).run(docB, 'Doc B', now, packId);
+
+      db.prepare(
+        `INSERT INTO evidence_passages
+         (doc_anchor, passage_id, content, position, created_at, passage_kind, heading_path, chunk_index, char_start, char_end)
+         VALUES (?, ?, ?, 0, ?, 'domain_chunk', ?, 0, 0, 10)`,
+      ).run(docA, 'split-p-a', 'content a', now, JSON.stringify(['TopicA']));
+      db.prepare(
+        `INSERT INTO evidence_passages
+         (doc_anchor, passage_id, content, position, created_at, passage_kind, heading_path, chunk_index, char_start, char_end)
+         VALUES (?, ?, ?, 0, ?, 'domain_chunk', ?, 0, 0, 10)`,
+      ).run(docB, 'split-p-b', 'content b', now, JSON.stringify(['TopicB']));
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'POST',
+        url: `/api/knowledge/packs/${packId}/graduate/confirm`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({
+          splits: [
+            { name: 'Pack A', topics: ['TopicA'] },
+            { name: 'Pack B', topics: ['TopicB'] },
+          ],
+        }),
+      });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.equal(body.sourcePack, packId);
+      assert.equal(body.created.length, 2);
+      assert.equal(body.created[0].name, 'Pack A');
+      assert.equal(body.created[0].movedDocs, 1);
+
+      const movedDoc = db.prepare('SELECT pack_id FROM evidence_docs WHERE anchor = ?').get(docA);
+      assert.equal(movedDoc.pack_id, body.created[0].packId);
+
+      await app.close();
+    });
+  });
+
   describe('PATCH /api/knowledge/docs/:anchor (AC-18)', () => {
     it('updates document metadata (keywords, doc_kind)', async () => {
       const anchor = 'dk:meta-edit-1';

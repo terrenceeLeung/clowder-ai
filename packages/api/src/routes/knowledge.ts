@@ -41,10 +41,13 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
     const parts = request.parts();
     for await (const part of parts) {
       if (part.type === 'file') {
-        const safeName = basename(part.filename).replace(/[^\w.\-]/g, '_');
+        const safeName = basename(part.filename).replace(/[^\w.-]/g, '_');
         if (!safeName || safeName.startsWith('.')) continue;
+        const ext = safeName.includes('.') ? safeName.slice(safeName.lastIndexOf('.')) : '';
+        const stem = safeName.includes('.') ? safeName.slice(0, safeName.lastIndexOf('.')) : safeName;
+        const uniqueName = `${stem}-${Date.now()}${ext}`;
         const buffer = await part.toBuffer();
-        const dest = join(uploadDir, safeName);
+        const dest = join(uploadDir, uniqueName);
         await writeFile(dest, buffer);
         filePaths.push(dest);
       }
