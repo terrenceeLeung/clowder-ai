@@ -8,7 +8,7 @@ created: 2026-05-02
 
 # F181: Thread Re-entry Commands (/history)
 
-> **Status**: spec | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
+> **Status**: in-progress | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
 
 ## Why
 
@@ -70,13 +70,13 @@ Path B (invocation): 用户消息 → InvocationQueue → QueueProcessor → 猫
 
 ## Acceptance Criteria
 
-- [ ] AC-1: `/history` 默认返回最近 1 个 Round（用户消息 + 全部猫回复）
-- [ ] AC-2: `/history N` 支持 N=1~5，超出范围提示
-- [ ] AC-3: Round 切分正确：以用户消息为边界，多猫回复归入同一 Round
+- [x] AC-1: `/history` 默认返回最近 1 个 Round（用户消息 + 全部猫回复）
+- [x] AC-2: `/history N` 支持 N=1~5，超出范围提示
+- [x] AC-3: Round 切分正确：以用户消息为边界，多猫回复归入同一 Round
 - [ ] AC-4: 正在流式输出的消息不包含在结果中
-- [ ] AC-5: 命令在猫流式输出期间可并行执行，不阻塞不被阻塞
-- [ ] AC-6: 有对应的单元测试
-- [ ] AC-7: 飞书 + 企微适配器正常渲染命令输出
+- [x] AC-5: 命令在猫流式输出期间可并行执行，不阻塞不被阻塞
+- [x] AC-6: 有对应的单元测试
+- [x] AC-7: 飞书 + 企微适配器正常渲染命令输出
 
 ## Dependencies
 
@@ -108,3 +108,4 @@ Path B (invocation): 用户消息 → InvocationQueue → QueueProcessor → 猫
 | 日期 | 事件 |
 |------|------|
 | 2026-05-02 | 立项。多猫讨论 → 铲屎官收敛 → 砍 /unread，/history 按轮次 |
+| 2026-05-02 | /history connector command merged (PR #11). AC-1/2/3/5/6/7 ✅. AC-4 deferred. |
