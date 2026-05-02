@@ -1111,6 +1111,12 @@
       "file": "F179-phase0-plan.md"
     },
     {
+      "id": "F179",
+      "name": "Phase 1: Knowledge Hub — Implementation Plan",
+      "status": "unknown",
+      "file": "F179-phase1-plan.md"
+    },
+    {
       "id": "F180",
       "name": "BTW Side Question — Thread 内轻量旁路提问",
       "status": "in-progress | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1",

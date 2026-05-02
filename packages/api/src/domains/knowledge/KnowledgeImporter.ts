@@ -15,6 +15,7 @@ export interface ImportResult {
   status: 'created' | 'updated' | 'skipped' | 'failed';
   reason?: string;
   chunkCount?: number;
+  confidence?: number;
   piiDetected?: boolean;
 }
 
@@ -35,7 +36,7 @@ interface ImporterDeps {
 export class KnowledgeImporter {
   constructor(private readonly deps: ImporterDeps) {}
 
-  async importFile(filePath: string, opts?: { packId?: string }): Promise<ImportResult> {
+  async importFile(filePath: string, opts?: { packId?: string; sourcePath?: string }): Promise<ImportResult> {
     let content: string;
     try {
       content = await readFile(filePath, 'utf-8');
@@ -43,7 +44,7 @@ export class KnowledgeImporter {
       return { sourcePath: filePath, anchor: null, status: 'failed', reason: (err as Error).message };
     }
     const sourceHash = createHash('sha256').update(content).digest('hex');
-    const sourcePath = filePath;
+    const sourcePath = opts?.sourcePath ?? filePath;
 
     const piiMatches = this.deps.piiDetector.scan(content);
     const piiDetected = piiMatches.length > 0;
@@ -164,6 +165,7 @@ export class KnowledgeImporter {
       anchor: normalized.anchor,
       status: 'created',
       chunkCount: normalized.chunks.length,
+      confidence: normalized.extractionConfidence,
       piiDetected,
     };
   }
