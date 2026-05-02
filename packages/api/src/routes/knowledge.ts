@@ -31,10 +31,10 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
 
   app.post('/api/knowledge/import', async (request, reply) => {
     if (!importer) {
-      return reply.status(500).send({ error: 'Importer not configured' });
+      return reply.status(501).send({ error: 'Import pipeline not yet wired (pending Phase 0 services)' });
     }
 
-    const uploadDir = join(projectRoot, '.knowledge-uploads', randomUUID());
+    const uploadDir = join(projectRoot, '.knowledge-uploads');
     await mkdir(uploadDir, { recursive: true });
 
     const filePaths: string[] = [];
@@ -82,7 +82,8 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
 
     const doc = db
       .prepare(
-        `SELECT anchor, kind, status, title, summary, governance_status, updated_at
+        `SELECT anchor, kind, status, title, summary, governance_status, updated_at,
+                keywords, doc_kind
          FROM evidence_docs WHERE anchor = ?`,
       )
       .get(anchor) as Record<string, unknown> | undefined;
@@ -110,6 +111,8 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         summary: doc.summary,
         governanceStatus: doc.governance_status,
         updatedAt: doc.updated_at,
+        keywords: doc.keywords ? JSON.parse(doc.keywords as string) : [],
+        docKind: doc.doc_kind ?? null,
       },
       passages: passages.map((p) => ({
         passageId: p.passage_id,

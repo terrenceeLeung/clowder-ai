@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/utils/api-client';
 
 const DOC_KINDS = ['guide', 'reference', 'tutorial', 'faq', 'runbook'] as const;
@@ -12,10 +12,23 @@ interface MetadataEditorProps {
   onSave?: () => void;
 }
 
-export default function MetadataEditor({ anchor, initialKeywords = [], initialDocKind, onSave }: MetadataEditorProps) {
-  const [keywords, setKeywords] = useState(initialKeywords.join(', '));
+export default function MetadataEditor({ anchor, initialKeywords, initialDocKind, onSave }: MetadataEditorProps) {
+  const [keywords, setKeywords] = useState(initialKeywords?.join(', ') ?? '');
   const [docKind, setDocKind] = useState(initialDocKind ?? '');
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(!!initialKeywords);
+
+  useEffect(() => {
+    if (loaded) return;
+    apiFetch(`/api/knowledge/docs/${encodeURIComponent(anchor)}`)
+      .then((res) => res.json())
+      .then((data: { doc: { keywords?: string[]; docKind?: string } }) => {
+        if (data.doc.keywords?.length) setKeywords(data.doc.keywords.join(', '));
+        if (data.doc.docKind) setDocKind(data.doc.docKind);
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, [anchor, loaded]);
 
   const save = useCallback(async () => {
     setSaving(true);
