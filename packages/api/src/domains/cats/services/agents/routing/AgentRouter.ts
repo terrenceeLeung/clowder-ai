@@ -22,6 +22,7 @@ import type { CatId, MessageContent } from '@cat-cafe/shared';
 import { catRegistry, escapeRegExp } from '@cat-cafe/shared';
 import type { SessionStore } from '@cat-cafe/shared/utils';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
+import { parseOpenCodeModel } from '../providers/opencode-config-template.js';
 import {
   resolveBuiltinClientForProvider,
   resolveForClient,
@@ -172,8 +173,11 @@ async function buildSideQuestionProviderEnv(
     const modelProviderHint = catConfig?.provider?.trim();
     if (modelProviderHint && protocolForProvider[modelProviderHint]) {
       effectiveProtocol = protocolForProvider[modelProviderHint];
-    } else if (defaultModel?.startsWith('openrouter/')) {
-      effectiveProtocol = 'openai';
+    } else {
+      const parsed = defaultModel ? parseOpenCodeModel(defaultModel) : null;
+      if (parsed && protocolForProvider[parsed.providerName]) {
+        effectiveProtocol = protocolForProvider[parsed.providerName];
+      }
     }
   }
 

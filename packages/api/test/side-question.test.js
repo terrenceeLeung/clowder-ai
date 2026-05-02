@@ -157,4 +157,19 @@ describe('side question (/btw)', () => {
     assert.equal(result.answer, '根据搜索结果：F129 是 pack system。');
     assert.equal(result.toolUseBlocked, false);
   });
+
+  it('buildSideQuestionProviderEnv uses parseOpenCodeModel for google/ model prefix', async () => {
+    const { parseOpenCodeModel } = await import(
+      '../dist/domains/cats/services/agents/providers/opencode-config-template.js'
+    );
+
+    const googleModel = parseOpenCodeModel('google/gemini-2.5-flash');
+    assert.deepEqual(googleModel, { providerName: 'google', modelName: 'gemini-2.5-flash' });
+
+    const openrouterModel = parseOpenCodeModel('openrouter/anthropic/claude-3.5-sonnet');
+    assert.deepEqual(openrouterModel, { providerName: 'openrouter', modelName: 'anthropic/claude-3.5-sonnet' });
+
+    const plainModel = parseOpenCodeModel('claude-opus-4-6');
+    assert.equal(plainModel, null);
+  });
 });
