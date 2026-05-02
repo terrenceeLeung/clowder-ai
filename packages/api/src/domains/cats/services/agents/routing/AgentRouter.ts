@@ -961,12 +961,12 @@ export class AgentRouter {
     const timeout = setTimeout(() => controller.abort('Side question timeout (30s)'), SIDE_QUESTION_TIMEOUT_MS);
 
     const providerEnv = await buildSideQuestionProviderEnv(catId);
-    const {
-      CAT_CAFE_AGENT_KEY_SECRET: _k,
-      CAT_CAFE_AGENT_KEY_FILE: _f,
-      ...strippedCallbackEnv
-    } = providerEnv.callbackEnv ?? {};
-    const readonlyEnv = { ...strippedCallbackEnv, CAT_CAFE_READONLY: 'true' };
+    const readonlyEnv: Record<string, string> = {
+      ...providerEnv.callbackEnv,
+      CAT_CAFE_READONLY: 'true',
+      CAT_CAFE_AGENT_KEY_SECRET: '',
+      CAT_CAFE_AGENT_KEY_FILE: '',
+    };
     const invokeOptions: AgentServiceOptions = {
       systemPrompt: buildSideQuestionSystemPrompt(catId),
       signal: controller.signal,
@@ -995,11 +995,13 @@ export class AgentRouter {
       }
     };
 
+    let deadlineTimer: ReturnType<typeof setTimeout>;
     const hardDeadline = new Promise<'timeout'>((resolve) => {
-      setTimeout(() => resolve('timeout'), SIDE_QUESTION_TIMEOUT_MS);
+      deadlineTimer = setTimeout(() => resolve('timeout'), SIDE_QUESTION_TIMEOUT_MS);
     });
     const race = await Promise.race([collectAnswer().then(() => 'done' as const), hardDeadline]);
     clearTimeout(timeout);
+    clearTimeout(deadlineTimer!);
 
     if (race === 'timeout') {
       controller.abort('Side question timeout (30s)');
