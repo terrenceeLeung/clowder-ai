@@ -2409,7 +2409,9 @@ async function main(): Promise<void> {
       },
       async getByThread(threadId: string, limit?: number, userId?: string) {
         const msgs = await messageStore.getByThread(threadId, limit, userId);
-        return msgs.map((m) => ({
+        return msgs
+          .filter((m: { origin?: string }) => m.origin !== 'briefing')
+          .map((m) => ({
           catId: m.catId,
           content: m.content,
           timestamp: m.timestamp,
