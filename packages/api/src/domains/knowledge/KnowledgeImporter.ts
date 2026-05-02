@@ -36,7 +36,7 @@ interface ImporterDeps {
 export class KnowledgeImporter {
   constructor(private readonly deps: ImporterDeps) {}
 
-  async importFile(filePath: string, opts?: { packId?: string }): Promise<ImportResult> {
+  async importFile(filePath: string, opts?: { packId?: string; sourcePath?: string }): Promise<ImportResult> {
     let content: string;
     try {
       content = await readFile(filePath, 'utf-8');
@@ -44,18 +44,18 @@ export class KnowledgeImporter {
       return { sourcePath: filePath, anchor: null, status: 'failed', reason: (err as Error).message };
     }
     const sourceHash = createHash('sha256').update(content).digest('hex');
-    const sourcePath = filePath;
+    const sourcePath = opts?.sourcePath ?? filePath;
 
     const piiMatches = this.deps.piiDetector.scan(content);
     const piiDetected = piiMatches.length > 0;
 
     const existing = this.deps.db
       .prepare(
-        "SELECT anchor, source_hash, governance_status FROM evidence_docs WHERE source_hash = ? AND kind = 'pack-knowledge' ORDER BY updated_at DESC LIMIT 1",
+        'SELECT anchor, source_hash, governance_status FROM evidence_docs WHERE source_path = ? ORDER BY updated_at DESC LIMIT 1',
       )
-      .get(sourceHash) as { anchor: string; source_hash: string; governance_status: string } | undefined;
+      .get(sourcePath) as { anchor: string; source_hash: string; governance_status: string } | undefined;
 
-    if (existing) {
+    if (existing && existing.source_hash === sourceHash) {
       return { sourcePath, anchor: existing.anchor, status: 'skipped', reason: 'identical content' };
     }
 
@@ -72,6 +72,16 @@ export class KnowledgeImporter {
       const packId = opts?.packId ?? this.deps.packs.ensureDefaultPack();
       const now = new Date().toISOString();
       const tx = this.deps.db.transaction(() => {
+        if (existing) {
+          try {
+            this.deps.governance.transition(existing.anchor, 'stale');
+          } catch {
+            this.deps.db
+              .prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?')
+              .run('stale', existing.anchor);
+          }
+        }
+
         this.deps.db
           .prepare(`
           INSERT INTO evidence_docs

@@ -11,11 +11,11 @@ interface ImportResult {
   status: 'created' | 'updated' | 'skipped' | 'failed';
   reason?: string;
   chunkCount?: number;
+  confidence?: number;
 }
 
 interface KnowledgeImporter {
-  importFile(filePath: string, opts?: { packId?: string }): Promise<ImportResult>;
-  importBatch(filePaths: string[], opts?: { packId?: string }): Promise<ImportResult[]>;
+  importFile(filePath: string, opts?: { packId?: string; sourcePath?: string }): Promise<ImportResult>;
 }
 
 interface KnowledgeRoutesOptions {
@@ -37,7 +37,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
     const uploadDir = join(projectRoot, '.knowledge-uploads');
     await mkdir(uploadDir, { recursive: true });
 
-    const filePaths: string[] = [];
+    const uploads: Array<{ filePath: string; sourcePath: string }> = [];
     const parts = request.parts();
     for await (const part of parts) {
       if (part.type === 'file') {
@@ -49,11 +49,14 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         const buffer = await part.toBuffer();
         const dest = join(uploadDir, uniqueName);
         await writeFile(dest, buffer);
-        filePaths.push(dest);
+        uploads.push({ filePath: dest, sourcePath: join(uploadDir, safeName) });
       }
     }
 
-    const results = await importer.importBatch(filePaths);
+    const results: ImportResult[] = [];
+    for (const u of uploads) {
+      results.push(await importer.importFile(u.filePath, { sourcePath: u.sourcePath }));
+    }
     return { results };
   });
 
