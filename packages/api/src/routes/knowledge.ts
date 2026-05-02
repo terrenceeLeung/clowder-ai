@@ -45,7 +45,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         if (!safeName || safeName.startsWith('.')) continue;
         const ext = safeName.includes('.') ? safeName.slice(safeName.lastIndexOf('.')) : '';
         const stem = safeName.includes('.') ? safeName.slice(0, safeName.lastIndexOf('.')) : safeName;
-        const uniqueName = `${stem}-${Date.now()}${ext}`;
+        const uniqueName = `${stem}-${randomUUID().slice(0, 8)}${ext}`;
         const buffer = await part.toBuffer();
         const dest = join(uploadDir, uniqueName);
         await writeFile(dest, buffer);

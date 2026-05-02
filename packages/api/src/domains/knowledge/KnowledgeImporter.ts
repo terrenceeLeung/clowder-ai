@@ -15,6 +15,7 @@ export interface ImportResult {
   status: 'created' | 'updated' | 'skipped' | 'failed';
   reason?: string;
   chunkCount?: number;
+  confidence?: number;
   piiDetected?: boolean;
 }
 
@@ -164,6 +165,7 @@ export class KnowledgeImporter {
       anchor: normalized.anchor,
       status: 'created',
       chunkCount: normalized.chunks.length,
+      confidence: normalized.extractionConfidence,
       piiDetected,
     };
   }
