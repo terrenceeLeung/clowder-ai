@@ -1115,6 +1115,12 @@
       "name": "BTW Side Question — Thread 内轻量旁路提问",
       "status": "spec | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1",
       "file": "F180-btw-side-question.md"
+    },
+    {
+      "id": "F181",
+      "name": "Thread Re-entry Commands (/history)",
+      "status": "spec | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1",
+      "file": "F181-thread-re-entry-commands.md"
     }
   ]
 }
