@@ -220,6 +220,9 @@ export class ClaudeAgentService implements AgentService {
     if (options?.sessionId) {
       args.push('--resume', options.sessionId);
     }
+    if (options?.disableTools) {
+      args.push('--tools', '');
+    }
     for (const dir of imageAccessDirs) {
       args.push('--add-dir', dir);
     }
@@ -227,7 +230,7 @@ export class ClaudeAgentService implements AgentService {
     // Add MCP server config when callback env is present
     // On Windows, Claude CLI treats inline JSON as a file path — write to temp file instead.
     // The file is cached per-instance so concurrent invocations share one file (no temp spam).
-    if (options?.callbackEnv && this.mcpServerPath) {
+    if (!options?.disableMcp && options?.callbackEnv && this.mcpServerPath) {
       if (IS_WINDOWS) {
         if (!this.mcpConfigFilePath || !existsSync(this.mcpConfigFilePath)) {
           const dir = mkdtempSync(join(tmpdir(), 'cat-cafe-mcp-'));
