@@ -27,6 +27,7 @@ export { featureDocDetailRoutes } from './feature-doc-detail.js';
 export { firstRunQuestRoutes } from './first-run-quest.js';
 export { gameRoutes } from './games.js';
 export { governanceStatusRoute } from './governance-status.js';
+export { knowledgeRoutes } from './knowledge.js';
 export { guideActionRoutes } from './guide-action-routes.js';
 export { intentCardRoutes } from './intent-card-routes.js';
 export { invocationsRoutes } from './invocations.js';
