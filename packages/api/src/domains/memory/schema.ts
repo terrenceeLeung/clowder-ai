@@ -66,7 +66,7 @@ END`,
 END`,
 ];
 
-export const CURRENT_SCHEMA_VERSION = 15;
+export const CURRENT_SCHEMA_VERSION = 16;
 
 // F163 Phase A: experiment infrastructure tables (cohorts, suggestions, logs)
 export const SCHEMA_V13_TABLES = `
@@ -451,6 +451,80 @@ export function applyMigrations(db: Database.Database): void {
     }
     db.prepare('INSERT INTO schema_version (version, applied_at) VALUES (?, ?)').run(15, new Date().toISOString());
   }
+
+  // F179: Domain Knowledge Governance — passage extension + domain_packs
+  if (currentVersion < 16) {
+    // evidence_passages: chunk-level metadata for domain knowledge
+    try {
+      db.exec("ALTER TABLE evidence_passages ADD COLUMN passage_kind TEXT DEFAULT 'message'");
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_passages ADD COLUMN heading_path TEXT');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_passages ADD COLUMN chunk_index INTEGER');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_passages ADD COLUMN char_start INTEGER');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_passages ADD COLUMN char_end INTEGER');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+
+    // evidence_docs: governance + normalizer tracking
+    try {
+      db.exec('ALTER TABLE evidence_docs ADD COLUMN governance_status TEXT');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_docs ADD COLUMN extraction_confidence REAL');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_docs ADD COLUMN doc_kind TEXT');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_docs ADD COLUMN normalizer_version TEXT');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_docs ADD COLUMN model_id TEXT');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+    try {
+      db.exec('ALTER TABLE evidence_docs ADD COLUMN source_updated_at TEXT');
+    } catch {
+      // Column may already exist from a partial migration
+    }
+
+    // domain_packs: lightweight container for domain knowledge grouping
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS domain_packs (
+        pack_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        description TEXT,
+        created_at TEXT NOT NULL
+      )
+    `);
+
+    db.prepare('INSERT INTO schema_version (version, applied_at) VALUES (?, ?)').run(16, new Date().toISOString());
+  }
 }
 
 /**
@@ -470,5 +544,19 @@ export function ensureVectorTable(db: Database.Database, dim: number): boolean {
     return true;
   } catch {
     return false; // sqlite-vec not loaded — fail-open
+  }
+}
+
+export function ensurePassageVectorTable(db: Database.Database, dim: number): boolean {
+  try {
+    db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS passage_vectors USING vec0(
+        passage_id TEXT PRIMARY KEY,
+        embedding float[${dim}]
+      )
+    `);
+    return true;
+  } catch {
+    return false;
   }
 }

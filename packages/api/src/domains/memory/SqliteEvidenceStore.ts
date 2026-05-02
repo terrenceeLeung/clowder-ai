@@ -32,6 +32,16 @@ export interface PassageResult {
   createdAt?: string;
   /** AC-I8: surrounding passages within the context window */
   context?: PassageResult[];
+  /** F179: passage type — 'message' for thread/session, 'domain_chunk' for domain knowledge */
+  passageKind?: string;
+  /** F179: heading hierarchy from document root */
+  headingPath?: string[];
+  /** F179: chunk sequence number */
+  chunkIndex?: number;
+  /** F179: start character offset in source document */
+  charStart?: number;
+  /** F179: end character offset in source document */
+  charEnd?: number;
 }
 
 export interface EmbedDeps {
@@ -876,7 +886,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     query: string,
     limit = 10,
     timeFilter?: { dateFrom?: string; dateTo?: string },
-    options?: { contextWindow?: number },
+    options?: { contextWindow?: number; passageKind?: string },
   ): PassageResult[] {
     this.ensureOpen();
     const trimmed = query.trim();
@@ -892,18 +902,25 @@ export class SqliteEvidenceStore implements IEvidenceStore {
 
     try {
       let sql = `SELECT p.doc_anchor, p.passage_id, p.content, p.speaker, p.position, p.created_at,
+                  p.passage_kind, p.heading_path, p.chunk_index, p.char_start, p.char_end,
                   bm25(passage_fts) AS rank
            FROM passage_fts f
            JOIN evidence_passages p ON p.rowid = f.rowid
-           WHERE passage_fts MATCH ?`;
+           LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
+           WHERE passage_fts MATCH ?
+             AND (d.governance_status IS NULL OR d.governance_status NOT IN ('stale', 'retired', 'rejected', 'failed'))`;
       const params: unknown[] = [ftsQuery];
+
+      if (options?.passageKind) {
+        sql += ' AND p.passage_kind = ?';
+        params.push(options.passageKind);
+      }
 
       if (timeFilter?.dateFrom) {
         sql += ' AND p.created_at >= ?';
         params.push(timeFilter.dateFrom);
       }
       if (timeFilter?.dateTo) {
-        // Add 'T23:59:59' to make dateTo inclusive for the full day
         sql += ' AND p.created_at <= ?';
         params.push(timeFilter.dateTo.length === 10 ? `${timeFilter.dateTo}T23:59:59` : timeFilter.dateTo);
       }
@@ -918,6 +935,11 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         speaker: string | null;
         position: number | null;
         created_at: string | null;
+        passage_kind: string | null;
+        heading_path: string | null;
+        chunk_index: number | null;
+        char_start: number | null;
+        char_end: number | null;
         rank: number;
       }>;
 
@@ -929,6 +951,11 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         position: r.position ?? undefined,
         rank: r.rank,
         createdAt: r.created_at ?? undefined,
+        passageKind: r.passage_kind ?? undefined,
+        headingPath: r.heading_path ? JSON.parse(r.heading_path) : undefined,
+        chunkIndex: r.chunk_index ?? undefined,
+        charStart: r.char_start ?? undefined,
+        charEnd: r.char_end ?? undefined,
       }));
 
       // AC-I8: fetch surrounding passages within the context window
@@ -967,6 +994,105 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       // FTS5 syntax error — degrade gracefully
       return [];
     }
+  }
+
+  /**
+   * F179 AC-07: Hybrid passage retrieval — BM25 + vec0 NN → RRF fusion.
+   * Ensures long-document tail chunks are retrievable via vector similarity
+   * even when BM25 keyword match fails.
+   */
+  async searchPassagesHybrid(query: string, limit = 10, options?: { passageKind?: string }): Promise<PassageResult[]> {
+    this.ensureOpen();
+    if (!this.db) return [];
+
+    const bm25Results = this.searchPassages(query, Math.min(Math.max(limit * 4, 20), 100), undefined, {
+      passageKind: options?.passageKind,
+    });
+
+    if (!this.embedDeps || this.embedDeps.mode !== 'on') {
+      return bm25Results.slice(0, limit);
+    }
+
+    let nnPassages: Array<{ passage_id: string; distance: number }>;
+    try {
+      const queryVec = await this.embedDeps.embedding.embed([query]);
+      const pool = Math.min(Math.max(limit * 4, 20), 100);
+      nnPassages = this.db
+        .prepare(
+          `SELECT passage_id, distance
+           FROM passage_vectors
+           WHERE embedding MATCH ?
+           ORDER BY distance
+           LIMIT ?`,
+        )
+        .all(queryVec[0], pool) as Array<{ passage_id: string; distance: number }>;
+    } catch {
+      return bm25Results.slice(0, limit);
+    }
+
+    const RRF_K = 60;
+    const scores = new Map<string, number>();
+
+    for (let i = 0; i < bm25Results.length; i++) {
+      scores.set(bm25Results[i].passageId, (scores.get(bm25Results[i].passageId) ?? 0) + 1 / (RRF_K + i));
+    }
+    for (let i = 0; i < nnPassages.length; i++) {
+      scores.set(nnPassages[i].passage_id, (scores.get(nnPassages[i].passage_id) ?? 0) + 1 / (RRF_K + i));
+    }
+
+    const bm25Map = new Map(bm25Results.map((r) => [r.passageId, r]));
+
+    const missingIds = [...scores.keys()].filter((id) => !bm25Map.has(id));
+    if (missingIds.length > 0) {
+      const placeholders = missingIds.map(() => '?').join(',');
+      let sql = `SELECT p.doc_anchor, p.passage_id, p.content, p.speaker, p.position, p.created_at,
+                  p.passage_kind, p.heading_path, p.chunk_index, p.char_start, p.char_end
+           FROM evidence_passages p
+           LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
+           WHERE p.passage_id IN (${placeholders})
+             AND (d.governance_status IS NULL OR d.governance_status NOT IN ('stale', 'retired', 'rejected', 'failed'))`;
+      const params: unknown[] = [...missingIds];
+
+      if (options?.passageKind) {
+        sql += ' AND p.passage_kind = ?';
+        params.push(options.passageKind);
+      }
+
+      const rows = this.db.prepare(sql).all(...params) as Array<{
+        doc_anchor: string;
+        passage_id: string;
+        content: string;
+        speaker: string | null;
+        position: number | null;
+        created_at: string | null;
+        passage_kind: string | null;
+        heading_path: string | null;
+        chunk_index: number | null;
+        char_start: number | null;
+        char_end: number | null;
+      }>;
+      for (const r of rows) {
+        bm25Map.set(r.passage_id, {
+          docAnchor: r.doc_anchor,
+          passageId: r.passage_id,
+          content: r.content,
+          speaker: r.speaker ?? undefined,
+          position: r.position ?? undefined,
+          createdAt: r.created_at ?? undefined,
+          passageKind: r.passage_kind ?? undefined,
+          headingPath: r.heading_path ? JSON.parse(r.heading_path) : undefined,
+          chunkIndex: r.chunk_index ?? undefined,
+          charStart: r.char_start ?? undefined,
+          charEnd: r.char_end ?? undefined,
+        });
+      }
+    }
+
+    return [...scores.entries()]
+      .filter(([id]) => bm25Map.has(id))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([id]) => bm25Map.get(id)!);
   }
 
   close(): void {
