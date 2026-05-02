@@ -906,7 +906,9 @@ export class SqliteEvidenceStore implements IEvidenceStore {
                   bm25(passage_fts) AS rank
            FROM passage_fts f
            JOIN evidence_passages p ON p.rowid = f.rowid
-           WHERE passage_fts MATCH ?`;
+           LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
+           WHERE passage_fts MATCH ?
+             AND (d.governance_status IS NULL OR d.governance_status != 'stale')`;
       const params: unknown[] = [ftsQuery];
 
       if (options?.passageKind) {
@@ -1043,13 +1045,16 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     const missingIds = [...scores.keys()].filter((id) => !bm25Map.has(id));
     if (missingIds.length > 0) {
       const placeholders = missingIds.map(() => '?').join(',');
-      let sql = `SELECT doc_anchor, passage_id, content, speaker, position, created_at,
-                  passage_kind, heading_path, chunk_index, char_start, char_end
-           FROM evidence_passages WHERE passage_id IN (${placeholders})`;
+      let sql = `SELECT p.doc_anchor, p.passage_id, p.content, p.speaker, p.position, p.created_at,
+                  p.passage_kind, p.heading_path, p.chunk_index, p.char_start, p.char_end
+           FROM evidence_passages p
+           LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
+           WHERE p.passage_id IN (${placeholders})
+             AND (d.governance_status IS NULL OR d.governance_status != 'stale')`;
       const params: unknown[] = [...missingIds];
 
       if (options?.passageKind) {
-        sql += ' AND passage_kind = ?';
+        sql += ' AND p.passage_kind = ?';
         params.push(options.passageKind);
       }
 
