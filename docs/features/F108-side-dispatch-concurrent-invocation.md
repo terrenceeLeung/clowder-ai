@@ -1,6 +1,6 @@
 ---
 feature_ids: [F108]
-related_features: [F086, F039, F048, F052]
+related_features: [F086, F039, F048, F052, F180]
 topics: [runtime, invocation, concurrency, orchestration]
 doc_kind: spec
 created: 2026-03-12
