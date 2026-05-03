@@ -2412,11 +2412,11 @@ async function main(): Promise<void> {
         return msgs
           .filter((m: { origin?: string }) => m.origin !== 'briefing')
           .map((m) => ({
-          catId: m.catId,
-          content: m.content,
-          timestamp: m.timestamp,
-          source: m.source?.connector,
-        }));
+            catId: m.catId,
+            content: m.content,
+            timestamp: m.timestamp,
+            source: m.source?.connector,
+          }));
       },
     },
     threadStore,
