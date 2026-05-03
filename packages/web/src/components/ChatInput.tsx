@@ -169,6 +169,8 @@ export function ChatInput({
         setImages([]);
         setShowMentions(false);
         setShowGameMenu(false);
+        setShowBtwAutocomplete(false);
+        setBtwFeatureFilter('');
       }
     },
     [input, disabled, onSend, images, sendTemporarilyDisabled, whisperMode, whisperTargets, addHistoryEntry],
