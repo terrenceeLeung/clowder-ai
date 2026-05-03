@@ -85,7 +85,7 @@ export const BtwAutocomplete = forwardRef<BtwAutocompleteHandle, BtwAutocomplete
         <div ref={listRef} className="max-h-40 overflow-y-auto">
           {visible.map((item, i) => (
             <button
-              key={item.id}
+              key={`${item.id}-${i}`}
               type="button"
               onClick={() => onSelect(item.id, item.title)}
               className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${

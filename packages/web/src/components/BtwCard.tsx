@@ -16,7 +16,7 @@ function saveBtwToHistory(data: BtwData): void {
   try {
     const raw = sessionStorage.getItem(BTW_HISTORY_KEY);
     const history: Array<BtwData & { savedAt: number }> = raw ? JSON.parse(raw) : [];
-    if (history[0]?.question === data.question && history[0]?.answer === data.answer) return;
+    if (history.some((h) => h.question === data.question && h.answer === data.answer)) return;
     history.unshift({ ...data, savedAt: Date.now() });
     if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
     sessionStorage.setItem(BTW_HISTORY_KEY, JSON.stringify(history));
