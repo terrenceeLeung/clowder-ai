@@ -1,8 +1,13 @@
 'use client';
 
 import type { BacklogItem } from '@cat-cafe/shared';
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { apiFetch } from '@/utils/api-client';
+
+export interface BtwAutocompleteHandle {
+  filteredCount: number;
+  selectByIndex: (idx: number) => void;
+}
 
 interface BtwAutocompleteProps {
   filter: string;
@@ -32,7 +37,8 @@ async function fetchFeatureItems(): Promise<Array<{ id: string; title: string }>
   }
 }
 
-export function BtwAutocomplete({ filter, onSelect, selectedIdx }: BtwAutocompleteProps) {
+export const BtwAutocomplete = forwardRef<BtwAutocompleteHandle, BtwAutocompleteProps>(
+  function BtwAutocomplete({ filter, onSelect, selectedIdx }, ref) {
   const [items, setItems] = useState<Array<{ id: string; title: string }>>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +50,16 @@ export function BtwAutocomplete({ filter, onSelect, selectedIdx }: BtwAutocomple
     (item) =>
       item.id.toLowerCase().includes(filter.toLowerCase()) || item.title.toLowerCase().includes(filter.toLowerCase()),
   );
+
+  const visible = filtered.slice(0, 8);
+
+  useImperativeHandle(ref, () => ({
+    filteredCount: visible.length,
+    selectByIndex: (idx: number) => {
+      const item = visible[idx];
+      if (item) onSelect(item.id, item.title);
+    },
+  }), [visible, onSelect]);
 
   useEffect(() => {
     const el = listRef.current?.children[selectedIdx] as HTMLElement | undefined;
@@ -59,7 +75,7 @@ export function BtwAutocomplete({ filter, onSelect, selectedIdx }: BtwAutocomple
           Matching Features
         </div>
         <div ref={listRef} className="max-h-40 overflow-y-auto">
-          {filtered.slice(0, 8).map((item, i) => (
+          {visible.map((item, i) => (
             <button
               key={item.id}
               type="button"
@@ -78,7 +94,7 @@ export function BtwAutocomplete({ filter, onSelect, selectedIdx }: BtwAutocomple
       </div>
     </div>
   );
-}
+});
 
 export function extractBtwFeatureFilter(input: string): string | null {
   const match = input.match(/^\/btw\s+(F\w*)$/i);

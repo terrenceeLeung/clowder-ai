@@ -11,7 +11,7 @@ import { useChatStore } from '@/stores/chatStore';
 import { useInputHistoryStore } from '@/stores/inputHistoryStore';
 import { apiFetch } from '@/utils/api-client';
 import { compressImage } from '@/utils/compressImage';
-import { BtwAutocomplete, extractBtwFeatureFilter } from './BtwAutocomplete';
+import { BtwAutocomplete, type BtwAutocompleteHandle, extractBtwFeatureFilter } from './BtwAutocomplete';
 import { ChatInputActionButton } from './ChatInputActionButton';
 import { ChatInputMenus } from './ChatInputMenus';
 import { buildCatOptions, type CatOption, detectMenuTrigger, GAME_LIST, WEREWOLF_MODES } from './chat-input-options';
@@ -88,6 +88,7 @@ export function ChatInput({
   const [whisperTargets, setWhisperTargets] = useState<Set<string>>(new Set());
   const [showBtwAutocomplete, setShowBtwAutocomplete] = useState(false);
   const [btwFeatureFilter, setBtwFeatureFilter] = useState('');
+  const btwRef = useRef<BtwAutocompleteHandle>(null);
 
   // F108B AC-B7: In whisper mode, check if SELECTED targets are busy (not thread-level).
   // When all whisper targets are idle → show Send button, not Queue.
@@ -381,6 +382,31 @@ export function ChatInput({
       }
     }
 
+    if (showBtwAutocomplete && btwRef.current && btwRef.current.filteredCount > 0) {
+      const count = btwRef.current.filteredCount;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIdx((i) => (i + 1) % count);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIdx((i) => (i - 1 + count) % count);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        btwRef.current.selectByIndex(selectedIdx);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowBtwAutocomplete(false);
+        setBtwFeatureFilter('');
+        return;
+      }
+    }
+
     // F080: Tab or ArrowRight accepts ghost suggestion (only when no menu is active)
     // ArrowRight only accepts when cursor is at end of input (no selection)
     if (e.key === 'Tab' || e.key === 'ArrowRight') {
@@ -577,6 +603,7 @@ export function ChatInput({
 
       {showBtwAutocomplete && !activeMenu && (
         <BtwAutocomplete
+          ref={btwRef}
           filter={btwFeatureFilter}
           selectedIdx={selectedIdx}
           onSelect={(featureId, title) => {
