@@ -250,6 +250,9 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
     }
 
     activeSideQuestions.add(sideQuestionKey);
+    request.raw.on('close', () => {
+      activeSideQuestions.delete(sideQuestionKey);
+    });
     try {
       return await router.answerSideQuestion(userId, threadId, bodyResult.data.question);
     } catch (err) {
