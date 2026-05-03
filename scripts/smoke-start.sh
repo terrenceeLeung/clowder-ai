@@ -287,6 +287,7 @@ if [ "$DRY_RUN" = "1" ]; then
 fi
 
 env \
+    NODE_ENV=development \
     FRONTEND_PORT="$WEB_PORT" \
     API_SERVER_PORT="$API_PORT" \
     NEXT_PUBLIC_API_URL="http://localhost:$API_PORT" \
@@ -297,5 +298,5 @@ env \
     TTS_ENABLED=0 \
     LLM_POSTPROCESS_ENABLED=0 \
     EMBED_ENABLED=0 \
-    "${REDIS_ENV_ARGS[@]}" \
+    ${REDIS_ENV_ARGS[@]+"${REDIS_ENV_ARGS[@]}"} \
     bash ./scripts/start-dev.sh ${STORAGE_MODE} "${EXTRA_ARGS[@]}"
