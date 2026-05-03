@@ -105,6 +105,6 @@ export const BtwAutocomplete = forwardRef<BtwAutocompleteHandle, BtwAutocomplete
 });
 
 export function extractBtwFeatureFilter(input: string): string | null {
-  const match = input.match(/^\/btw\s+(F\w*)$/i);
+  const match = input.match(/^\/btw\s+(F\d*)$/i);
   return match ? match[1] : null;
 }
