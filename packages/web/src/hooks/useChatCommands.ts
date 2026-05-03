@@ -259,11 +259,13 @@ export function useChatCommands() {
         }
 
         const messageId = `btw-${Date.now()}`;
+        const startTime = Date.now();
         addLocalMessage(threadId, {
           id: messageId,
           type: 'system',
-          variant: 'info',
-          content: '[btw] 正在旁路询问...',
+          variant: 'btw',
+          content: '',
+          btw: { question, answer: '', catDisplayName: '...' },
           timestamp: Date.now(),
         });
 
@@ -277,21 +279,30 @@ export function useChatCommands() {
             answer?: string;
             catId?: string;
             catDisplayName?: string;
+            toolsUsed?: string[];
             error?: string;
           } | null;
           if (!res.ok) {
             throw new Error(data?.error ?? `Server error: ${res.status}`);
           }
-          const label = data?.catDisplayName ?? data?.catId ?? '猫猫';
           const answer = data?.answer?.trim() || '(空回复)';
           patchLocalMessage(threadId, messageId, {
-            content: `[btw → ${label}] ${question}\n━━━━━━━━━\n${answer}`,
-            variant: 'info',
+            variant: 'btw',
+            content: answer,
+            btw: {
+              question,
+              answer,
+              catId: data?.catId,
+              catDisplayName: data?.catDisplayName,
+              durationMs: Date.now() - startTime,
+              toolsUsed: data?.toolsUsed,
+            },
           });
         } catch (err) {
           patchLocalMessage(threadId, messageId, {
             content: `[btw] 旁路问题失败: ${err instanceof Error ? err.message : 'Unknown'}`,
             variant: 'error',
+            btw: undefined,
           });
         }
         return true;

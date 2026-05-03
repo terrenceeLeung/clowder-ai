@@ -7,6 +7,7 @@ import { hexToRgba, tintedLight } from '@/lib/color-utils';
 import { getMentionRe, getMentionToCat } from '@/lib/mention-highlight';
 import { parseDirection } from '@/lib/parse-direction';
 import { type ChatMessage as ChatMessageType, resolveBubbleExpanded, useChatStore } from '@/stores/chatStore';
+import { BtwCard } from './BtwCard';
 import { CatAvatar } from './CatAvatar';
 import { CollapsibleMarkdown } from './CollapsibleMarkdown';
 import { ConnectorBubble } from './ConnectorBubble';
@@ -160,6 +161,14 @@ export function ChatMessage({ message, getCatById }: ChatMessageProps) {
     if (message.variant === 'governance_blocked' && message.extra?.governanceBlocked) {
       const { projectPath, reasonKind, invocationId } = message.extra.governanceBlocked;
       return <GovernanceBlockedCard projectPath={projectPath} reasonKind={reasonKind} invocationId={invocationId} />;
+    }
+
+    if (message.variant === 'btw' && message.btw) {
+      return (
+        <div data-message-id={message.id} className="flex justify-end mb-3 px-4">
+          <BtwCard data={message.btw} onDismiss={() => useChatStore.getState().removeMessage(message.id)} />
+        </div>
+      );
     }
 
     // F045: variant='thinking' is deprecated — thinking is now embedded in assistant bubbles.

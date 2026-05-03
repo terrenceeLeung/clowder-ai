@@ -11,6 +11,7 @@ import { useChatStore } from '@/stores/chatStore';
 import { useInputHistoryStore } from '@/stores/inputHistoryStore';
 import { apiFetch } from '@/utils/api-client';
 import { compressImage } from '@/utils/compressImage';
+import { BtwAutocomplete, extractBtwFeatureFilter } from './BtwAutocomplete';
 import { ChatInputActionButton } from './ChatInputActionButton';
 import { ChatInputMenus } from './ChatInputMenus';
 import { buildCatOptions, type CatOption, detectMenuTrigger, GAME_LIST, WEREWOLF_MODES } from './chat-input-options';
@@ -85,6 +86,8 @@ export function ChatInput({
   const [isPreparingImages, setIsPreparingImages] = useState(false);
   const [whisperMode, setWhisperMode] = useState(false);
   const [whisperTargets, setWhisperTargets] = useState<Set<string>>(new Set());
+  const [showBtwAutocomplete, setShowBtwAutocomplete] = useState(false);
+  const [btwFeatureFilter, setBtwFeatureFilter] = useState('');
 
   // F108B AC-B7: In whisper mode, check if SELECTED targets are busy (not thread-level).
   // When all whisper targets are idle → show Send button, not Queue.
@@ -259,6 +262,15 @@ export function ChatInput({
       } else {
         closeMenus();
         setMentionFilter('');
+      }
+      const featureFilter = extractBtwFeatureFilter(val);
+      if (featureFilter !== null) {
+        setShowBtwAutocomplete(true);
+        setBtwFeatureFilter(featureFilter);
+        setSelectedIdx(0);
+      } else {
+        setShowBtwAutocomplete(false);
+        setBtwFeatureFilter('');
       }
     },
     [closeMenus],
@@ -561,6 +573,18 @@ export function ChatInput({
         </div>
       )}
 
+      {showBtwAutocomplete && !activeMenu && (
+        <BtwAutocomplete
+          filter={btwFeatureFilter}
+          selectedIdx={selectedIdx}
+          onSelect={(featureId, title) => {
+            setInput(`/btw ${featureId} ${title} `);
+            setShowBtwAutocomplete(false);
+            setTimeout(() => textareaRef.current?.focus(), 0);
+          }}
+        />
+      )}
+
       {pathCompletion.isOpen && !activeMenu && (
         <PathCompletionMenu
           entries={pathCompletion.entries}
@@ -732,7 +756,9 @@ export function ChatInput({
             className={`w-full resize-none rounded-xl border p-3 text-sm focus:outline-none focus:ring-2 placeholder:text-gray-400 ${
               whisperMode
                 ? 'border-amber-300 bg-amber-50/50 focus:ring-amber-400'
-                : 'border-cocreator-light bg-cafe-surface focus:ring-cocreator-primary'
+                : input.trimStart().toLowerCase().startsWith('/btw')
+                  ? 'border-purple-400 bg-purple-50/30 focus:ring-purple-400 dark:bg-purple-950/20'
+                  : 'border-cocreator-light bg-cafe-surface focus:ring-cocreator-primary'
             }`}
             rows={1}
             disabled={disabled}
