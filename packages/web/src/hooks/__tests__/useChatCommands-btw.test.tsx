@@ -135,12 +135,19 @@ describe('useChatCommands /btw', () => {
     expect(mocks.mockAddMessage).toHaveBeenCalledTimes(1);
     expect(mocks.mockAddMessage.mock.calls[0][0]).toMatchObject({
       type: 'system',
-      variant: 'info',
-      content: '[btw] 正在旁路询问...',
+      variant: 'btw',
+      btw: { question: 'F129 是什么？', answer: '' },
     });
     expect(mocks.mockPatchMessage).toHaveBeenCalledTimes(1);
-    expect(mocks.mockPatchMessage.mock.calls[0][1].content).toContain('[btw → 缅因猫] F129 是什么？');
-    expect(mocks.mockPatchMessage.mock.calls[0][1].content).toContain('F129 是 pack system。');
+    const patch = mocks.mockPatchMessage.mock.calls[0][1];
+    expect(patch.variant).toBe('btw');
+    expect(patch.btw).toMatchObject({
+      question: 'F129 是什么？',
+      answer: 'F129 是 pack system。',
+      catId: 'codex',
+      catDisplayName: '缅因猫',
+    });
+    expect(patch.btw.durationMs).toBeGreaterThanOrEqual(0);
   });
 
   it('shows usage for /btw without a question', async () => {

@@ -56,6 +56,16 @@ export interface EvidenceData {
   degradeReason?: string;
 }
 
+/** F180 Phase B: BTW side question structured data */
+export interface BtwData {
+  question: string;
+  answer: string;
+  catId?: string;
+  catDisplayName?: string;
+  durationMs?: number;
+  toolsUsed?: string[];
+}
+
 export interface ToolEvent {
   id: string;
   type: 'tool_use' | 'tool_result';
@@ -228,7 +238,7 @@ export interface ChatMessage {
   id: string;
   type: 'user' | 'assistant' | 'system' | 'summary' | 'connector';
   /** Visual variant for system messages */
-  variant?: 'error' | 'info' | 'tool' | 'evidence' | 'a2a_followup' | 'governance_blocked';
+  variant?: 'error' | 'info' | 'tool' | 'evidence' | 'a2a_followup' | 'governance_blocked' | 'btw';
   catId?: string;
   content: string;
   /** F97: External connector source. Present when type='connector' */
@@ -248,6 +258,8 @@ export interface ChatMessage {
     createdBy: string;
   };
   evidence?: EvidenceData;
+  /** F180 Phase B: BTW side question structured data */
+  btw?: BtwData;
   /** F22+F52+F098-C1: Rich blocks + cross-thread origin + explicit targets */
   extra?: {
     rich?: { v: 1; blocks: RichBlock[] };
