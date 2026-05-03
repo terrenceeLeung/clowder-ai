@@ -16,11 +16,15 @@ const TABS = [
 ] as const;
 
 const GOV_BADGE: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'bg-[var(--conn-green-bg)]', text: 'text-[var(--conn-green-text)]' },
-  approved: { bg: 'bg-[var(--conn-blue-bg)]', text: 'text-[var(--conn-blue-text)]' },
+  ingested: { bg: 'bg-[var(--conn-blue-bg)]', text: 'text-[var(--conn-blue-text)]' },
+  normalized: { bg: 'bg-[var(--conn-blue-bg)]', text: 'text-[var(--conn-blue-text)]' },
   needs_review: { bg: 'bg-[var(--conn-amber-bg)]', text: 'text-[var(--conn-amber-text)]' },
+  approved: { bg: 'bg-[var(--conn-green-bg)]', text: 'text-[var(--conn-green-text)]' },
+  active: { bg: 'bg-[var(--conn-green-bg)]', text: 'text-[var(--conn-green-text)]' },
   stale: { bg: 'bg-[var(--conn-gray-bg)]', text: 'text-[var(--conn-gray-text)]' },
   retired: { bg: 'bg-[var(--conn-gray-bg)]', text: 'text-[var(--conn-gray-text)]' },
+  rejected: { bg: 'bg-[var(--conn-red-bg)]', text: 'text-[var(--conn-red-text)]' },
+  failed: { bg: 'bg-[var(--conn-red-bg)]', text: 'text-[var(--conn-red-text)]' },
 };
 
 function GovBadge({ status }: { status: string }) {

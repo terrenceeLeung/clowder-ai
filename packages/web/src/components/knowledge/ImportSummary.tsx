@@ -20,15 +20,15 @@ export default function ImportSummary({ results, onReset }: ImportSummaryProps) 
 
   return (
     <div className="space-y-4">
-      <h3 className="font-medium text-gray-900 dark:text-gray-100">Import Complete</h3>
+      <h3 className="font-medium text-cafe">Import Complete</h3>
 
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-        <StatCard label="Created" value={created} color="text-green-600" />
-        <StatCard label="Updated" value={updated} color="text-blue-600" />
-        <StatCard label="Failed" value={failed} color="text-red-600" />
-        <StatCard label="Chunks" value={totalChunks} color="text-purple-600" />
-        <StatCard label="Needs Review" value={needsReview} color="text-amber-600" />
-        <StatCard label="Auto-Approved" value={autoApproved} color="text-emerald-600" />
+        <StatCard label="Created" value={created} color="text-[var(--conn-green-text)]" />
+        <StatCard label="Updated" value={updated} color="text-[var(--conn-blue-text)]" />
+        <StatCard label="Failed" value={failed} color="text-[var(--conn-red-text)]" />
+        <StatCard label="Chunks" value={totalChunks} color="text-[var(--conn-purple-text)]" />
+        <StatCard label="Needs Review" value={needsReview} color="text-[var(--conn-amber-text)]" />
+        <StatCard label="Auto-Approved" value={autoApproved} color="text-[var(--conn-green-text)]" />
       </div>
 
       {results.length > 0 && (
@@ -36,12 +36,12 @@ export default function ImportSummary({ results, onReset }: ImportSummaryProps) 
           {results.map((r) => (
             <li
               key={r.sourcePath}
-              className="flex items-center justify-between rounded border px-3 py-2 text-sm dark:border-gray-700"
+              className="flex items-center justify-between rounded border border-cafe-border px-3 py-2 text-sm"
             >
-              <span className="truncate text-gray-800 dark:text-gray-200">{r.sourcePath.split('/').pop()}</span>
+              <span className="truncate text-cafe">{r.sourcePath.split('/').pop()}</span>
               <div className="flex items-center gap-2">
                 {r.confidence != null && <ConfidenceBadge confidence={r.confidence} />}
-                {r.chunkCount != null && <span className="text-xs text-gray-400">{r.chunkCount} chunks</span>}
+                {r.chunkCount != null && <span className="text-xs text-cafe-muted">{r.chunkCount} chunks</span>}
                 <StatusBadge status={r.status} />
               </div>
             </li>
@@ -52,7 +52,7 @@ export default function ImportSummary({ results, onReset }: ImportSummaryProps) 
       <button
         type="button"
         onClick={onReset}
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+        className="rounded-md bg-cafe-accent px-4 py-2 text-sm text-white hover:opacity-90"
       >
         Import More
       </button>
@@ -62,9 +62,9 @@ export default function ImportSummary({ results, onReset }: ImportSummaryProps) 
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="rounded-lg border p-3 text-center dark:border-gray-700">
+    <div className="rounded-lg border border-cafe-border p-3 text-center">
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
-      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xs text-cafe-muted">{label}</p>
     </div>
   );
 }
@@ -73,17 +73,17 @@ function ConfidenceBadge({ confidence }: { confidence: number }) {
   const pct = Math.round(confidence * 100);
   const style =
     confidence >= CONFIDENCE_THRESHOLD
-      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-      : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+      ? 'bg-[var(--conn-green-bg)] text-[var(--conn-green-text)]'
+      : 'bg-[var(--conn-amber-bg)] text-[var(--conn-amber-text)]';
   return <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${style}`}>{pct}%</span>;
 }
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    created: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-    updated: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-    failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-    skipped: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    created: 'bg-[var(--conn-green-bg)] text-[var(--conn-green-text)]',
+    updated: 'bg-[var(--conn-blue-bg)] text-[var(--conn-blue-text)]',
+    failed: 'bg-[var(--conn-red-bg)] text-[var(--conn-red-text)]',
+    skipped: 'bg-[var(--conn-gray-bg)] text-[var(--conn-gray-text)]',
   };
   return (
     <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles[status] ?? styles.skipped}`}>{status}</span>
