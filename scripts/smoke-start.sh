@@ -1,16 +1,34 @@
 #!/bin/bash
 
+# Smoke test environment launcher for quality-gate Step 3.5.
+# Mirrors review-start.sh but targets author's worktree instead of reviewer sandbox.
+#
+# Usage:
+#   pnpm smoke:start [--seed-from=<path>] [--web-port=<port>] [--api-port=<port>]
+#                     [--redis-port=<port>] [--dry-run] [-- <extra start-dev args>]
+#
+# Defaults:
+#   web=3101, api=3102 (auto-advance in +2 pairs when occupied)
+#   profile=opensource (unless you pass --profile=...)
+#   storage=memory (--memory); override with --redis-port=<port>
+#
+# Safety:
+#   - Refuses to run on main/master branch (must be in a worktree/feature branch).
+#   - Refuses runtime/alpha/production reserved ports (3003/3004/3011/3012/4111/6399).
+#   - --seed-from copies .cat-cafe/ from source project so cats are pre-configured.
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-DEFAULT_WEB_PORT=3201
-DEFAULT_API_PORT=3202
+DEFAULT_WEB_PORT=3101
+DEFAULT_API_PORT=3102
 MAX_PORT_SCAN_PAIRS=60
 
 WEB_PORT=""
 API_PORT=""
+REDIS_PORT_OVERRIDE=""
 SEED_FROM=""
 DRY_RUN=0
 EXTRA_ARGS=()
@@ -18,27 +36,29 @@ EXTRA_ARGS=()
 usage() {
     cat <<'EOF'
 Usage:
-  pnpm review:start [--seed-from=<path>] [--web-port=<port>] [--api-port=<port>]
-                     [--dry-run] [-- <extra start-dev args>]
+  pnpm smoke:start [--seed-from=<path>] [--web-port=<port>] [--api-port=<port>]
+                    [--redis-port=<port>] [--dry-run] [-- <extra start-dev args>]
 
 Defaults:
-  web=3201, api=3202 (auto-advance in +2 pairs when occupied)
+  web=3101, api=3102 (auto-advance in +2 pairs when occupied)
   profile=opensource (unless you pass --profile=...)
-  storage=memory (--memory)
+  storage=memory (--memory); override with --redis-port=<port>
 
 Options:
   --seed-from=<path>   Copy .cat-cafe/ from source project (cat config preset)
+  --redis-port=<port>  Use isolated Redis instead of --memory
+  --dry-run            Print config and exit without starting
 
 Safety:
-  - Must run inside /tmp/cat-cafe-review/... (or /private/tmp/... on macOS) by default.
-  - Refuses runtime/alpha reserved ports (3003/3004/3011/3012/4111).
+  - Must run on a feature branch (not main/master).
+  - Refuses runtime/alpha/production reserved ports (3003/3004/3011/3012/4111/6399).
 EOF
 }
 
 port_is_reserved() {
     local port="$1"
     case "$port" in
-        3003|3004|3011|3012|4111) return 0 ;;
+        3003|3004|3011|3012|4111|6399) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -113,24 +133,37 @@ has_profile_arg() {
     return 1
 }
 
-enforce_review_sandbox() {
-    local pwd_real
-    pwd_real="$(pwd -P)"
-    case "$pwd_real" in
-        /tmp/cat-cafe-review/*|/private/tmp/cat-cafe-review/*) return 0 ;;
-    esac
+enforce_not_main_branch() {
+    local branch
+    branch="$(git -C "$PROJECT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
 
-    if [ "${CAT_CAFE_ALLOW_NON_SANDBOX_REVIEW:-0}" = "1" ]; then
-        echo "⚠ 非 review 沙盒路径运行，因 CAT_CAFE_ALLOW_NON_SANDBOX_REVIEW=1 放行: $pwd_real"
-        return 0
+    if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+        echo "✗ smoke:start 禁止在 main/master 分支运行（LL-033）" >&2
+        echo "  当前分支: $branch" >&2
+        echo "  项目目录: $PROJECT_DIR" >&2
+        echo "  请在 feature worktree 中运行" >&2
+        exit 1
     fi
 
-    echo "✗ review:start 只允许在 review 沙盒运行：" >&2
-    echo "  /tmp/cat-cafe-review/{review-target-id}/{reviewer-handle}" >&2
-    echo "  /private/tmp/cat-cafe-review/{review-target-id}/{reviewer-handle} (macOS realpath)" >&2
-    echo "  当前目录: $pwd_real" >&2
-    echo "  如需临时绕过: CAT_CAFE_ALLOW_NON_SANDBOX_REVIEW=1 pnpm review:start" >&2
-    exit 1
+    if [ -z "$branch" ]; then
+        echo "✗ 无法检测 git 分支（项目目录可能不是 git 仓库）: $PROJECT_DIR" >&2
+        exit 1
+    fi
+}
+
+seed_cat_config() {
+    [ -n "$SEED_FROM" ] || return 0
+    if [ -d ".cat-cafe" ]; then
+        echo "  seed:     跳过（.cat-cafe/ 已存在）"
+        return 0
+    fi
+    if [ ! -d "$SEED_FROM/.cat-cafe" ]; then
+        echo "⚠ --seed-from 指定的路径没有 .cat-cafe/ 目录: $SEED_FROM" >&2
+        return 0
+    fi
+    cp -r "$SEED_FROM/.cat-cafe" .cat-cafe
+    chmod 600 .cat-cafe/credentials.json 2>/dev/null || true
+    echo "  seed:     已从 $SEED_FROM 复制猫配置"
 }
 
 pick_port_pair() {
@@ -159,6 +192,9 @@ for arg in "$@"; do
         --api-port=*)
             API_PORT="${arg#*=}"
             ;;
+        --redis-port=*)
+            REDIS_PORT_OVERRIDE="${arg#*=}"
+            ;;
         --seed-from=*)
             SEED_FROM="${arg#*=}"
             ;;
@@ -175,7 +211,7 @@ for arg in "$@"; do
     esac
 done
 
-enforce_review_sandbox
+enforce_not_main_branch
 
 if [ -n "$WEB_PORT" ]; then
     validate_port "web port" "$WEB_PORT"
@@ -183,10 +219,13 @@ fi
 if [ -n "$API_PORT" ]; then
     validate_port "api port" "$API_PORT"
 fi
+if [ -n "$REDIS_PORT_OVERRIDE" ]; then
+    validate_port "redis port" "$REDIS_PORT_OVERRIDE"
+fi
 
 if [ -z "$WEB_PORT" ] && [ -z "$API_PORT" ]; then
     pick_port_pair || {
-        echo "✗ 未找到可用 review 端口对（起点 ${DEFAULT_WEB_PORT}/${DEFAULT_API_PORT}，扫描 ${MAX_PORT_SCAN_PAIRS} 组）" >&2
+        echo "✗ 未找到可用 smoke 端口对（起点 ${DEFAULT_WEB_PORT}/${DEFAULT_API_PORT}，扫描 ${MAX_PORT_SCAN_PAIRS} 组）" >&2
         exit 1
     }
 elif [ -z "$WEB_PORT" ] || [ -z "$API_PORT" ]; then
@@ -216,28 +255,27 @@ if ! has_profile_arg; then
     fi
 fi
 
-seed_cat_config() {
-    [ -n "$SEED_FROM" ] || return 0
-    if [ -d ".cat-cafe" ]; then
-        echo "  seed:     跳过（.cat-cafe/ 已存在）"
-        return 0
-    fi
-    if [ ! -d "$SEED_FROM/.cat-cafe" ]; then
-        echo "⚠ --seed-from 指定的路径没有 .cat-cafe/ 目录: $SEED_FROM" >&2
-        return 0
-    fi
-    cp -r "$SEED_FROM/.cat-cafe" .cat-cafe
-    chmod 600 .cat-cafe/credentials.json 2>/dev/null || true
-    echo "  seed:     已从 $SEED_FROM 复制猫配置"
-}
+STORAGE_MODE="--memory"
+REDIS_DISPLAY="--memory (in-memory)"
+REDIS_ENV_ARGS=()
+if [ -n "$REDIS_PORT_OVERRIDE" ]; then
+    STORAGE_MODE=""
+    REDIS_DISPLAY="redis://localhost:$REDIS_PORT_OVERRIDE"
+    REDIS_ENV_ARGS=(
+        REDIS_PORT="$REDIS_PORT_OVERRIDE"
+        REDIS_URL="redis://localhost:$REDIS_PORT_OVERRIDE"
+    )
+fi
 
-echo "🐱 Review 沙盒启动"
+echo "🔬 Smoke test environment"
 echo "  project:  $PROJECT_DIR"
 echo "  cwd:      $(pwd -P)"
+echo "  branch:   $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '<unknown>')"
 echo "  web port: $WEB_PORT"
 echo "  api port: $API_PORT"
 echo "  api url:  http://localhost:$API_PORT"
-echo "  mode:     --memory"
+echo "  redis:    $REDIS_DISPLAY"
+echo "  gateway:  disabled"
 
 cd "$PROJECT_DIR"
 
@@ -247,16 +285,17 @@ if [ "$DRY_RUN" = "1" ]; then
     echo "  dry-run:  true (未实际启动)"
     exit 0
 fi
-# Review sandboxes should not inherit local sidecar/proxy toggles from .env or shell.
-# Keep the default deterministic for reviewers, while still allowing explicit overrides.
-FRONTEND_PORT="$WEB_PORT" \
-API_SERVER_PORT="$API_PORT" \
-NEXT_PUBLIC_API_URL="http://localhost:$API_PORT" \
-PREVIEW_GATEWAY_PORT=0 \
-CAT_CAFE_RESPECT_DOTENV_PORTS=0 \
-ANTHROPIC_PROXY_ENABLED=0 \
-ASR_ENABLED=0 \
-TTS_ENABLED=0 \
-LLM_POSTPROCESS_ENABLED=0 \
-EMBED_ENABLED=0 \
-bash ./scripts/start-dev.sh --memory "${EXTRA_ARGS[@]}"
+
+env \
+    FRONTEND_PORT="$WEB_PORT" \
+    API_SERVER_PORT="$API_PORT" \
+    NEXT_PUBLIC_API_URL="http://localhost:$API_PORT" \
+    PREVIEW_GATEWAY_PORT=0 \
+    CAT_CAFE_RESPECT_DOTENV_PORTS=0 \
+    ANTHROPIC_PROXY_ENABLED=0 \
+    ASR_ENABLED=0 \
+    TTS_ENABLED=0 \
+    LLM_POSTPROCESS_ENABLED=0 \
+    EMBED_ENABLED=0 \
+    "${REDIS_ENV_ARGS[@]}" \
+    bash ./scripts/start-dev.sh ${STORAGE_MODE} "${EXTRA_ARGS[@]}"

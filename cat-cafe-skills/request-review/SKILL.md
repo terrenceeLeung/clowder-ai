@@ -101,10 +101,11 @@ Branch: {branch-name}
 
 **Reviewer 启动命令（统一入口）：**
 ```
-pnpm review:start
+pnpm review:start --seed-from=<author 的项目根目录>
 ```
 说明：
 - 该入口默认在 review 沙盒内运行，自动分配隔离端口（起点 3201/3202）
+- `--seed-from` 从源项目复制 `.cat-cafe/`（猫配置预置，避免触发新手导览）
 - review 请求信里必须记录实际启动端口（web/api）
 
 沙盒必须是 detached HEAD / read-only。要改代码 = TAKEOVER，开正式 worktree。

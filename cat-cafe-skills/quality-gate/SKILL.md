@@ -77,15 +77,20 @@ Step 3.5: FUNCTIONAL SMOKE TEST（运行态冒烟验证）
      b. 改动涉及 Redis 读写 → 隔离端口（如 REDIS_PORT=6397，独立数据目录 ~/.cat-cafe/redis-dev-6397/）
      c. 需要 flushdb / 清除旧数据 → STOP，@co-creator 确认后才能操作（不可逆）
   ③ 在当前 worktree 启动隔离环境：
-     API_SERVER_PORT=3013 FRONTEND_PORT=3014 ./scripts/start-dev.sh --memory
-     铁律：
+     ./scripts/smoke-start.sh --seed-from=<主项目绝对路径>
+     主项目路径 = `git worktree list` 输出的第一行（主 worktree 根目录）
+     脚本自动执行：端口自选(3101+) + NEXT_PUBLIC_API_URL 派生 + --memory + sidecar OFF
+     --seed-from 从主项目复制 .cat-cafe/（猫配置预置，避免触发新手导览）
+     需要 Redis 时：./scripts/smoke-start.sh --seed-from=<path> --redis-port=6397
+     铁律（脚本内部强制，违反即拒绝启动）：
+     - **禁止在 main 分支上做 smoke test**——必须在 worktree 中执行（LL-033）
      - 禁止使用 3003/3004（runtime 端口）
      - 禁止使用 3011/3012（alpha 端口）
      - 禁止使用 6399（production Redis）
      - 默认不加 --quick（让 start-dev.sh 完整构建，构建失败本身是信号）
-  ④ 走核心用户路径：
-     - UI 改动：浏览器打开 localhost:3014，走主路径
-     - API 改动：curl localhost:3013/api/xxx，验证请求/响应
+  ④ 走核心用户路径（端口从脚本输出复制）：
+     - UI 改动：浏览器打开 localhost:<web-port>，走主路径
+     - API 改动：curl localhost:<api-port>/api/xxx，验证请求/响应
      - 集成改动：触发端到端流程，确认数据流通
   ⑤ 记录证据：截图 / curl 输出 / 日志，标注 worktree path + 端口 + Redis 策略
   ⑥ 关闭 dev server（Ctrl+C），确认隔离 Redis 进程也已关闭
@@ -182,7 +187,8 @@ Spec: feature spec or implementation note
 ### 运行态冒烟验证（Step 3.5）
 分类: [影响运行时 / 不影响运行时（跳过）]
 Redis 策略: [--memory / 隔离端口 REDIS_PORT=6397 / 需 flushdb（已获铲屎官确认）]
-启动命令: API_SERVER_PORT=3013 FRONTEND_PORT=3014 ./scripts/start-dev.sh --memory
+启动命令: ./scripts/smoke-start.sh --seed-from=<主项目路径>
+实际端口: frontend=XXXX api=XXXX（从脚本输出复制）
 核心路径验证:
 | # | 用户路径 | 预期行为 | 实际结果 | 证据 |
 |---|---------|---------|---------|------|
@@ -217,7 +223,8 @@ pnpm -r --if-present run build → exit 0 ✅
 | 前端功能没有截图证据 | ≤3 张截图 + 15s 录屏 + 映射表 |
 | 有 .pen 设计稿但没对照实现 | Step 5 自动 glob 检测，匹配到就强制对照，不靠记忆 |
 | 影响运行时的改动没跑 smoke test | Step 3.5：在 worktree 起隔离环境走核心路径，静态检查≠行为正确（LL-030） |
-| smoke test 用了 runtime/alpha 端口 | 禁止 3003/3004/3011/3012/6399，用隔离端口 3013/3014/6397 |
+| smoke test 用了 runtime/alpha 端口 | 用 `smoke-start.sh` 自动选端口（3101+），禁止 3003/3004/3011/3012/6399 |
+| 在 main 分支上跑 smoke test | **必须在 worktree 中执行**——main 上启动会用真实 .env 凭证（飞书 IM 等），与 runtime 冲突且进程易孤儿化（LL-033） |
 | 为了截图在 runtime 会话里重跑 `pnpm start` | 先探活复用现有 runtime；确需重启必须显式授权 |
 | 拿 runtime 的 `3003/3004` 页面当成当前 worktree 的验证结果 | 报告里同时写明 `pwd/worktree` 和目标 URL；如果 URL 是 `3003/3004`，默认这是 runtime 证据，不是未合入改动证据 |
 | 截图/录屏/设计稿顺手掉进仓库根目录 | Step 7.5 必查；先移到 `${TMPDIR}/cat-cafe-evidence/...` 或正式归档目录，再继续 |
