@@ -60,18 +60,29 @@ created: 2026-05-01
 - [x] AC-A5: btw 内再输入 `/btw` 被拒绝（深度=1）
 - [x] AC-A6: btw 请求超时 30s 后优雅降级，不影响主线
 
-### Phase B: Web UX 优化（未排期）
+### Phase B: Web UX 优化（设计完成，待实现）
 
 **目标**：优化 btw 在 Web Hub 上的交互体验
 
-**候选方向**：
-- 灰底卡片视觉优化（当前是纯文本 `[btw → 猫名]`，可改为独立卡片组件）
-- btw 响应支持 markdown 渲染（代码块、列表等）
-- 快捷键触发（如 `Ctrl+B` 弹出 btw 输入框）
-- btw 历史记录（本地 sessionStorage，跨刷新但不落库）
-- 输入时自动补全已知 feature ID（F129 → 显示 feature 标题）
+**设计参考**：`pencil-design/new.pen` Screen 5 (BTW Card Polish) + Screen 6 (Autocomplete UX)
+
+**确定方向**（设计稿已通过 review）：
+1. **独立 BtwCard 组件** — 紫色 header（"旁路问答 · {catName}解答"）+ 问题高亮区 + 回答区 + footer（耗时 + 工具使用 + "刷新后消失"）。右对齐 75% 宽度，虚线边框，bg-surface-secondary。Header 中猫名动态渲染（基于 thread primary cat）
+2. **Markdown 渲染** — 回答区支持粗体、列表、代码块（Geist Mono），区别于纯文本
+3. **History 快捷入口** — 卡片 header 内 History 按钮，打开本地历史（sessionStorage，跨刷新不落库）
+4. **Feature ID 自动补全** — 输入 `/btw F...` 时触发 Matching Features 下拉，显示 feature ID + 标题
+5. **BTW 输入模式** — 输入 `/btw` 前缀或点击旁路按钮后，输入框紫色高亮边框标识 btw 模式
+
+**待定**：快捷键触发（如 `Ctrl+B`），实现时决定
 
 **不做**：IM 适配。IM 无 ephemeral message 能力，强行适配是降级体验，不如不做。
+
+### Phase B AC
+- [ ] AC-B1: BtwCard 独立组件渲染，视觉区分于主线消息
+- [ ] AC-B2: btw 回答支持 markdown（粗体/列表/代码块）
+- [ ] AC-B3: History 按钮可查看本地 btw 历史（sessionStorage）
+- [ ] AC-B4: 输入 `/btw F` 触发 feature ID 自动补全下拉
+- [ ] AC-B5: btw 模式下输入框有视觉区分（紫色边框）
 
 ## Dependencies
 
@@ -94,6 +105,7 @@ created: 2026-05-01
 | KD-4 | 禁嵌套（深度=1） | 简化心智，btw 是旁路减负不是可递归主线 | 2026-05-01 |
 | KD-5 | 上下文全量注入，不截断 | CC 给 compact boundary 后全量消息；我们 5条/1000token 截太狠，影响回答质量 | 2026-05-02 |
 | KD-6 | 1 次 agent loop / one-shot / 不支持追问 | CC 也是 one-shot；需追问说明问题不适合 btw | 2026-05-02 |
+| KD-7 | Phase B 卡片 header 猫名动态渲染 | btw 目标猫由 thread primary cat 决定，header 不应硬编码 | 2026-05-03 |
 
 ## Timeline
 
@@ -102,6 +114,7 @@ created: 2026-05-01
 | 2026-05-01 | 立项（三猫讨论收敛） |
 | 2026-05-02 | CC 源码对比 → 修订 KD-3/5/6（工具策略 + 上下文 + 轮次） |
 | 2026-05-02 | Phase A merged (PR #14) — 6 轮 review，含 agent-key 封堵、timer 清理、nesting guard scoping |
+| 2026-05-03 | Phase B 设计稿完成（暹罗猫 Pencil mockup），布偶猫 review 通过 |
 
 ## Links
 
@@ -109,3 +122,4 @@ created: 2026-05-01
 |------|------|------|
 | **Feature** | `docs/features/F108-side-dispatch-concurrent-invocation.md` | 并发 invocation 基础设施（概念相关） |
 | **Reference** | Claude Code `src/commands/btw.tsx` + `forkedAgent.ts` | 原版实现参考 |
+| **Design** | `pencil-design/new.pen` Screen 5 + Screen 6 | Phase B 视觉稿（暹罗猫） |
