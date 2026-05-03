@@ -23,11 +23,13 @@ async function fetchFeatureItems(): Promise<Array<{ id: string; title: string }>
     const res = await apiFetch('/api/backlog/items');
     if (!res.ok) return [];
     const data = (await res.json()) as { items?: BacklogItem[] };
+    const featureTagRe = /^(?:feature:)?(f\d{2,4})$/i;
     const items = (data.items ?? [])
-      .filter((item) => item.tags.some((t) => /^F\d{2,4}$/i.test(t)))
+      .filter((item) => item.tags.some((t) => featureTagRe.test(t)))
       .map((item) => {
-        const fTag = item.tags.find((t) => /^F\d{2,4}$/i.test(t)) ?? '';
-        return { id: fTag.toUpperCase(), title: item.title };
+        const match = item.tags.map((t) => t.match(featureTagRe)).find(Boolean);
+        const fId = match?.[1] ?? '';
+        return { id: fId.toUpperCase(), title: item.title };
       })
       .sort((a, b) => a.id.localeCompare(b.id));
     cachedItems = items;
