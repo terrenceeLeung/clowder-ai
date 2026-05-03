@@ -84,6 +84,19 @@ created: 2026-05-01
 - [x] AC-B4: 输入 `/btw F` 触发 feature ID 自动补全下拉
 - [x] AC-B5: btw 模式下输入框有视觉区分（紫色边框）
 
+### Phase C: 超时放宽 + 取消按钮 📋
+
+**目标**：btw 不再限制 30s，允许复杂查询；用户可主动中断
+
+**改动**：
+1. Backend: `SIDE_QUESTION_TIMEOUT_MS` 30s → 300s
+2. Frontend: BtwCard loading 态显示「停止」按钮，点击 abort fetch
+
+### Phase C AC
+- [ ] AC-C1: btw 超时从 30s 放宽到 300s
+- [ ] AC-C2: BtwCard loading 态显示「停止」按钮
+- [ ] AC-C3: 点击停止后 fetch 中断，显示已收集的部分回答或提示
+
 ## Dependencies
 
 - **Related**: F108（Side-Dispatch Concurrent Invocation）— 概念相关但实现独立，btw 比 F108 轻量得多
@@ -106,6 +119,7 @@ created: 2026-05-01
 | KD-5 | 上下文全量注入，不截断 | CC 给 compact boundary 后全量消息；我们 5条/1000token 截太狠，影响回答质量 | 2026-05-02 |
 | KD-6 | 1 次 agent loop / one-shot / 不支持追问 | CC 也是 one-shot；需追问说明问题不适合 btw | 2026-05-02 |
 | KD-7 | Phase B 卡片 header 猫名动态渲染 | btw 目标猫由 thread primary cat 决定，header 不应硬编码 | 2026-05-03 |
+| KD-8 | 30s → 300s（铲屎官拍板，覆盖 GPT-5.4 建议的 90s） | 铲屎官认为 30s 太短；配合取消按钮，用户自行决定等多久 | 2026-05-03 |
 
 ## Timeline
 
