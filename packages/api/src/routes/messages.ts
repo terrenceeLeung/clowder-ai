@@ -250,11 +250,11 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
     }
 
     activeSideQuestions.add(sideQuestionKey);
-    request.raw.on('close', () => {
-      activeSideQuestions.delete(sideQuestionKey);
-    });
+    const ac = new AbortController();
+    const onDisconnect = () => { ac.abort(); activeSideQuestions.delete(sideQuestionKey); };
+    reply.raw.on('close', onDisconnect);
     try {
-      return await router.answerSideQuestion(userId, threadId, bodyResult.data.question);
+      return await router.answerSideQuestion(userId, threadId, bodyResult.data.question, { signal: ac.signal });
     } catch (err) {
       if (err instanceof SideQuestionToolUseError) {
         reply.status(409);
@@ -264,6 +264,7 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
       reply.status(500);
       return { error: err instanceof Error ? err.message : 'Side question failed' };
     } finally {
+      reply.raw.off('close', onDisconnect);
       activeSideQuestions.delete(sideQuestionKey);
     }
   });
