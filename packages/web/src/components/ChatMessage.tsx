@@ -1,6 +1,7 @@
 'use client';
 
 import { type CatData, formatCatName } from '@/hooks/useCatData';
+import { cancelBtw } from '@/hooks/useChatCommands';
 import { useCoCreatorConfig } from '@/hooks/useCoCreatorConfig';
 import { useTts } from '@/hooks/useTts';
 import { hexToRgba, tintedLight } from '@/lib/color-utils';
@@ -166,7 +167,11 @@ export function ChatMessage({ message, getCatById }: ChatMessageProps) {
     if (message.variant === 'btw' && message.btw) {
       return (
         <div data-message-id={message.id} className="flex justify-end mb-3 px-4">
-          <BtwCard data={message.btw} onDismiss={() => useChatStore.getState().removeMessage(message.id)} />
+          <BtwCard
+            data={message.btw}
+            onDismiss={() => useChatStore.getState().removeMessage(message.id)}
+            onCancel={() => cancelBtw(message.id)}
+          />
         </div>
       );
     }

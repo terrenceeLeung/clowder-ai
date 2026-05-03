@@ -7,6 +7,7 @@ import type { BtwData } from '@/stores/chat-types';
 interface BtwCardProps {
   data: BtwData;
   onDismiss?: () => void;
+  onCancel?: () => void;
 }
 
 const BTW_HISTORY_KEY = 'cat-cafe-btw-history';
@@ -34,17 +35,18 @@ export function getBtwHistory(): Array<BtwData & { savedAt: number }> {
   }
 }
 
-export function BtwCard({ data, onDismiss }: BtwCardProps) {
+export function BtwCard({ data, onDismiss, onCancel }: BtwCardProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<Array<BtwData & { savedAt: number }>>([]);
   const savedRef = useRef(false);
 
+  const isLoading = !data.answer;
   const catName = data.catDisplayName ?? data.catId ?? '猫猫';
   const durationLabel = data.durationMs ? `${(data.durationMs / 1000).toFixed(1)}s` : null;
   const toolsLabel = data.toolsUsed?.length ? `使用了 ${data.toolsUsed.join(', ')}` : null;
 
   useEffect(() => {
-    if (data.answer && !savedRef.current) {
+    if (data.answer && !savedRef.current && !data.answer.startsWith('⏹')) {
       savedRef.current = true;
       saveBtwToHistory(data);
     }
@@ -114,9 +116,25 @@ export function BtwCard({ data, onDismiss }: BtwCardProps) {
         Q: {data.question}
       </div>
 
-      {/* Answer (Markdown) */}
+      {/* Answer / Loading */}
       <div className="px-3 py-2 text-sm text-cafe-primary dark:text-gray-200 [&_.markdown-content]:text-sm [&_pre]:bg-cafe-surface-elevated [&_pre]:rounded [&_pre]:p-2 [&_pre]:text-xs [&_code]:font-mono">
-        <MarkdownContent content={data.answer} disableCommandPrefix />
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-1.5 h-4 bg-purple-400 animate-pulse rounded-full opacity-60" />
+            <span className="text-cafe-muted text-xs">正在查询…</span>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="ml-auto text-xs px-2 py-0.5 rounded border border-purple-300 dark:border-purple-600 text-purple-600 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
+              >
+                停止
+              </button>
+            )}
+          </div>
+        ) : (
+          <MarkdownContent content={data.answer} disableCommandPrefix />
+        )}
       </div>
 
       {/* Footer */}

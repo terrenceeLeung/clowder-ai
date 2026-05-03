@@ -63,7 +63,7 @@ import { routeSerial } from '../routing/route-serial.js';
 const log = createModuleLogger('agent-router');
 const routeTracer = trace.getTracer('cat-cafe-api', '0.1.0');
 
-const SIDE_QUESTION_TIMEOUT_MS = 30_000;
+const SIDE_QUESTION_TIMEOUT_MS = 300_000;
 const SIDE_QUESTION_CONTEXT_LIMIT = 60;
 const SIDE_QUESTION_CONTEXT_OPTIONS = {
   maxMessages: 30,
@@ -1009,11 +1009,11 @@ export class AgentRouter {
     }
 
     if (race === 'timeout') {
-      controller.abort('Side question timeout (30s)');
+      controller.abort('Side question timeout (300s)');
       return {
         catId,
         catDisplayName: getCatDisplayLabel(catId),
-        answer: answer.trim() || '⏱ 旁路问题超时（30s），这个问题不太适合 btw，请走正常消息深入讨论。',
+        answer: answer.trim() || '⏱ 旁路问题超时（300s），请走正常消息深入讨论。',
         contextMessageCount: assembled.messageCount,
         contextEstimatedTokens: assembled.estimatedTokens,
         toolUseBlocked,
