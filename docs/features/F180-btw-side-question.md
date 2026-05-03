@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # F180: BTW Side Question — Thread 内轻量旁路提问
 
-> **Status**: in-progress | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1
+> **Status**: done | **Owner**: 布偶猫 (Opus 4.6) | **Priority**: P1 | **Completed**: 2026-05-04
 
 ## Why
 
@@ -84,7 +84,7 @@ created: 2026-05-01
 - [x] AC-B4: 输入 `/btw F` 触发 feature ID 自动补全下拉
 - [x] AC-B5: btw 模式下输入框有视觉区分（紫色边框）
 
-### Phase C: 超时放宽 + 取消按钮 📋
+### Phase C: 超时放宽 + 取消按钮 ✅
 
 **目标**：btw 不再限制 30s，允许复杂查询；用户可主动中断
 
@@ -93,9 +93,9 @@ created: 2026-05-01
 2. Frontend: BtwCard loading 态显示「停止」按钮，点击 abort fetch
 
 ### Phase C AC
-- [ ] AC-C1: btw 超时从 30s 放宽到 300s
-- [ ] AC-C2: BtwCard loading 态显示「停止」按钮
-- [ ] AC-C3: 点击停止后 fetch 中断，显示已收集的部分回答或提示
+- [x] AC-C1: btw 超时从 30s 放宽到 300s
+- [x] AC-C2: BtwCard loading 态显示「停止」按钮
+- [x] AC-C3: 点击停止后 fetch 中断，显示已收集的部分回答或提示
 
 ## Dependencies
 
@@ -106,7 +106,7 @@ created: 2026-05-01
 | 风险 | 缓解 |
 |------|------|
 | side agent 的 token usage 混入主线计费 | 独立计费路径，btw 调用标记 `ephemeral: true` |
-| 只读工具调用延长响应时间 | 30s timeout 硬上限；一般 1-2 次工具调用在 10s 内完成 |
+| 只读工具调用延长响应时间 | 300s timeout + 用户可随时取消（Phase C）；一般 1-2 次工具调用在 10s 内完成 |
 
 ## Key Decisions
 
@@ -130,6 +130,7 @@ created: 2026-05-01
 | 2026-05-02 | Phase A merged (PR #14) — 6 轮 review，含 agent-key 封堵、timer 清理、nesting guard scoping |
 | 2026-05-03 | Phase B 设计稿完成（暹罗猫 Pencil mockup），布偶猫 review 通过 |
 | 2026-05-03 | Phase B merged (PR #18) — BtwCard + markdown + history + autocomplete + purple border |
+| 2026-05-04 | Phase C merged (PR #20) — timeout 30s→300s + cancel button + server-side abort propagation |
 
 ## Links
 
