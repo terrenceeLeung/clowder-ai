@@ -326,6 +326,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-01 | 铲屎官接手 + 完备性审查（opus+gpt55）：OQ-10/11/12 关闭，新增 KD-17/18 + AC-013/014，embedding 可选 |
 | 2026-05-02 | Phase 0 实现完成 + 合入 main（PR #9）：13/14 AC ✅，AC-011 fixture 独立任务 |
 | 2026-05-03 | Phase 1 合入 main（PR #13）：8/8 AC ✅，Knowledge Hub 全功能上线（缅因猫 6 轮 review + 云端 review 2 轮） |
+| 2026-05-03 | Design polish 合入 main（PR #17）：Hub 侧边栏导航集成 + 全组件设计 token 对齐（cafe-*/--conn-*），暹罗猫 Pencil 设计 + 缅因猫 code review |
 
 ## Review Gate
 
