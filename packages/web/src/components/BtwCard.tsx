@@ -46,7 +46,7 @@ export function BtwCard({ data, onDismiss, onCancel }: BtwCardProps) {
   const toolsLabel = data.toolsUsed?.length ? `使用了 ${data.toolsUsed.join(', ')}` : null;
 
   useEffect(() => {
-    if (data.answer && !savedRef.current) {
+    if (data.answer && !savedRef.current && !data.answer.startsWith('⏹')) {
       savedRef.current = true;
       saveBtwToHistory(data);
     }
