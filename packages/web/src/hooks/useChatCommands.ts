@@ -11,7 +11,7 @@ const activeBtwControllers = new Map<string, AbortController>();
 export function cancelBtw(messageId: string): void {
   const controller = activeBtwControllers.get(messageId);
   if (controller) {
-    controller.abort('user-cancelled');
+    controller.abort();
     activeBtwControllers.delete(messageId);
   }
 }
