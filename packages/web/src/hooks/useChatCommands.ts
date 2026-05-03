@@ -6,6 +6,16 @@ import { useChatStore } from '@/stores/chatStore';
 import { apiFetch } from '@/utils/api-client';
 import { getUserId } from '@/utils/userId';
 
+const activeBtwControllers = new Map<string, AbortController>();
+
+export function cancelBtw(messageId: string): void {
+  const controller = activeBtwControllers.get(messageId);
+  if (controller) {
+    controller.abort('user-cancelled');
+    activeBtwControllers.delete(messageId);
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ConfigSnapshot = any;
 
@@ -269,11 +279,14 @@ export function useChatCommands() {
           timestamp: Date.now(),
         });
 
+        const abortController = new AbortController();
+        activeBtwControllers.set(messageId, abortController);
         try {
           const res = await apiFetch(`/api/threads/${encodeURIComponent(threadId)}/side-question`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question }),
+            signal: abortController.signal,
           });
           const data = (await res.json().catch(() => null)) as {
             answer?: string;
@@ -299,11 +312,21 @@ export function useChatCommands() {
             },
           });
         } catch (err) {
-          patchLocalMessage(threadId, messageId, {
-            content: `[btw] 旁路问题失败: ${err instanceof Error ? err.message : 'Unknown'}`,
-            variant: 'error',
-            btw: undefined,
-          });
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            patchLocalMessage(threadId, messageId, {
+              content: '已停止',
+              variant: 'btw',
+              btw: { question, answer: '⏹ 已停止旁路问题。', durationMs: Date.now() - startTime },
+            });
+          } else {
+            patchLocalMessage(threadId, messageId, {
+              content: `[btw] 旁路问题失败: ${err instanceof Error ? err.message : 'Unknown'}`,
+              variant: 'error',
+              btw: undefined,
+            });
+          }
+        } finally {
+          activeBtwControllers.delete(messageId);
         }
         return true;
       }

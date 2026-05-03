@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useChatCommands } from '../useChatCommands';
+import { cancelBtw, useChatCommands } from '../useChatCommands';
 
 const mocks = vi.hoisted(() => {
   const mockAddMessage = vi.fn();
@@ -127,11 +127,15 @@ describe('useChatCommands /btw', () => {
     });
 
     expect(handled).toBe(true);
-    expect(mocks.mockApiFetch).toHaveBeenCalledWith('/api/threads/thread-1/side-question', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: 'F129 是什么？' }),
-    });
+    expect(mocks.mockApiFetch).toHaveBeenCalledWith(
+      '/api/threads/thread-1/side-question',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: 'F129 是什么？' }),
+        signal: expect.any(AbortSignal),
+      }),
+    );
     expect(mocks.mockAddMessage).toHaveBeenCalledTimes(1);
     expect(mocks.mockAddMessage.mock.calls[0][0]).toMatchObject({
       type: 'system',
@@ -165,5 +169,33 @@ describe('useChatCommands /btw', () => {
       variant: 'info',
     });
     expect(mocks.mockAddMessage.mock.calls[0][0].content).toContain('用法: /btw <旁路问题>');
+  });
+
+  it('cancelBtw aborts an in-flight btw request', async () => {
+    const processCommand = await setupProcessCommand(root);
+    mocks.mockApiFetch.mockImplementationOnce((_url: string, opts: { signal?: AbortSignal }) => {
+      return new Promise((_resolve, reject) => {
+        if (opts.signal) {
+          opts.signal.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+          });
+        }
+      });
+    });
+
+    let handlePromise: Promise<boolean>;
+    await act(async () => {
+      handlePromise = processCommand('/btw slow question');
+    });
+
+    const messageId = mocks.mockAddMessage.mock.calls[0][0].id;
+
+    await act(async () => {
+      cancelBtw(messageId);
+      await handlePromise!;
+    });
+
+    const patchCall = mocks.mockPatchMessage.mock.calls[0];
+    expect(patchCall[1].btw.answer).toContain('已停止');
   });
 });
