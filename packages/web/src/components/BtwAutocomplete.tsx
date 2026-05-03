@@ -37,8 +37,10 @@ async function fetchFeatureItems(): Promise<Array<{ id: string; title: string }>
   }
 }
 
-export const BtwAutocomplete = forwardRef<BtwAutocompleteHandle, BtwAutocompleteProps>(
-  function BtwAutocomplete({ filter, onSelect, selectedIdx }, ref) {
+export const BtwAutocomplete = forwardRef<BtwAutocompleteHandle, BtwAutocompleteProps>(function BtwAutocomplete(
+  { filter, onSelect, selectedIdx },
+  ref,
+) {
   const [items, setItems] = useState<Array<{ id: string; title: string }>>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -53,13 +55,17 @@ export const BtwAutocomplete = forwardRef<BtwAutocompleteHandle, BtwAutocomplete
 
   const visible = filtered.slice(0, 8);
 
-  useImperativeHandle(ref, () => ({
-    filteredCount: visible.length,
-    selectByIndex: (idx: number) => {
-      const item = visible[idx];
-      if (item) onSelect(item.id, item.title);
-    },
-  }), [visible, onSelect]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      filteredCount: visible.length,
+      selectByIndex: (idx: number) => {
+        const item = visible[idx];
+        if (item) onSelect(item.id, item.title);
+      },
+    }),
+    [visible, onSelect],
+  );
 
   useEffect(() => {
     const el = listRef.current?.children[selectedIdx] as HTMLElement | undefined;
