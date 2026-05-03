@@ -60,7 +60,7 @@ created: 2026-05-01
 - [x] AC-A5: btw 内再输入 `/btw` 被拒绝（深度=1）
 - [x] AC-A6: btw 请求超时 30s 后优雅降级，不影响主线
 
-### Phase B: Web UX 优化（设计完成，待实现）
+### Phase B: Web UX 优化 ✅
 
 **目标**：优化 btw 在 Web Hub 上的交互体验
 
@@ -78,11 +78,11 @@ created: 2026-05-01
 **不做**：IM 适配。IM 无 ephemeral message 能力，强行适配是降级体验，不如不做。
 
 ### Phase B AC
-- [ ] AC-B1: BtwCard 独立组件渲染，视觉区分于主线消息
-- [ ] AC-B2: btw 回答支持 markdown（粗体/列表/代码块）
-- [ ] AC-B3: History 按钮可查看本地 btw 历史（sessionStorage）
-- [ ] AC-B4: 输入 `/btw F` 触发 feature ID 自动补全下拉
-- [ ] AC-B5: btw 模式下输入框有视觉区分（紫色边框）
+- [x] AC-B1: BtwCard 独立组件渲染，视觉区分于主线消息
+- [x] AC-B2: btw 回答支持 markdown（粗体/列表/代码块）
+- [x] AC-B3: History 按钮可查看本地 btw 历史（sessionStorage）
+- [x] AC-B4: 输入 `/btw F` 触发 feature ID 自动补全下拉
+- [x] AC-B5: btw 模式下输入框有视觉区分（紫色边框）
 
 ## Dependencies
 
@@ -115,6 +115,7 @@ created: 2026-05-01
 | 2026-05-02 | CC 源码对比 → 修订 KD-3/5/6（工具策略 + 上下文 + 轮次） |
 | 2026-05-02 | Phase A merged (PR #14) — 6 轮 review，含 agent-key 封堵、timer 清理、nesting guard scoping |
 | 2026-05-03 | Phase B 设计稿完成（暹罗猫 Pencil mockup），布偶猫 review 通过 |
+| 2026-05-03 | Phase B merged (PR #18) — BtwCard + markdown + history + autocomplete + purple border |
 
 ## Links
 
