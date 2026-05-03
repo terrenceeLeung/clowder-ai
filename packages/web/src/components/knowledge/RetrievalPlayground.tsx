@@ -32,21 +32,26 @@ export default function RetrievalPlayground() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search knowledge chunks..."
-          className="flex-1 rounded-md border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+          className="flex-1 rounded-md border border-cafe-border bg-cafe-surface px-3 py-2 text-sm text-cafe"
         />
         <button
           type="submit"
           disabled={loading || !query.trim()}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-md bg-cafe-accent px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
         >
           Search
         </button>
       </form>
 
-      {loading && <p className="text-sm text-gray-500">Searching...</p>}
+      {loading && (
+        <div className="flex items-center gap-2 py-4">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-cafe-border/30 border-t-cafe-accent" />
+          <span className="text-sm text-cafe-muted">Searching...</span>
+        </div>
+      )}
 
       {!loading && searchResults.length === 0 && query && (
-        <p className="py-4 text-center text-sm text-gray-500">No results found.</p>
+        <p className="py-4 text-center text-sm text-cafe-muted">No results found.</p>
       )}
 
       <div className="space-y-2">
@@ -76,22 +81,18 @@ function SearchResultCard({
   onSave: () => void;
 }) {
   return (
-    <div className="rounded-lg border p-3 dark:border-gray-700">
+    <div className="rounded-xl border border-cafe-border p-3">
       {r.headingPath && r.headingPath.length > 0 && (
-        <p className="mb-1 text-xs text-gray-400">{r.headingPath.join(' > ')}</p>
+        <p className="mb-1 text-xs text-cafe-muted">{r.headingPath.join(' > ')}</p>
       )}
-      <p className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">{r.content}</p>
+      <p className="whitespace-pre-wrap text-sm text-cafe">{r.content}</p>
       <div className="mt-2 flex items-center gap-2">
         <DocKindBadge kind={r.docKind} />
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-cafe-muted">
           doc: {r.docAnchor} &middot; chunk #{r.chunkIndex}
         </span>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="ml-auto text-xs text-blue-600 hover:underline dark:text-blue-400"
-        >
-          Edit
+        <button type="button" onClick={onEdit} className="ml-auto text-xs text-cafe-accent hover:underline">
+          Edit Metadata
         </button>
       </div>
       {isEditing && (

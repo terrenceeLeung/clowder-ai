@@ -28,6 +28,7 @@ import { HubMemoryTab } from './HubMemoryTab';
 import { HubObservabilityTab } from './HubObservabilityTab';
 import { HubRoutingPolicyTab } from './HubRoutingPolicyTab';
 import { HubToolUsageTab } from './HubToolUsageTab';
+import KnowledgeHub from './knowledge/KnowledgeHub';
 import { MarketplacePanel } from './marketplace/marketplace-panel';
 import { PushSettingsPanel } from './PushSettingsPanel';
 import { useConfirm } from './useConfirm';
@@ -326,6 +327,7 @@ export function CatCafeHub() {
             {tab === 'governance' && <HubGovernanceTab />}
             {tab === 'health' && <BrakeSettingsPanel />}
             {tab === 'memory' && <HubMemoryTab />}
+            {tab === 'knowledge' && <KnowledgeHub />}
             {tab === 'rescue' && <HubClaudeRescueSection />}
             {tab === 'leaderboard' && <HubLeaderboardTab />}
             {tab === 'marketplace' && <MarketplacePanel />}

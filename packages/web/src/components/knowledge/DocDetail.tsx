@@ -49,19 +49,19 @@ export default function DocDetail({ anchor, onBack }: DocDetailProps) {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-sm text-gray-500">Loading...</p>;
-  if (!doc) return <p className="text-sm text-red-500">Document not found.</p>;
+  if (loading) return <p className="text-sm text-cafe-muted">Loading...</p>;
+  if (!doc) return <p className="text-sm text-[var(--conn-red-text)]">Document not found.</p>;
 
   return (
     <div className="space-y-4">
-      <button type="button" onClick={onBack} className="text-sm text-blue-600 hover:underline">
+      <button type="button" onClick={onBack} className="text-sm text-cafe-accent hover:underline">
         &larr; Back to list
       </button>
 
-      <div className="rounded-lg border p-4 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{doc.title}</h2>
-        {doc.summary && <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{doc.summary}</p>}
-        <div className="mt-2 flex gap-3 text-xs text-gray-500">
+      <div className="rounded-xl border border-cafe-border p-4">
+        <h2 className="text-lg font-semibold text-cafe">{doc.title}</h2>
+        {doc.summary && <p className="mt-1 text-sm text-cafe-secondary">{doc.summary}</p>}
+        <div className="mt-2 flex gap-3 text-xs text-cafe-muted">
           <span>
             Governance: <strong>{doc.governanceStatus}</strong>
           </span>
@@ -70,7 +70,7 @@ export default function DocDetail({ anchor, onBack }: DocDetailProps) {
         </div>
       </div>
 
-      <h3 className="font-medium text-gray-900 dark:text-gray-100">Chunks ({passages.length})</h3>
+      <h3 className="font-medium text-cafe">Chunks ({passages.length})</h3>
       <div className="space-y-2">
         {passages.map((p) => (
           <ChunkViewer key={p.passageId} passage={p} />

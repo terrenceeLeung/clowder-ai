@@ -16,17 +16,25 @@ const TABS = [
 ] as const;
 
 const GOV_BADGE: Record<string, { bg: string; text: string }> = {
-  active: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-300' },
-  approved: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-300' },
-  needs_review: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-800 dark:text-amber-300' },
-  stale: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-500' },
-  retired: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-500' },
+  ingested: { bg: 'bg-[var(--conn-blue-bg)]', text: 'text-[var(--conn-blue-text)]' },
+  normalized: { bg: 'bg-[var(--conn-blue-bg)]', text: 'text-[var(--conn-blue-text)]' },
+  needs_review: { bg: 'bg-[var(--conn-amber-bg)]', text: 'text-[var(--conn-amber-text)]' },
+  approved: { bg: 'bg-[var(--conn-green-bg)]', text: 'text-[var(--conn-green-text)]' },
+  active: { bg: 'bg-[var(--conn-green-bg)]', text: 'text-[var(--conn-green-text)]' },
+  stale: { bg: 'bg-[var(--conn-gray-bg)]', text: 'text-[var(--conn-gray-text)]' },
+  retired: { bg: 'bg-[var(--conn-gray-bg)]', text: 'text-[var(--conn-gray-text)]' },
+  rejected: { bg: 'bg-[var(--conn-red-bg)]', text: 'text-[var(--conn-red-text)]' },
+  failed: { bg: 'bg-[var(--conn-red-bg)]', text: 'text-[var(--conn-red-text)]' },
 };
 
 function GovBadge({ status }: { status: string }) {
   const style = GOV_BADGE[status] ?? GOV_BADGE.stale;
   return (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>{status}</span>
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${style.bg} ${style.text}`}
+    >
+      {status.replace('_', ' ')}
+    </span>
   );
 }
 
@@ -35,15 +43,19 @@ function DocRow({ doc, onClick }: { doc: KnowledgeDoc; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
+      className="flex w-full items-center justify-between rounded-xl border border-cafe-border/30 bg-cafe-surface px-4 py-3 text-left transition-all hover:bg-cafe-surface-elevated hover:shadow-sm"
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-gray-900 dark:text-gray-100">{doc.title || doc.anchor}</p>
-        {doc.summary && <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">{doc.summary}</p>}
+        <div className="flex items-center gap-2">
+          <p className="truncate font-semibold text-cafe">{doc.title || doc.anchor}</p>
+          <GovBadge status={doc.governanceStatus} />
+        </div>
+        {doc.summary && <p className="mt-0.5 truncate text-xs text-cafe-secondary">{doc.summary}</p>}
       </div>
-      <div className="ml-4 flex shrink-0 items-center gap-2">
-        <GovBadge status={doc.governanceStatus} />
-        <span className="text-xs text-gray-400">{new Date(doc.updatedAt).toLocaleDateString()}</span>
+      <div className="ml-4 flex shrink-0 items-center gap-3">
+        <span className="text-[10px] font-medium uppercase tracking-tight text-cafe-muted">
+          {new Date(doc.updatedAt).toLocaleDateString()}
+        </span>
       </div>
     </button>
   );
@@ -59,22 +71,21 @@ export default function KnowledgeHub() {
   }, [fetchDocs, fetchPacks]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <h1 className="mb-4 text-2xl font-bold text-gray-900 dark:text-gray-100">Knowledge Hub</h1>
-
-      <div className="mb-6 flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
-        {TABS.map((tab) => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 border-b border-cafe-border pb-2">
+        {TABS.map((t) => (
           <button
-            key={tab.key}
+            key={t.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => {
+              setActiveTab(t.key);
+              setSelectedAnchor(null);
+            }}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+              activeTab === t.key ? 'bg-cafe-surface-elevated text-cafe shadow-sm' : 'text-cafe-muted hover:text-cafe'
             }`}
           >
-            {tab.label}
+            {t.label}
           </button>
         ))}
       </div>
@@ -85,9 +96,9 @@ export default function KnowledgeHub() {
 
       {activeTab === 'browse' && !selectedAnchor && (
         <div className="space-y-2">
-          {loading && <p className="text-sm text-gray-500">Loading...</p>}
+          {loading && <p className="text-sm text-cafe-muted">Loading...</p>}
           {!loading && docs.length === 0 && (
-            <p className="py-8 text-center text-gray-500">No documents imported yet.</p>
+            <p className="py-8 text-center text-cafe-muted">No documents imported yet.</p>
           )}
           {docs.map((doc) => (
             <DocRow key={doc.anchor} doc={doc} onClick={() => setSelectedAnchor(doc.anchor)} />
