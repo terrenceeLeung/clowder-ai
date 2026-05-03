@@ -54,8 +54,9 @@ export const HUB_GROUPS: HubGroup[] = [
     label: '监控与治理',
     icon: 'activity',
     color: '#5B9BD5',
-    preview: '可观测 · 治理 · 健康 · 记忆 · 救援',
+    preview: '领域知识 · 可观测 · 治理 · 健康 · 记忆',
     tabs: [
+      { id: 'knowledge', label: '领域知识', icon: 'book-open' },
       { id: 'observability', label: '可观测性', icon: 'bar-chart' },
       { id: 'governance', label: '治理看板', icon: 'shield' },
       { id: 'health', label: '健康', icon: 'heart-pulse' },

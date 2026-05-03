@@ -47,6 +47,7 @@ const ICON_PATHS: Record<string, string> = {
   target:
     'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
   'bar-chart': 'M12 20V10M18 20V4M6 20v-4',
+  'book-open': 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
   notebook: 'M2 6h4M2 10h4M2 14h4M2 18h4M6 2v20M20 2H6v20h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z',
   podcast: 'M12 18a6 6 0 0 0 6-6V6a6 6 0 0 0-12 0v6a6 6 0 0 0 6 6zM12 18v4M8 22h8',
   camera:

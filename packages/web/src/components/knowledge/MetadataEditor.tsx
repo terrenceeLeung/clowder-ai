@@ -47,25 +47,25 @@ export default function MetadataEditor({ anchor, initialKeywords, initialDocKind
   }, [anchor, keywords, docKind, onSave]);
 
   return (
-    <div className="space-y-3 rounded-lg border bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-800/50">
+    <div className="space-y-3 rounded-lg border border-cafe-border bg-cafe-surface-elevated p-3">
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Keywords</label>
+        <label className="mb-1 block text-xs font-medium text-cafe-secondary">Keywords</label>
         <input
           type="text"
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
           placeholder="comma-separated keywords"
-          className="w-full rounded border px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+          className="w-full rounded border border-cafe-border bg-cafe-surface px-2 py-1.5 text-sm text-cafe"
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">Doc Kind</label>
+        <label className="mb-1 block text-xs font-medium text-cafe-secondary">Doc Kind</label>
         <select
           value={docKind}
           onChange={(e) => setDocKind(e.target.value)}
-          className="w-full rounded border px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+          className="w-full rounded border border-cafe-border bg-cafe-surface px-2 py-1.5 text-sm text-cafe"
         >
-          <option value="">— unset —</option>
+          <option value="">&mdash; unset &mdash;</option>
           {DOC_KINDS.map((k) => (
             <option key={k} value={k}>
               {k}
@@ -77,7 +77,7 @@ export default function MetadataEditor({ anchor, initialKeywords, initialDocKind
         type="button"
         disabled={saving}
         onClick={save}
-        className="rounded bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded bg-cafe-accent px-3 py-1.5 text-xs text-white hover:opacity-90 disabled:opacity-50"
       >
         {saving ? 'Saving...' : 'Save'}
       </button>

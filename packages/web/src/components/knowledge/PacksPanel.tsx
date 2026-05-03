@@ -35,18 +35,18 @@ export default function PacksPanel() {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="New pack name..."
-          className="flex-1 rounded-md border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+          className="flex-1 rounded-md border border-cafe-border bg-cafe-surface px-3 py-2 text-sm text-cafe"
         />
         <button
           type="submit"
           disabled={creating || !newName.trim()}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-md bg-cafe-accent px-4 py-2 text-sm text-white hover:opacity-90 disabled:opacity-50"
         >
           Create
         </button>
       </form>
 
-      {packs.length === 0 && <p className="py-4 text-center text-sm text-gray-500">No domain packs yet.</p>}
+      {packs.length === 0 && <p className="py-4 text-center text-sm text-cafe-muted">No domain packs yet.</p>}
 
       <div className="space-y-2">
         {packs.map((pack) => (
@@ -89,39 +89,39 @@ function PackCard({ pack, onSplit }: { pack: DomainPack; onSplit: () => void }) 
   }, [pack.packId, clusters, onSplit]);
 
   return (
-    <div className="rounded-lg border px-4 py-3 dark:border-gray-700">
+    <div className="rounded-xl border border-cafe-border px-4 py-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-medium text-gray-900 dark:text-gray-100">{pack.name}</p>
-          {pack.description && <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{pack.description}</p>}
+          <p className="font-medium text-cafe">{pack.name}</p>
+          {pack.description && <p className="mt-0.5 text-sm text-cafe-secondary">{pack.description}</p>}
         </div>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
+        <div className="flex items-center gap-3 text-sm text-cafe-muted">
           <span>{pack.docCount} docs</span>
-          <span className="text-xs text-gray-400">{new Date(pack.createdAt).toLocaleDateString()}</span>
+          <span className="text-xs">{new Date(pack.createdAt).toLocaleDateString()}</span>
           <button
             type="button"
             onClick={analyze}
             disabled={loading}
-            className="text-xs text-blue-600 hover:underline disabled:opacity-50 dark:text-blue-400"
+            className="rounded-md bg-cafe-accent px-3 py-1 text-xs text-white hover:opacity-90 disabled:opacity-50"
           >
             {loading ? 'Analyzing...' : 'Graduate'}
           </button>
         </div>
       </div>
       {clusters && (
-        <div className="mt-3 space-y-2 border-t pt-3 dark:border-gray-700">
-          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Suggested splits:</p>
+        <div className="mt-3 space-y-2 border-t border-cafe-border pt-3">
+          <p className="text-xs font-medium text-cafe-secondary">Suggested splits:</p>
           {clusters.map((c) => (
             <div key={c.suggestedName} className="flex items-center justify-between text-sm">
-              <span className="text-gray-800 dark:text-gray-200">{c.suggestedName}</span>
-              <span className="text-xs text-gray-400">{c.chunkCount} chunks</span>
+              <span className="text-cafe">{c.suggestedName}</span>
+              <span className="text-xs text-cafe-muted">{c.chunkCount} chunks</span>
             </div>
           ))}
           <div className="flex gap-2 pt-1">
             <button
               type="button"
               onClick={() => setClusters(null)}
-              className="rounded border px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400"
+              className="rounded border border-cafe-border px-3 py-1 text-xs text-cafe-secondary hover:bg-cafe-surface-elevated"
             >
               Cancel
             </button>
@@ -129,7 +129,7 @@ function PackCard({ pack, onSplit }: { pack: DomainPack; onSplit: () => void }) 
               type="button"
               onClick={confirmSplit}
               disabled={confirming}
-              className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded bg-cafe-accent px-3 py-1 text-xs text-white hover:opacity-90 disabled:opacity-50"
             >
               {confirming ? 'Splitting...' : 'Confirm Split'}
             </button>
