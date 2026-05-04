@@ -9,7 +9,7 @@ community_issue: 569
 
 # F179: Domain Knowledge Governance — 领域知识治理
 
-> **Status**: in-progress | **Owner**: Ragdoll | **Priority**: P1
+> **Status**: in-progress (Phase 1.5) | **Owner**: Ragdoll | **Priority**: P1
 
 ## Vision
 
@@ -179,7 +179,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - [x] AC-08: PII/安全边界在开工前拍板（前置条件）
 - [x] AC-09: Normalizer 输出带 normalizer_version / model_id，支持可复现性
 - [x] AC-010: 导入知识携带 authority / activation / provenance / extraction_confidence 治理元数据
-- [ ] AC-011: Fixture demo Pack 端到端验收——检索结果包含：命中 chunk 内容、父文档元数据（title/doc_kind/authority/activation）、原文定位（heading_path/char_start/char_end）、治理状态。含固定 query set 报告 Recall 和 Precision@5 baseline（不设硬阈值，作为 Phase 1 优化基线）。Fixture 使用虚构技术领域文档集（保证不在 LLM 训练数据中）
+- [ ] AC-011: Fixture demo Pack 端到端验收——检索结果包含：命中 chunk 内容、父文档元数据（title/doc_kind/authority/activation）、原文定位（heading_path/char_start/char_end）、治理状态。含固定 query set 报告 Recall 和 Precision@5 baseline（不设硬阈值，作为 Phase 1 优化基线）。Fixture 使用虚构技术领域文档集（保证不在 LLM 训练数据中）。**注：测试代码就位（9/9 通过）但存在盲区——governance 断言把 needs_review 算通过（e2e-meowgrid.test.js:143），Phase 1.5 AC-155 修正**
 - [x] AC-012: Domain Pack CRUD（list/create/rename）+ 首次导入自动创建 default Domain Pack
 - [x] AC-013: 导入事务原子性——raw file、evidence_docs row、evidence_passages rows、embedding rows 要么全部成功，要么可恢复（不产生半落库状态）
 - [x] AC-014: evidence_passages schema 扩展不破坏现有 thread/session passage 的写入、检索和 hydrate 行为（兼容迁移）
@@ -206,6 +206,35 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - [x] AC-16: Knowledge Texture：不同 doc_kind 有视觉区分（底纹/色彩标识）
 - [x] AC-17: Import Summary 视图：入库前展示 chunk 总数、需确认数、已就绪数
 - [x] AC-18: Retrieval Playground 支持就地调优（Edit Metadata / Add Keyword），召回不对时当场补关键词
+
+### Phase 1.5: Governance Lifecycle — 治理闭环修复
+
+**背景：** Phase 0/1 CVO 验收时发现治理闭环断裂（2026-05-04）。后端 GovernanceStateMachine 定义了 9 种状态转换，但只有 `ingested → normalized → needs_review/approved` 这条链路有代码。用户无法在 UI 执行审核操作，检索不区分治理状态，`approved → active` 自动转换缺失。gpt52 Playwright 实测确认。
+
+**范围：**
+- 治理转换 API route（approve/reject/retire）
+- DocDetail 添加治理操作按钮（按当前状态显示可用操作）
+- `approved → active` 自动链式转换（spec 定义为"系统"触发）
+- 检索 governance 门控修正：只返回 `active` 文档
+- AC-011 e2e 测试修正：验证完整治理链路
+
+**不做：** stale 主动扫描、对话式导入、多格式支持（Phase 2 / 后续迭代）
+
+**UI/UX 设计 (暹罗猫 🐾)：**
+- **治理丝带 (Governance Ribbon)**：DocDetail 顶部新增色块条，显式强化当前状态及可用操作。
+    - `NEEDS REVIEW`: 琥珀色背景，提供 [Approve] (绿色) / [Reject] (红色) 按钮。
+    - `ACTIVE`: 绿色背景，提供 [Retire] (灰色) 按钮。
+    - `REJECTED`: 红色背景，提供 [Restore] (蓝色) / [Delete Permanently] (红色) 按钮。
+- **浏览列表增强 (Browse Enhancement)**：
+    - 新增 **治理概览卡片 (Governance Overview)**：展示各状态文档统计。
+    - 列表项 (DocRow) 样式对齐：使用语义化边框和更清晰的 Badge 样式。
+
+**验收标准：**
+- [ ] AC-151: `PATCH /api/knowledge/docs/:anchor/governance` 端点接受目标状态，经 GovernanceStateMachine 验证转换合法性，返回更新后状态
+- [ ] AC-152: DocDetail UI 按当前治理状态显示操作按钮（needs_review → Approve/Reject，active → Retire），操作后状态即时刷新
+- [ ] AC-153: `approved → active` 在用户审批或高置信自动审批后自动触发——用户点 Approve 后文档直接到达 `active`，导入时高置信文档也自动到达 `active`
+- [ ] AC-154: Knowledge search 只返回 `governance_status = 'active'` 的文档——`needs_review`/`ingested`/`normalized`/`approved` 均不出现在检索结果中
+- [ ] AC-155: AC-011 e2e 测试更新：验证完整治理链（ingested → normalized → approved → active），确认只有 `active` 文档出现在检索结果中，`needs_review` 文档不可搜到
 
 ### Phase 2: Federation + Evolution — 外部知识联邦 + 知识进化
 
@@ -327,11 +356,14 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-02 | Phase 0 实现完成 + 合入 main（PR #9）：13/14 AC ✅，AC-011 fixture 独立任务 |
 | 2026-05-03 | Phase 1 合入 main（PR #13）：8/8 AC ✅，Knowledge Hub 全功能上线（缅因猫 6 轮 review + 云端 review 2 轮） |
 | 2026-05-03 | Design polish 合入 main（PR #17）：Hub 侧边栏导航集成 + 全组件设计 token 对齐（cafe-*/--conn-*），暹罗猫 Pencil 设计 + 缅因猫 code review |
+| 2026-05-04 | CVO 验收发现治理闭环断裂：愿景 vs AC 缺口分析（opus）+ Playwright 实测确认（gpt52）→ Phase 1.5 立项 |
+| 2026-05-04 | Phase 1.5 UI/UX 设计完成：设计"治理丝带"与概览视图（暹罗猫 🐾） |
 
 ## Review Gate
 
 - Phase 0: 架构级 → 跨猫 collaborative-thinking → 铲屎官拍板
 - Phase 1: 前端 UI → 铲屎官确认 wireframe
+- Phase 1.5: 后端 + 前端 → gpt52 code review + CVO 验收
 - Phase 2: 架构级 → 猫猫讨论 + 铲屎官拍板
 
 ## Links
