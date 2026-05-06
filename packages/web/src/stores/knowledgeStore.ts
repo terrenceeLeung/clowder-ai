@@ -55,6 +55,7 @@ interface KnowledgeState {
   searchPassages: (query: string) => Promise<void>;
   importFiles: (files: File[]) => Promise<ImportResult[]>;
   createPack: (name: string, description?: string) => Promise<void>;
+  updateGovernance: (anchor: string, status: string) => Promise<{ governanceStatus: string } | null>;
 }
 
 export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
@@ -112,6 +113,19 @@ export const useKnowledgeStore = create<KnowledgeState>((set, get) => ({
       return data.results as ImportResult[];
     }
     return [];
+  },
+
+  updateGovernance: async (anchor, status) => {
+    const res = await apiFetch(`/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) {
+      await get().fetchDocs();
+      return (await res.json()) as { governanceStatus: string };
+    }
+    return null;
   },
 
   createPack: async (name, description) => {
