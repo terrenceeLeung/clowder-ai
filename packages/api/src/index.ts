@@ -665,6 +665,23 @@ async function main(): Promise<void> {
     }
   }
 
+  // F179 AC-203: FTS integrity-check + auto-rebuild
+  if (memoryServices.evidenceStore) {
+    try {
+      const store = memoryServices.evidenceStore as { checkAndRepairFts?: () => { checked: boolean; repaired: boolean; error?: string } };
+      if (store.checkAndRepairFts) {
+        const ftsResult = store.checkAndRepairFts();
+        if (ftsResult.repaired) {
+          app.log.warn('[api] F179: FTS index was corrupted — auto-rebuilt');
+        } else if (ftsResult.error) {
+          app.log.error(`[api] F179: FTS rebuild failed: ${ftsResult.error}`);
+        }
+      }
+    } catch (err) {
+      app.log.warn(`[api] F179: FTS check failed (non-fatal): ${err}`);
+    }
+  }
+
   // F-4: Global knowledge rebuild (Skills + MEMORY.md → global_knowledge.sqlite)
   if (memoryServices.globalIndexBuilder) {
     try {

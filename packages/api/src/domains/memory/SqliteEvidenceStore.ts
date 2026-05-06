@@ -731,6 +731,27 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     }
   }
 
+  checkAndRepairFts(): { checked: boolean; repaired: boolean; error?: string } {
+    this.ensureOpen();
+    const ftsNames = ['evidence_fts', 'passage_fts'];
+    let wasCorrupted = false;
+    for (const fts of ftsNames) {
+      try {
+        this.db!.prepare(`INSERT INTO ${fts}(${fts}) VALUES('integrity-check')`).run();
+      } catch {
+        wasCorrupted = true;
+      }
+    }
+    try {
+      for (const fts of ftsNames) {
+        this.db!.prepare(`INSERT INTO ${fts}(${fts}) VALUES('rebuild')`).run();
+      }
+      return { checked: true, repaired: wasCorrupted };
+    } catch (err) {
+      return { checked: true, repaired: false, error: String(err) };
+    }
+  }
+
   /** Expose db for IndexBuilder and other internal consumers */
   getDb(): Database.Database {
     this.ensureOpen();
