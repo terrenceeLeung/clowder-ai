@@ -9,7 +9,7 @@ community_issue: 569
 
 # F179: Domain Knowledge Governance — 领域知识治理
 
-> **Status**: in-progress (Phase 2 active) | **Owner**: Ragdoll | **Priority**: P1
+> **Status**: in-progress (Phase 3 next) | **Owner**: Ragdoll | **Priority**: P1
 
 ## Vision
 
@@ -251,13 +251,13 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** Federated 外部检索、Skill 进化、conflict detection（Phase 3）
 
 **验收标准：**
-- [ ] AC-201: IndexBuilder.rebuild() stale-anchor cleanup 跳过 `anchor LIKE 'dk:%'` 或 `kind='pack-knowledge'` 的文档——API 重启后 pack-knowledge 文档仍存在
-- [ ] AC-202: deleteByAnchor 级联删除 evidence_passages 中 `doc_anchor` 匹配的子记录——删除文档后无孤儿 passage
-- [ ] AC-203: API 启动时对 evidence_fts / passage_fts 执行 integrity-check，检测到损坏时自动 rebuild——FTS 腐化自愈
-- [ ] AC-204: evidence.ts `queryAlwaysOn` 方法调用保持 `this` 绑定——F163 alwaysOnInjection=on 时搜索不降级
-- [ ] AC-205: evidence search 新增 `packId` 查询参数，返回指定 pack 的 `active` 知识文档——pack-scoped 检索可用
-- [ ] AC-206: Agent 对话中可通过工具调用检索 pack 知识并注入上下文——用户导入的知识在对话中可被 AI 引用
-- [ ] AC-207: 端到端验证：导入知识 → 重启 API → pack-scoped 搜索仍返回结果 → 删除文档后无孤儿数据
+- [x] AC-201: IndexBuilder.rebuild() stale-anchor cleanup 跳过 `anchor LIKE 'dk:%'` 或 `kind='pack-knowledge'` 的文档——API 重启后 pack-knowledge 文档仍存在
+- [x] AC-202: deleteByAnchor 级联删除 evidence_passages 中 `doc_anchor` 匹配的子记录——删除文档后无孤儿 passage
+- [x] AC-203: API 启动时对 evidence_fts / passage_fts 执行 integrity-check，检测到损坏时自动 rebuild——FTS 腐化自愈
+- [x] AC-204: evidence.ts `queryAlwaysOn` 方法调用保持 `this` 绑定——F163 alwaysOnInjection=on 时搜索不降级
+- [x] AC-205: evidence search 新增 `packId` 查询参数，返回指定 pack 的 `active` 知识文档——pack-scoped 检索可用（含 semantic/hybrid 路径 + governance 门控）
+- [x] AC-206: Agent 对话中可通过工具调用检索 pack 知识并注入上下文——用户导入的知识在对话中可被 AI 引用
+- [x] AC-207: 端到端验证：导入知识 → 重启 API → pack-scoped 搜索仍返回结果 → 删除文档后无孤儿数据
 
 ### Phase 3: Federation + Evolution — 外部知识联邦 + 知识进化
 
@@ -383,6 +383,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-04 | Phase 1.5 UI/UX 设计完成：设计"治理丝带"与概览视图（暹罗猫 🐾） |
 | 2026-05-06 | Phase 1.5 merged (PR #21)：治理闭环修复——PATCH governance API + GovernanceRibbon + autoRoute chain + search gating + e2e test fix |
 | 2026-05-06 | CVO 真机验收暴露 5 个存量问题（rebuild 删知识 / 级联缺失致 FTS 腐化 / this 绑定 / pack 检索缺失 / RAG 注入缺失）→ Phase 2 立项 |
+| 2026-05-06 | Phase 2 merged (PR #22)：3 bug fixes (rebuild 保护/级联删除/FTS 自愈/this 绑定) + pack-scoped 检索 (5 路径全覆盖 + governance 门控) + RAG 注入。16 tests, codex + cloud review 3 轮 P1 修复 |
 
 ## Review Gate
 
