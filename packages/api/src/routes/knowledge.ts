@@ -156,7 +156,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
            JOIN evidence_docs d ON d.anchor = p.doc_anchor
            WHERE passage_fts MATCH ?
              AND d.kind = 'pack-knowledge'
-             AND d.governance_status = 'active'
+             AND (d.governance_status IS NULL OR d.governance_status = 'active')
            ORDER BY rank
            LIMIT ?`,
         )
