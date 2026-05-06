@@ -24,6 +24,12 @@ const RIBBON_CONFIG: Record<
       { status: 'rejected', label: 'Reject', className: 'bg-red-700 hover:bg-red-800 text-white' },
     ],
   },
+  approved: {
+    bg: 'bg-blue-50 border-blue-200',
+    text: 'text-blue-700',
+    label: 'Approved (pending activation)',
+    actions: [{ status: 'active', label: 'Activate', className: 'bg-green-700 hover:bg-green-800 text-white' }],
+  },
   active: {
     bg: 'bg-green-50 border-green-200',
     text: 'text-green-700',

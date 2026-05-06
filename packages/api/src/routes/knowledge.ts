@@ -227,7 +227,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         return reply.status(400).send({ error: 'status is required' });
       }
 
-      const allowed = ['approved', 'rejected', 'retired'];
+      const allowed = ['approved', 'rejected', 'retired', 'active'];
       if (!allowed.includes(targetStatus)) {
         return reply.status(400).send({ error: `status must be one of: ${allowed.join(', ')}` });
       }
