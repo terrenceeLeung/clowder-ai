@@ -133,7 +133,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       anchorSql += " AND kind != 'pack-knowledge'";
     }
     if (options?.packId) {
-      anchorSql += ' AND pack_id = ?';
+      anchorSql += " AND pack_id = ? AND governance_status = 'active'";
       anchorParams.push(options.packId);
     }
     if (options?.status) {
@@ -190,7 +190,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
           sql += " AND d.kind != 'pack-knowledge'";
         }
         if (options?.packId) {
-          sql += ' AND d.pack_id = ?';
+          sql += " AND d.pack_id = ? AND d.governance_status = 'active'";
           params.push(options.packId);
         }
         if (options?.status) {
@@ -262,7 +262,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         containsSql += " AND kind != 'pack-knowledge'";
       }
       if (options?.packId) {
-        containsSql += ' AND pack_id = ?';
+        containsSql += " AND pack_id = ? AND governance_status = 'active'";
         containsParams.push(options.packId);
       }
       if (options?.status) {
@@ -488,7 +488,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       sql += " AND kind != 'pack-knowledge'";
     }
     if (options?.packId) {
-      sql += ' AND pack_id = ?';
+      sql += " AND pack_id = ? AND governance_status = 'active'";
       params.push(options.packId);
     }
     if (options?.status) {
@@ -583,7 +583,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         sql += " AND kind != 'pack-knowledge'";
       }
       if (options?.packId) {
-        sql += ' AND pack_id = ?';
+        sql += " AND pack_id = ? AND governance_status = 'active'";
         params.push(options.packId);
       }
       if (options?.status) {

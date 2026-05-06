@@ -40,6 +40,10 @@ describe('Pack-scoped search — semantic/hybrid paths (P1 fix)', () => {
       },
     ]);
 
+    // governance_status not in upsert schema — set via direct SQL
+    const db = store.getDb();
+    db.prepare("UPDATE evidence_docs SET governance_status = 'active' WHERE anchor LIKE 'dk:%'").run();
+
     // Mock embedDeps: fake embedding + vector store
     // Returns packA docs (one found by lexical, one vector-only) + packB doc
     const mockEmbedDeps = {

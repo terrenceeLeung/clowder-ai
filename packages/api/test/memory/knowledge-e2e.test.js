@@ -27,9 +27,11 @@ describe('Knowledge lifecycle E2E (AC-207)', () => {
         summary: 'How to set up the development environment',
         updatedAt: now,
         packId: 'test-pack',
-        governanceStatus: 'active',
       },
     ]);
+
+    // governance_status not in upsert schema — set via direct SQL
+    db.prepare("UPDATE evidence_docs SET governance_status = 'active' WHERE anchor = 'dk:test-pack:guide'").run();
 
     db.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, position, created_at, passage_kind)
       VALUES (?, ?, ?, ?, ?, ?)`).run(

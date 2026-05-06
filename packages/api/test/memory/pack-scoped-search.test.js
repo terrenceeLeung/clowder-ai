@@ -39,6 +39,9 @@ describe('Pack-scoped evidence search (AC-205)', () => {
         updatedAt: new Date().toISOString(),
       },
     ]);
+
+    // governance_status not in upsert schema — set via direct SQL
+    db.prepare("UPDATE evidence_docs SET governance_status = 'active' WHERE anchor LIKE 'dk:%'").run();
   });
 
   it('search without packId excludes pack-knowledge', async () => {
@@ -59,6 +62,40 @@ describe('Pack-scoped evidence search (AC-205)', () => {
   it('search with packId returns empty for non-existent pack', async () => {
     const results = await store.search('knowledge', { limit: 10, packId: 'nonexistent' });
     assert.equal(results.length, 0);
+  });
+
+  it('search with packId excludes non-active governance docs', async () => {
+    // Insert a rejected doc in packA
+    await store.upsert([
+      {
+        anchor: 'dk:packA:rejected',
+        kind: 'pack-knowledge',
+        status: 'active',
+        title: 'Rejected Pack A Doc',
+        summary: 'knowledge about rejected topic',
+        updatedAt: new Date().toISOString(),
+        packId: 'packA',
+        governanceStatus: 'rejected',
+      },
+      {
+        anchor: 'dk:packA:needs-review',
+        kind: 'pack-knowledge',
+        status: 'active',
+        title: 'Needs Review Pack A Doc',
+        summary: 'knowledge about pending topic',
+        updatedAt: new Date().toISOString(),
+        packId: 'packA',
+        governanceStatus: 'needs_review',
+      },
+    ]);
+    // Also set packA:doc1 to active governance
+    db.prepare("UPDATE evidence_docs SET governance_status = 'active' WHERE anchor = 'dk:packA:doc1'").run();
+
+    const results = await store.search('knowledge', { limit: 10, packId: 'packA' });
+    const anchors = results.map((r) => r.anchor);
+    assert.ok(anchors.includes('dk:packA:doc1'), 'governance-active doc included');
+    assert.ok(!anchors.includes('dk:packA:rejected'), 'rejected doc excluded');
+    assert.ok(!anchors.includes('dk:packA:needs-review'), 'needs_review doc excluded');
   });
 
   it('packId filter works via API route', async () => {
