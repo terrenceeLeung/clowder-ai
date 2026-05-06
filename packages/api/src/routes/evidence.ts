@@ -34,6 +34,7 @@ const searchSchema = z.object({
   activeFeatureIds: z.string().optional(),
   truthSourceRef: z.string().optional(),
   recentArtifactRefs: z.string().optional(),
+  packId: z.string().optional(),
 });
 
 export type { EvidenceConfidence, EvidenceSourceType } from './evidence-helpers.js';
@@ -98,6 +99,7 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
       activeFeatureIds: rawFeatureIds,
       truthSourceRef,
       recentArtifactRefs: rawArtifactRefs,
+      packId,
     } = parseResult.data;
 
     const effectiveLimit = limit ?? 5;
@@ -127,6 +129,7 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
         contextWindow,
         threadId,
         dimension,
+        packId,
       };
       // F-4: Use KnowledgeResolver for federated project + global search
       const resolveResult = opts.knowledgeResolver ? await opts.knowledgeResolver.resolve(q, searchOpts) : null;

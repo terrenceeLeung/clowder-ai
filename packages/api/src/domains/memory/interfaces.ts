@@ -164,6 +164,8 @@ export interface SearchOptions {
   provenanceTier?: ProvenanceTier;
   /** F163 Phase B (AC-B3): include backstop docs in results (for drill-down) */
   includeBackstop?: boolean;
+  /** F179 AC-205: filter to a specific knowledge pack (bypasses pack-knowledge exclusion) */
+  packId?: string;
 }
 
 export interface MarkerFilter {

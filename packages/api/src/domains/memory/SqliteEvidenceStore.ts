@@ -99,7 +99,8 @@ export class SqliteEvidenceStore implements IEvidenceStore {
           : undefined);
     const excludeSessionAndThread = options?.scope === 'docs' || options?.scope === 'memory';
     // F129 AC-A10: exclude pack-knowledge from global search unless explicitly requested
-    const excludePackKnowledge = effectiveKind !== 'pack-knowledge';
+    // F179 AC-205: packId opt-in bypasses exclusion
+    const excludePackKnowledge = !options?.packId && effectiveKind !== 'pack-knowledge';
     // F148 Phase B (AC-B1): threadId filter — scope to a specific thread's evidence
     // Anchor convention: thread-{threadId} (e.g. thread-thread_abc for threadId="thread_abc")
     const threadAnchor = options?.threadId ? `thread-${options.threadId}` : undefined;
@@ -130,6 +131,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     }
     if (excludePackKnowledge) {
       anchorSql += " AND kind != 'pack-knowledge'";
+    }
+    if (options?.packId) {
+      anchorSql += ' AND pack_id = ?';
+      anchorParams.push(options.packId);
     }
     if (options?.status) {
       anchorSql += ' AND status = ?';
@@ -183,6 +188,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         }
         if (excludePackKnowledge) {
           sql += " AND d.kind != 'pack-knowledge'";
+        }
+        if (options?.packId) {
+          sql += ' AND d.pack_id = ?';
+          params.push(options.packId);
         }
         if (options?.status) {
           sql += ' AND d.status = ?';
@@ -251,6 +260,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       }
       if (excludePackKnowledge) {
         containsSql += " AND kind != 'pack-knowledge'";
+      }
+      if (options?.packId) {
+        containsSql += ' AND pack_id = ?';
+        containsParams.push(options.packId);
       }
       if (options?.status) {
         containsSql += ' AND status = ?';
