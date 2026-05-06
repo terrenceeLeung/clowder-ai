@@ -668,7 +668,9 @@ async function main(): Promise<void> {
   // F179 AC-203: FTS integrity-check + auto-rebuild
   if (memoryServices.evidenceStore) {
     try {
-      const store = memoryServices.evidenceStore as { checkAndRepairFts?: () => { checked: boolean; repaired: boolean; error?: string } };
+      const store = memoryServices.evidenceStore as {
+        checkAndRepairFts?: () => { checked: boolean; repaired: boolean; error?: string };
+      };
       if (store.checkAndRepairFts) {
         const ftsResult = store.checkAndRepairFts();
         if (ftsResult.repaired) {

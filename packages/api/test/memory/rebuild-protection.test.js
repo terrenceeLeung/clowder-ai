@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
-import { join } from 'node:path';
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, it } from 'node:test';
 
 describe('IndexBuilder rebuild — pack-knowledge protection (AC-201)', () => {
   it('rebuild preserves pack-knowledge docs not on disk', async () => {
@@ -14,15 +14,17 @@ describe('IndexBuilder rebuild — pack-knowledge protection (AC-201)', () => {
     const db = store.getDb();
 
     // Insert a pack-knowledge doc (API-imported, has no disk file)
-    await store.upsert([{
-      anchor: 'dk:mypack:imported-doc',
-      kind: 'pack-knowledge',
-      status: 'active',
-      title: 'Imported Knowledge',
-      summary: 'This was imported via API, not from disk',
-      updatedAt: new Date().toISOString(),
-      packId: 'mypack',
-    }]);
+    await store.upsert([
+      {
+        anchor: 'dk:mypack:imported-doc',
+        kind: 'pack-knowledge',
+        status: 'active',
+        title: 'Imported Knowledge',
+        summary: 'This was imported via API, not from disk',
+        updatedAt: new Date().toISOString(),
+        packId: 'mypack',
+      },
+    ]);
 
     // Insert a disk-sourced doc that WILL be on disk
     const docsRoot = mkdtempSync(join(tmpdir(), 'rebuild-test-'));
@@ -30,24 +32,28 @@ describe('IndexBuilder rebuild — pack-knowledge protection (AC-201)', () => {
     mkdirSync(docsDir, { recursive: true });
     writeFileSync(join(docsDir, 'on-disk.md'), '---\ntitle: On Disk\n---\nContent here');
 
-    await store.upsert([{
-      anchor: 'docs/on-disk.md',
-      kind: 'feature',
-      status: 'active',
-      title: 'On Disk Doc',
-      updatedAt: new Date().toISOString(),
-      sourcePath: 'docs/on-disk.md',
-    }]);
+    await store.upsert([
+      {
+        anchor: 'docs/on-disk.md',
+        kind: 'feature',
+        status: 'active',
+        title: 'On Disk Doc',
+        updatedAt: new Date().toISOString(),
+        sourcePath: 'docs/on-disk.md',
+      },
+    ]);
 
     // Insert a stale disk doc that is NOT on disk (should be cleaned up)
-    await store.upsert([{
-      anchor: 'docs/deleted.md',
-      kind: 'feature',
-      status: 'active',
-      title: 'Deleted Doc',
-      updatedAt: new Date().toISOString(),
-      sourcePath: 'docs/deleted.md',
-    }]);
+    await store.upsert([
+      {
+        anchor: 'docs/deleted.md',
+        kind: 'feature',
+        status: 'active',
+        title: 'Deleted Doc',
+        updatedAt: new Date().toISOString(),
+        sourcePath: 'docs/deleted.md',
+      },
+    ]);
 
     const builder = new IndexBuilder(store, docsRoot);
     await builder.rebuild();

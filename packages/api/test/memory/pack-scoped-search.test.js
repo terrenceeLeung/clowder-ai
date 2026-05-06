@@ -43,7 +43,7 @@ describe('Pack-scoped evidence search (AC-205)', () => {
 
   it('search without packId excludes pack-knowledge', async () => {
     const results = await store.search('knowledge', { limit: 10 });
-    const anchors = results.map(r => r.anchor);
+    const anchors = results.map((r) => r.anchor);
     assert.ok(!anchors.includes('dk:packA:doc1'), 'packA doc excluded');
     assert.ok(!anchors.includes('dk:packB:doc1'), 'packB doc excluded');
     assert.ok(anchors.includes('regular-doc'), 'regular doc included');
@@ -51,7 +51,7 @@ describe('Pack-scoped evidence search (AC-205)', () => {
 
   it('search with packId returns only that pack docs', async () => {
     const results = await store.search('knowledge', { limit: 10, packId: 'packA' });
-    const anchors = results.map(r => r.anchor);
+    const anchors = results.map((r) => r.anchor);
     assert.ok(anchors.includes('dk:packA:doc1'), 'packA doc included');
     assert.ok(!anchors.includes('dk:packB:doc1'), 'packB doc excluded');
   });
@@ -77,9 +77,12 @@ describe('Pack-scoped evidence search (AC-205)', () => {
     assert.equal(res.statusCode, 200);
     const body = res.json();
     assert.equal(body.degraded, false);
-    const anchors = body.results.map(r => r.anchor);
-    assert.ok(anchors.some(a => a.includes('packA')), 'packA doc returned via API');
-    assert.ok(!anchors.some(a => a.includes('packB')), 'packB doc not returned via API');
+    const anchors = body.results.map((r) => r.anchor);
+    assert.ok(
+      anchors.some((a) => a.includes('packA')),
+      'packA doc returned via API',
+    );
+    assert.ok(!anchors.some((a) => a.includes('packB')), 'packB doc not returned via API');
 
     await app.close();
   });

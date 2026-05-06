@@ -20,14 +20,16 @@ describe('FTS integrity-check + auto-rebuild (AC-203)', () => {
   });
 
   it('checkAndRepairFts is idempotent — search works after multiple rebuilds', async () => {
-    await store.upsert([{
-      anchor: 'test-doc',
-      kind: 'feature',
-      status: 'active',
-      title: 'Test Document',
-      summary: 'unique searchable content',
-      updatedAt: new Date().toISOString(),
-    }]);
+    await store.upsert([
+      {
+        anchor: 'test-doc',
+        kind: 'feature',
+        status: 'active',
+        title: 'Test Document',
+        summary: 'unique searchable content',
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
 
     store.checkAndRepairFts();
     store.checkAndRepairFts();
@@ -37,14 +39,16 @@ describe('FTS integrity-check + auto-rebuild (AC-203)', () => {
   });
 
   it('rebuild restores FTS consistency after orphan passage removal', async () => {
-    await store.upsert([{
-      anchor: 'fts-doc',
-      kind: 'feature',
-      status: 'active',
-      title: 'FTS Document',
-      summary: 'document with passages',
-      updatedAt: new Date().toISOString(),
-    }]);
+    await store.upsert([
+      {
+        anchor: 'fts-doc',
+        kind: 'feature',
+        status: 'active',
+        title: 'FTS Document',
+        summary: 'document with passages',
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
 
     db.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, position, created_at)
       VALUES (?, ?, ?, ?, ?)`).run('fts-doc', 'p1', 'passage content', 0, new Date().toISOString());

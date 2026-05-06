@@ -719,7 +719,9 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     return this.writeQueue.enqueue(() => {
       this.ensureOpen();
       this.db
-        ?.prepare('DELETE FROM evidence_passages WHERE doc_anchor IN (SELECT anchor FROM evidence_docs WHERE pack_id = ?)')
+        ?.prepare(
+          'DELETE FROM evidence_passages WHERE doc_anchor IN (SELECT anchor FROM evidence_docs WHERE pack_id = ?)',
+        )
         .run(packId);
       const result = this.db?.prepare('DELETE FROM evidence_docs WHERE pack_id = ?').run(packId);
       return result?.changes ?? 0;

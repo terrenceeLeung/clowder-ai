@@ -13,21 +13,25 @@ describe('Cascade delete — evidence_passages cleanup (AC-202)', () => {
   });
 
   it('deleteByAnchor cascades to evidence_passages', async () => {
-    await store.upsert([{
-      anchor: 'dk:test-pack:doc1',
-      kind: 'pack-knowledge',
-      status: 'active',
-      title: 'Test Doc',
-      summary: 'A test document',
-      updatedAt: new Date().toISOString(),
-    }]);
+    await store.upsert([
+      {
+        anchor: 'dk:test-pack:doc1',
+        kind: 'pack-knowledge',
+        status: 'active',
+        title: 'Test Doc',
+        summary: 'A test document',
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
 
     db.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, position, created_at)
       VALUES (?, ?, ?, ?, ?)`).run('dk:test-pack:doc1', 'p1', 'passage one', 0, new Date().toISOString());
     db.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, position, created_at)
       VALUES (?, ?, ?, ?, ?)`).run('dk:test-pack:doc1', 'p2', 'passage two', 1, new Date().toISOString());
 
-    const before = db.prepare("SELECT count(*) AS c FROM evidence_passages WHERE doc_anchor = 'dk:test-pack:doc1'").get();
+    const before = db
+      .prepare("SELECT count(*) AS c FROM evidence_passages WHERE doc_anchor = 'dk:test-pack:doc1'")
+      .get();
     assert.equal(before.c, 2, 'should have 2 passages before delete');
 
     await store.deleteByAnchor('dk:test-pack:doc1');
@@ -35,7 +39,9 @@ describe('Cascade delete — evidence_passages cleanup (AC-202)', () => {
     const afterDoc = await store.getByAnchor('dk:test-pack:doc1');
     assert.equal(afterDoc, null, 'doc should be deleted');
 
-    const afterPassages = db.prepare("SELECT count(*) AS c FROM evidence_passages WHERE doc_anchor = 'dk:test-pack:doc1'").get();
+    const afterPassages = db
+      .prepare("SELECT count(*) AS c FROM evidence_passages WHERE doc_anchor = 'dk:test-pack:doc1'")
+      .get();
     assert.equal(afterPassages.c, 0, 'passages should be cascade-deleted');
   });
 
@@ -64,7 +70,7 @@ describe('Cascade delete — evidence_passages cleanup (AC-202)', () => {
     db.prepare(`INSERT INTO evidence_passages (doc_anchor, passage_id, content, position, created_at)
       VALUES (?, ?, ?, ?, ?)`).run('dk:mypack:doc-b', 'p1', 'chunk b1', 0, new Date().toISOString());
 
-    const before = db.prepare("SELECT count(*) AS c FROM evidence_passages").get();
+    const before = db.prepare('SELECT count(*) AS c FROM evidence_passages').get();
     assert.equal(before.c, 2, 'should have 2 passages before delete');
 
     await store.deleteByPackId('mypack');
@@ -72,7 +78,7 @@ describe('Cascade delete — evidence_passages cleanup (AC-202)', () => {
     const afterDocs = db.prepare("SELECT count(*) AS c FROM evidence_docs WHERE pack_id = 'mypack'").get();
     assert.equal(afterDocs.c, 0, 'docs should be deleted');
 
-    const afterPassages = db.prepare("SELECT count(*) AS c FROM evidence_passages").get();
+    const afterPassages = db.prepare('SELECT count(*) AS c FROM evidence_passages').get();
     assert.equal(afterPassages.c, 0, 'passages should be cascade-deleted');
   });
 
