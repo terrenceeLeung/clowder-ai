@@ -9,7 +9,7 @@ community_issue: 569
 
 # F179: Domain Knowledge Governance — 领域知识治理
 
-> **Status**: in-progress (Phase 2 pending) | **Owner**: Ragdoll | **Priority**: P1
+> **Status**: in-progress (Phase 2 active) | **Owner**: Ragdoll | **Priority**: P1
 
 ## Vision
 
@@ -236,7 +236,30 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - [x] AC-154: Knowledge search 只返回 `governance_status = 'active'` 的文档——`needs_review`/`ingested`/`normalized`/`approved` 均不出现在检索结果中
 - [x] AC-155: AC-011 e2e 测试更新：验证完整治理链（ingested → normalized → approved → active），确认只有 `active` 文档出现在检索结果中，`needs_review` 文档不可搜到
 
-### Phase 2: Federation + Evolution — 外部知识联邦 + 知识进化
+### Phase 2: Import Reliability + Retrieval — 知识导入可靠性 + 检索打通
+
+**背景：** Phase 1.5 合入后 CVO 真机验收（2026-05-06），暴露 5 个**存量问题**（非 F179 引入）：IndexBuilder 重启时删除 API 导入的知识文档、deleteByAnchor 不级联删除子 passage 导致 FTS 腐化、evidence.ts 中 `queryAlwaysOn` 的 `this` 绑定丢失导致全部搜索降级。加上 F129 AC-A10 设计了 pack-knowledge 排除但从未实现 opt-in 检索路径和 RAG 注入。
+
+**范围：**
+- Bug 1：IndexBuilder.rebuild() stale-anchor cleanup 跳过 `kind='pack-knowledge'` 文档（防止重启删除 API 导入的知识）
+- Bug 2：deleteByAnchor 级联删除 evidence_passages 子记录（防止孤儿 passage 腐化 FTS）
+- Bug 3：启动时 FTS integrity-check + 自动 rebuild（防止腐化累积）
+- Bug 4：evidence.ts queryAlwaysOn `this` 绑定修复（已在 runtime 热修复，需正式提交 + 测试）
+- Feature 1：Pack-scoped 检索——evidence search 新增 `packId` 参数，支持 pack 内知识检索
+- Feature 2：RAG 注入——agent 对话时注入 pack 知识上下文（F129 AC-A10 缺失的 opt-in 路径）
+
+**不做：** Federated 外部检索、Skill 进化、conflict detection（Phase 3）
+
+**验收标准：**
+- [ ] AC-201: IndexBuilder.rebuild() stale-anchor cleanup 跳过 `anchor LIKE 'dk:%'` 或 `kind='pack-knowledge'` 的文档——API 重启后 pack-knowledge 文档仍存在
+- [ ] AC-202: deleteByAnchor 级联删除 evidence_passages 中 `doc_anchor` 匹配的子记录——删除文档后无孤儿 passage
+- [ ] AC-203: API 启动时对 evidence_fts / passage_fts 执行 integrity-check，检测到损坏时自动 rebuild——FTS 腐化自愈
+- [ ] AC-204: evidence.ts `queryAlwaysOn` 方法调用保持 `this` 绑定——F163 alwaysOnInjection=on 时搜索不降级
+- [ ] AC-205: evidence search 新增 `packId` 查询参数，返回指定 pack 的 `active` 知识文档——pack-scoped 检索可用
+- [ ] AC-206: Agent 对话中可通过工具调用检索 pack 知识并注入上下文——用户导入的知识在对话中可被 AI 引用
+- [ ] AC-207: 端到端验证：导入知识 → 重启 API → pack-scoped 搜索仍返回结果 → 删除文档后无孤儿数据
+
+### Phase 3: Federation + Evolution — 外部知识联邦 + 知识进化
 
 **范围：**
 - KnowledgeResolver 新增 external source registry
@@ -359,13 +382,15 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-04 | CVO 验收发现治理闭环断裂：愿景 vs AC 缺口分析（opus）+ Playwright 实测确认（gpt52）→ Phase 1.5 立项 |
 | 2026-05-04 | Phase 1.5 UI/UX 设计完成：设计"治理丝带"与概览视图（暹罗猫 🐾） |
 | 2026-05-06 | Phase 1.5 merged (PR #21)：治理闭环修复——PATCH governance API + GovernanceRibbon + autoRoute chain + search gating + e2e test fix |
+| 2026-05-06 | CVO 真机验收暴露 5 个存量问题（rebuild 删知识 / 级联缺失致 FTS 腐化 / this 绑定 / pack 检索缺失 / RAG 注入缺失）→ Phase 2 立项 |
 
 ## Review Gate
 
 - Phase 0: 架构级 → 跨猫 collaborative-thinking → 铲屎官拍板
 - Phase 1: 前端 UI → 铲屎官确认 wireframe
 - Phase 1.5: 后端 + 前端 → gpt52 code review + CVO 验收
-- Phase 2: 架构级 → 猫猫讨论 + 铲屎官拍板
+- Phase 2: 后端 bug fix + 检索扩展 → 纯后端，猫猫 collaborative-thinking
+- Phase 3: 架构级 → 猫猫讨论 + 铲屎官拍板
 
 ## Links
 
