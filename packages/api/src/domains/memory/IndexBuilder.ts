@@ -379,11 +379,15 @@ export class IndexBuilder implements IIndexBuilder {
     // Remove stale anchors that no longer exist on disk
     // P1 fix: if threadListFn failed, preserve existing thread-* anchors (don't delete on transient error)
     const db = this.store.getDb();
-    const allAnchors = db.prepare('SELECT anchor FROM evidence_docs').all() as Array<{ anchor: string }>;
+    const allAnchors = db.prepare('SELECT anchor, kind FROM evidence_docs').all() as Array<{
+      anchor: string;
+      kind: string;
+    }>;
     const removedAnchors: string[] = [];
     for (const row of allAnchors) {
       if (!currentAnchors.has(row.anchor)) {
         if (threadListFailed && row.anchor.startsWith('thread-')) continue;
+        if (row.kind === 'pack-knowledge') continue;
         await this.store.deleteByAnchor(row.anchor);
         this.embedDeps?.vectorStore.delete(row.anchor);
         removedAnchors.push(row.anchor);
