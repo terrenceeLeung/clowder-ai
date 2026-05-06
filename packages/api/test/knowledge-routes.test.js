@@ -493,4 +493,158 @@ describe('F179 Phase 1: Knowledge API routes', () => {
       await app.close();
     });
   });
+
+  describe('PATCH /api/knowledge/docs/:anchor/governance (AC-151)', () => {
+    it('approves a needs_review doc → returns active (chain)', async () => {
+      const anchor = 'dk:gov-route-1';
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at)
+         VALUES (?, 'pack-knowledge', 'active', ?, 'needs_review', ?)`,
+      ).run(anchor, 'Gov Doc 1', now);
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ status: 'approved' }),
+      });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.equal(body.governanceStatus, 'active');
+      assert.equal(body.previousStatus, 'needs_review');
+
+      await app.close();
+    });
+
+    it('rejects a needs_review doc', async () => {
+      const anchor = 'dk:gov-route-2';
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at)
+         VALUES (?, 'pack-knowledge', 'active', ?, 'needs_review', ?)`,
+      ).run(anchor, 'Gov Doc 2', now);
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ status: 'rejected' }),
+      });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.equal(body.governanceStatus, 'rejected');
+
+      await app.close();
+    });
+
+    it('retires an active doc', async () => {
+      const anchor = 'dk:gov-route-3';
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at)
+         VALUES (?, 'pack-knowledge', 'active', ?, 'active', ?)`,
+      ).run(anchor, 'Gov Doc 3', now);
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ status: 'retired' }),
+      });
+
+      assert.equal(res.statusCode, 200);
+      const body = JSON.parse(res.body);
+      assert.equal(body.governanceStatus, 'retired');
+      assert.equal(body.previousStatus, 'active');
+
+      await app.close();
+    });
+
+    it('returns 400 when status is missing', async () => {
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/knowledge/docs/dk:gov-route-1/governance',
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({}),
+      });
+
+      assert.equal(res.statusCode, 400);
+      await app.close();
+    });
+
+    it('returns 404 for non-existent doc', async () => {
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: '/api/knowledge/docs/dk:nonexistent/governance',
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ status: 'approved' }),
+      });
+
+      assert.equal(res.statusCode, 404);
+      await app.close();
+    });
+
+    it('returns 409 for invalid transition', async () => {
+      const anchor = 'dk:gov-route-3';
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ status: 'approved' }),
+      });
+
+      assert.equal(res.statusCode, 409);
+      await app.close();
+    });
+
+    it('returns 404 for non-knowledge doc (kind != pack-knowledge)', async () => {
+      const anchor = 'dk:gov-non-knowledge';
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT OR IGNORE INTO evidence_docs (anchor, kind, status, title, governance_status, updated_at)
+         VALUES (?, 'memory-note', 'active', ?, 'active', ?)`,
+      ).run(anchor, 'Not Knowledge', now);
+
+      app = Fastify();
+      await app.register(knowledgeRoutes, { db, projectRoot: tmpRoot });
+      await app.ready();
+
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`,
+        headers: { 'Content-Type': 'application/json' },
+        payload: JSON.stringify({ status: 'retired' }),
+      });
+
+      assert.equal(res.statusCode, 404);
+      await app.close();
+    });
+  });
 });

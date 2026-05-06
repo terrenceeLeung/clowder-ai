@@ -140,15 +140,31 @@ describe('MeowGrid E2E — import + search (AC-011)', () => {
     assert.ok(totalChunks > 5, `Expected >5 chunks total, got ${totalChunks}`);
   });
 
-  it('governance status reaches approved/active', () => {
+  it('high confidence docs reach active status via autoRoute chain', () => {
     const db = new Database(dbPath);
     for (const r of importResults) {
       const doc = db.prepare('SELECT governance_status FROM evidence_docs WHERE anchor = ?').get(r.anchor);
-      assert.ok(
-        ['approved', 'active', 'needs_review'].includes(doc.governance_status),
-        `Doc ${r.anchor} should be approved/needs_review, got ${doc.governance_status}`,
+      assert.equal(
+        doc.governance_status,
+        'active',
+        `Doc ${r.anchor} (confidence 0.88) should be active, got ${doc.governance_status}`,
       );
     }
+    db.close();
+  });
+
+  it('needs_review docs are NOT returned by search', () => {
+    const db = new Database(dbPath);
+    const firstAnchor = importResults[0].anchor;
+    db.prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?').run('needs_review', firstAnchor);
+
+    const results = store.searchPassages('MeowGrid', 20);
+    const domainChunks = results.filter((r) => r.passageKind === 'domain_chunk');
+    for (const chunk of domainChunks) {
+      assert.notEqual(chunk.docAnchor, firstAnchor, `Search returned chunk from needs_review doc ${firstAnchor}`);
+    }
+
+    db.prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?').run('active', firstAnchor);
     db.close();
   });
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/utils/api-client';
 import ChunkViewer from './ChunkViewer';
+import GovernanceRibbon from './GovernanceRibbon';
 
 interface DocMeta {
   anchor: string;
@@ -33,6 +34,7 @@ export default function DocDetail({ anchor, onBack }: DocDetailProps) {
   const [doc, setDoc] = useState<DocMeta | null>(null);
   const [passages, setPassages] = useState<Passage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +51,20 @@ export default function DocDetail({ anchor, onBack }: DocDetailProps) {
     load();
   }, [load]);
 
+  const handleGovernanceAction = useCallback(
+    async (targetStatus: string) => {
+      setActionLoading(true);
+      const res = await apiFetch(`/api/knowledge/docs/${encodeURIComponent(anchor)}/governance`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status: targetStatus }),
+      });
+      if (res.ok) await load();
+      setActionLoading(false);
+    },
+    [anchor, load],
+  );
+
   if (loading) return <p className="text-sm text-cafe-muted">Loading...</p>;
   if (!doc) return <p className="text-sm text-[var(--conn-red-text)]">Document not found.</p>;
 
@@ -57,6 +73,8 @@ export default function DocDetail({ anchor, onBack }: DocDetailProps) {
       <button type="button" onClick={onBack} className="text-sm text-cafe-accent hover:underline">
         &larr; Back to list
       </button>
+
+      <GovernanceRibbon status={doc.governanceStatus} onAction={handleGovernanceAction} loading={actionLoading} />
 
       <div className="rounded-xl border border-cafe-border p-4">
         <h2 className="text-lg font-semibold text-cafe">{doc.title}</h2>

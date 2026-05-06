@@ -4,6 +4,7 @@ import { basename, join } from 'node:path';
 import multipart from '@fastify/multipart';
 import type Database from 'better-sqlite3';
 import type { FastifyPluginAsync } from 'fastify';
+import { GovernanceStateMachine } from '../domains/knowledge/GovernanceStateMachine.js';
 
 interface ImportResult {
   sourcePath: string;
@@ -26,6 +27,7 @@ interface KnowledgeRoutesOptions {
 
 export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async (app, opts) => {
   const { importer, db, projectRoot = '/tmp' } = opts;
+  const governance = new GovernanceStateMachine(db);
 
   await app.register(multipart, { limits: { fileSize: 1_048_576, files: 10 } });
 
@@ -154,7 +156,7 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
            JOIN evidence_docs d ON d.anchor = p.doc_anchor
            WHERE passage_fts MATCH ?
              AND d.kind = 'pack-knowledge'
-             AND d.governance_status NOT IN ('stale','retired','rejected','failed')
+             AND (d.governance_status IS NULL OR d.governance_status = 'active')
            ORDER BY rank
            LIMIT ?`,
         )
@@ -210,6 +212,45 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         keywords: updated.keywords ? JSON.parse(updated.keywords as string) : [],
         docKind: updated.doc_kind ?? null,
       };
+    },
+  );
+
+  // --- Governance transition (AC-151) ---
+
+  app.patch<{ Params: { anchor: string }; Body: { status: string } }>(
+    '/api/knowledge/docs/:anchor/governance',
+    async (request, reply) => {
+      const { anchor } = request.params;
+      const { status: targetStatus } = request.body ?? {};
+
+      if (!targetStatus) {
+        return reply.status(400).send({ error: 'status is required' });
+      }
+
+      const allowed = ['approved', 'rejected', 'retired', 'active'];
+      if (!allowed.includes(targetStatus)) {
+        return reply.status(400).send({ error: `status must be one of: ${allowed.join(', ')}` });
+      }
+
+      const doc = db
+        .prepare("SELECT governance_status FROM evidence_docs WHERE anchor = ? AND kind = 'pack-knowledge'")
+        .get(anchor) as { governance_status: string | null } | undefined;
+      if (!doc) {
+        return reply.status(404).send({ error: 'Document not found' });
+      }
+      const currentStatus = doc.governance_status;
+
+      try {
+        governance.transition(anchor, targetStatus as 'approved' | 'rejected' | 'retired');
+        let finalStatus = targetStatus;
+        if (targetStatus === 'approved') {
+          governance.transition(anchor, 'active');
+          finalStatus = 'active';
+        }
+        return { anchor, governanceStatus: finalStatus, previousStatus: currentStatus };
+      } catch (err) {
+        return reply.status(409).send({ error: (err as Error).message });
+      }
     },
   );
 

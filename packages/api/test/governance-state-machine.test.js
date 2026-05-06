@@ -120,11 +120,11 @@ describe('GovernanceStateMachine', () => {
   });
 
   describe('autoRoute', () => {
-    it('high confidence → approved', () => {
+    it('high confidence → active (auto-chain via approved)', () => {
       insertDoc(db, 'dk:ar1', 'normalized');
       const result = gsm.autoRoute('dk:ar1', 0.9);
-      assert.equal(result, 'approved');
-      assert.equal(gsm.getStatus('dk:ar1'), 'approved');
+      assert.equal(result, 'active');
+      assert.equal(gsm.getStatus('dk:ar1'), 'active');
     });
 
     it('low confidence → needs_review', () => {
@@ -134,10 +134,10 @@ describe('GovernanceStateMachine', () => {
       assert.equal(gsm.getStatus('dk:ar2'), 'needs_review');
     });
 
-    it('boundary confidence 0.8 → approved', () => {
+    it('boundary confidence 0.8 → active (auto-chain via approved)', () => {
       insertDoc(db, 'dk:ar3', 'normalized');
       const result = gsm.autoRoute('dk:ar3', 0.8);
-      assert.equal(result, 'approved');
+      assert.equal(result, 'active');
     });
   });
 

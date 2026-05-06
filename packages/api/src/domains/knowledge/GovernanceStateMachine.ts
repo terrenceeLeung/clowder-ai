@@ -73,6 +73,10 @@ export class GovernanceStateMachine {
   autoRoute(anchor: string, confidence: number): GovernanceStatus {
     const target: GovernanceStatus = confidence >= this.autoApproveThreshold ? 'approved' : 'needs_review';
     this.transition(anchor, target);
+    if (target === 'approved') {
+      this.transition(anchor, 'active');
+      return 'active';
+    }
     return target;
   }
 }
