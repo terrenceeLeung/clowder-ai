@@ -251,7 +251,10 @@ export const messagesRoutes: FastifyPluginAsync<MessagesRoutesOptions> = async (
 
     activeSideQuestions.add(sideQuestionKey);
     const ac = new AbortController();
-    const onDisconnect = () => { ac.abort(); activeSideQuestions.delete(sideQuestionKey); };
+    const onDisconnect = () => {
+      ac.abort();
+      activeSideQuestions.delete(sideQuestionKey);
+    };
     reply.raw.on('close', onDisconnect);
     try {
       return await router.answerSideQuestion(userId, threadId, bodyResult.data.question, { signal: ac.signal });
