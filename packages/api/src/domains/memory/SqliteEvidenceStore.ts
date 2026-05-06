@@ -133,7 +133,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       anchorSql += " AND kind != 'pack-knowledge'";
     }
     if (options?.packId) {
-      anchorSql += " AND pack_id = ? AND governance_status = 'active'";
+      anchorSql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
       anchorParams.push(options.packId);
     }
     if (options?.status) {
@@ -190,7 +190,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
           sql += " AND d.kind != 'pack-knowledge'";
         }
         if (options?.packId) {
-          sql += " AND d.pack_id = ? AND d.governance_status = 'active'";
+          sql += " AND d.pack_id = ? AND (d.governance_status IS NULL OR d.governance_status = 'active')";
           params.push(options.packId);
         }
         if (options?.status) {
@@ -262,7 +262,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         containsSql += " AND kind != 'pack-knowledge'";
       }
       if (options?.packId) {
-        containsSql += " AND pack_id = ? AND governance_status = 'active'";
+        containsSql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
         containsParams.push(options.packId);
       }
       if (options?.status) {
@@ -335,7 +335,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
           let parentSql = 'SELECT * FROM evidence_docs WHERE anchor = ?';
           const parentParams: unknown[] = [anchor];
           if (options?.packId) {
-            parentSql += " AND pack_id = ? AND governance_status = 'active'";
+            parentSql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
             parentParams.push(options.packId);
           }
           const parentDoc = this.db?.prepare(parentSql).get(...parentParams) as RowShape | undefined;
@@ -492,7 +492,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       sql += " AND kind != 'pack-knowledge'";
     }
     if (options?.packId) {
-      sql += " AND pack_id = ? AND governance_status = 'active'";
+      sql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
       params.push(options.packId);
     }
     if (options?.status) {
@@ -587,7 +587,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         sql += " AND kind != 'pack-knowledge'";
       }
       if (options?.packId) {
-        sql += " AND pack_id = ? AND governance_status = 'active'";
+        sql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
         params.push(options.packId);
       }
       if (options?.status) {
