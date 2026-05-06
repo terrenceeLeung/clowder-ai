@@ -338,9 +338,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
             parentSql += " AND pack_id = ? AND governance_status = 'active'";
             parentParams.push(options.packId);
           }
-          const parentDoc = this.db?.prepare(parentSql).get(...parentParams) as
-            | RowShape
-            | undefined;
+          const parentDoc = this.db?.prepare(parentSql).get(...parentParams) as RowShape | undefined;
           if (parentDoc) {
             item = rowToItem(parentDoc);
             item.summary = `[passage match] ${pList[0].speaker ? `${pList[0].speaker}: ` : ''}${pList[0].content.slice(0, 200)}`;
