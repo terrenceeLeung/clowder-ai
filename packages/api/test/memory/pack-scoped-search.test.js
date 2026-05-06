@@ -91,7 +91,9 @@ describe('Pack-scoped evidence search (AC-205)', () => {
     // governance_status not in upsert schema — set via direct SQL
     db.prepare("UPDATE evidence_docs SET governance_status = 'active' WHERE anchor = 'dk:packA:doc1'").run();
     db.prepare("UPDATE evidence_docs SET governance_status = 'rejected' WHERE anchor = 'dk:packA:rejected'").run();
-    db.prepare("UPDATE evidence_docs SET governance_status = 'needs_review' WHERE anchor = 'dk:packA:needs-review'").run();
+    db.prepare(
+      "UPDATE evidence_docs SET governance_status = 'needs_review' WHERE anchor = 'dk:packA:needs-review'",
+    ).run();
 
     const results = await store.search('knowledge', { limit: 10, packId: 'packA' });
     const anchors = results.map((r) => r.anchor);
