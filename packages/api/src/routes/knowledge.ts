@@ -232,10 +232,13 @@ export const knowledgeRoutes: FastifyPluginAsync<KnowledgeRoutesOptions> = async
         return reply.status(400).send({ error: `status must be one of: ${allowed.join(', ')}` });
       }
 
-      const currentStatus = governance.getStatus(anchor);
-      if (currentStatus === null) {
+      const doc = db
+        .prepare("SELECT governance_status FROM evidence_docs WHERE anchor = ? AND kind = 'pack-knowledge'")
+        .get(anchor) as { governance_status: string | null } | undefined;
+      if (!doc) {
         return reply.status(404).send({ error: 'Document not found' });
       }
+      const currentStatus = doc.governance_status;
 
       try {
         governance.transition(anchor, targetStatus as 'approved' | 'rejected' | 'retired');
