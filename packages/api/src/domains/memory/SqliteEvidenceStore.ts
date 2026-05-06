@@ -476,7 +476,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       options?.kind ??
       (options?.scope === 'threads' ? 'thread' : options?.scope === 'sessions' ? 'session' : undefined);
     const excludeSessionAndThread = options?.scope === 'docs' || options?.scope === 'memory';
-    const excludePackKnowledge = effectiveKind !== 'pack-knowledge';
+    const excludePackKnowledge = !options?.packId && effectiveKind !== 'pack-knowledge';
     if (effectiveKind) {
       sql += ' AND kind = ?';
       params.push(effectiveKind);
@@ -486,6 +486,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     }
     if (excludePackKnowledge) {
       sql += " AND kind != 'pack-knowledge'";
+    }
+    if (options?.packId) {
+      sql += ' AND pack_id = ?';
+      params.push(options.packId);
     }
     if (options?.status) {
       sql += ' AND status = ?';
@@ -567,7 +571,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         options?.kind ??
         (options?.scope === 'threads' ? 'thread' : options?.scope === 'sessions' ? 'session' : undefined);
       const excludeSessionAndThread = options?.scope === 'docs' || options?.scope === 'memory';
-      const excludePackKnowledge = effectiveKind !== 'pack-knowledge';
+      const excludePackKnowledge = !options?.packId && effectiveKind !== 'pack-knowledge';
       if (effectiveKind) {
         sql += ' AND kind = ?';
         params.push(effectiveKind);
@@ -577,6 +581,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       }
       if (excludePackKnowledge) {
         sql += " AND kind != 'pack-knowledge'";
+      }
+      if (options?.packId) {
+        sql += ' AND pack_id = ?';
+        params.push(options.packId);
       }
       if (options?.status) {
         sql += ' AND status = ?';
