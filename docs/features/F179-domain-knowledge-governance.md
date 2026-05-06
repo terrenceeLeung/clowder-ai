@@ -9,7 +9,7 @@ community_issue: 569
 
 # F179: Domain Knowledge Governance — 领域知识治理
 
-> **Status**: in-progress (Phase 1.5) | **Owner**: Ragdoll | **Priority**: P1
+> **Status**: in-progress (Phase 2 pending) | **Owner**: Ragdoll | **Priority**: P1
 
 ## Vision
 
@@ -230,11 +230,11 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
     - 列表项 (DocRow) 样式对齐：使用语义化边框和更清晰的 Badge 样式。
 
 **验收标准：**
-- [ ] AC-151: `PATCH /api/knowledge/docs/:anchor/governance` 端点接受目标状态，经 GovernanceStateMachine 验证转换合法性，返回更新后状态
-- [ ] AC-152: DocDetail UI 按当前治理状态显示操作按钮（needs_review → Approve/Reject，active → Retire），操作后状态即时刷新
-- [ ] AC-153: `approved → active` 在用户审批或高置信自动审批后自动触发——用户点 Approve 后文档直接到达 `active`，导入时高置信文档也自动到达 `active`
-- [ ] AC-154: Knowledge search 只返回 `governance_status = 'active'` 的文档——`needs_review`/`ingested`/`normalized`/`approved` 均不出现在检索结果中
-- [ ] AC-155: AC-011 e2e 测试更新：验证完整治理链（ingested → normalized → approved → active），确认只有 `active` 文档出现在检索结果中，`needs_review` 文档不可搜到
+- [x] AC-151: `PATCH /api/knowledge/docs/:anchor/governance` 端点接受目标状态，经 GovernanceStateMachine 验证转换合法性，返回更新后状态
+- [x] AC-152: DocDetail UI 按当前治理状态显示操作按钮（needs_review → Approve/Reject，active → Retire），操作后状态即时刷新
+- [x] AC-153: `approved → active` 在用户审批或高置信自动审批后自动触发——用户点 Approve 后文档直接到达 `active`，导入时高置信文档也自动到达 `active`
+- [x] AC-154: Knowledge search 只返回 `governance_status = 'active'` 的文档——`needs_review`/`ingested`/`normalized`/`approved` 均不出现在检索结果中
+- [x] AC-155: AC-011 e2e 测试更新：验证完整治理链（ingested → normalized → approved → active），确认只有 `active` 文档出现在检索结果中，`needs_review` 文档不可搜到
 
 ### Phase 2: Federation + Evolution — 外部知识联邦 + 知识进化
 
@@ -358,6 +358,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-03 | Design polish 合入 main（PR #17）：Hub 侧边栏导航集成 + 全组件设计 token 对齐（cafe-*/--conn-*），暹罗猫 Pencil 设计 + 缅因猫 code review |
 | 2026-05-04 | CVO 验收发现治理闭环断裂：愿景 vs AC 缺口分析（opus）+ Playwright 实测确认（gpt52）→ Phase 1.5 立项 |
 | 2026-05-04 | Phase 1.5 UI/UX 设计完成：设计"治理丝带"与概览视图（暹罗猫 🐾） |
+| 2026-05-06 | Phase 1.5 merged (PR #21)：治理闭环修复——PATCH governance API + GovernanceRibbon + autoRoute chain + search gating + e2e test fix |
 
 ## Review Gate
 
