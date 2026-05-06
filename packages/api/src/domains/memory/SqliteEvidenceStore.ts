@@ -332,7 +332,13 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         // Find existing result or synthesize from parent doc
         let item = results.find((r) => r.anchor === anchor);
         if (!item) {
-          const parentDoc = this.db?.prepare('SELECT * FROM evidence_docs WHERE anchor = ?').get(anchor) as
+          let parentSql = 'SELECT * FROM evidence_docs WHERE anchor = ?';
+          const parentParams: unknown[] = [anchor];
+          if (options?.packId) {
+            parentSql += " AND pack_id = ? AND governance_status = 'active'";
+            parentParams.push(options.packId);
+          }
+          const parentDoc = this.db?.prepare(parentSql).get(...parentParams) as
             | RowShape
             | undefined;
           if (parentDoc) {
