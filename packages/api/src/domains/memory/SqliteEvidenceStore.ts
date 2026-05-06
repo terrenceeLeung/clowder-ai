@@ -99,7 +99,8 @@ export class SqliteEvidenceStore implements IEvidenceStore {
           : undefined);
     const excludeSessionAndThread = options?.scope === 'docs' || options?.scope === 'memory';
     // F129 AC-A10: exclude pack-knowledge from global search unless explicitly requested
-    const excludePackKnowledge = effectiveKind !== 'pack-knowledge';
+    // F179 AC-205: packId opt-in bypasses exclusion
+    const excludePackKnowledge = !options?.packId && effectiveKind !== 'pack-knowledge';
     // F148 Phase B (AC-B1): threadId filter — scope to a specific thread's evidence
     // Anchor convention: thread-{threadId} (e.g. thread-thread_abc for threadId="thread_abc")
     const threadAnchor = options?.threadId ? `thread-${options.threadId}` : undefined;
@@ -130,6 +131,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     }
     if (excludePackKnowledge) {
       anchorSql += " AND kind != 'pack-knowledge'";
+    }
+    if (options?.packId) {
+      anchorSql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
+      anchorParams.push(options.packId);
     }
     if (options?.status) {
       anchorSql += ' AND status = ?';
@@ -183,6 +188,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         }
         if (excludePackKnowledge) {
           sql += " AND d.kind != 'pack-knowledge'";
+        }
+        if (options?.packId) {
+          sql += " AND d.pack_id = ? AND (d.governance_status IS NULL OR d.governance_status = 'active')";
+          params.push(options.packId);
         }
         if (options?.status) {
           sql += ' AND d.status = ?';
@@ -252,6 +261,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       if (excludePackKnowledge) {
         containsSql += " AND kind != 'pack-knowledge'";
       }
+      if (options?.packId) {
+        containsSql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
+        containsParams.push(options.packId);
+      }
       if (options?.status) {
         containsSql += ' AND status = ?';
         containsParams.push(options.status);
@@ -319,9 +332,13 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         // Find existing result or synthesize from parent doc
         let item = results.find((r) => r.anchor === anchor);
         if (!item) {
-          const parentDoc = this.db?.prepare('SELECT * FROM evidence_docs WHERE anchor = ?').get(anchor) as
-            | RowShape
-            | undefined;
+          let parentSql = 'SELECT * FROM evidence_docs WHERE anchor = ?';
+          const parentParams: unknown[] = [anchor];
+          if (options?.packId) {
+            parentSql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
+            parentParams.push(options.packId);
+          }
+          const parentDoc = this.db?.prepare(parentSql).get(...parentParams) as RowShape | undefined;
           if (parentDoc) {
             item = rowToItem(parentDoc);
             item.summary = `[passage match] ${pList[0].speaker ? `${pList[0].speaker}: ` : ''}${pList[0].content.slice(0, 200)}`;
@@ -463,7 +480,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       options?.kind ??
       (options?.scope === 'threads' ? 'thread' : options?.scope === 'sessions' ? 'session' : undefined);
     const excludeSessionAndThread = options?.scope === 'docs' || options?.scope === 'memory';
-    const excludePackKnowledge = effectiveKind !== 'pack-knowledge';
+    const excludePackKnowledge = !options?.packId && effectiveKind !== 'pack-knowledge';
     if (effectiveKind) {
       sql += ' AND kind = ?';
       params.push(effectiveKind);
@@ -473,6 +490,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     }
     if (excludePackKnowledge) {
       sql += " AND kind != 'pack-knowledge'";
+    }
+    if (options?.packId) {
+      sql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
+      params.push(options.packId);
     }
     if (options?.status) {
       sql += ' AND status = ?';
@@ -554,7 +575,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         options?.kind ??
         (options?.scope === 'threads' ? 'thread' : options?.scope === 'sessions' ? 'session' : undefined);
       const excludeSessionAndThread = options?.scope === 'docs' || options?.scope === 'memory';
-      const excludePackKnowledge = effectiveKind !== 'pack-knowledge';
+      const excludePackKnowledge = !options?.packId && effectiveKind !== 'pack-knowledge';
       if (effectiveKind) {
         sql += ' AND kind = ?';
         params.push(effectiveKind);
@@ -564,6 +585,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       }
       if (excludePackKnowledge) {
         sql += " AND kind != 'pack-knowledge'";
+      }
+      if (options?.packId) {
+        sql += " AND pack_id = ? AND (governance_status IS NULL OR governance_status = 'active')";
+        params.push(options.packId);
       }
       if (options?.status) {
         sql += ' AND status = ?';
@@ -696,6 +721,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
   async deleteByAnchor(anchor: string): Promise<void> {
     return this.writeQueue.enqueue(() => {
       this.ensureOpen();
+      this.db?.prepare('DELETE FROM evidence_passages WHERE doc_anchor = ?').run(anchor);
       this.db?.prepare('DELETE FROM evidence_docs WHERE anchor = ?').run(anchor);
     });
   }
@@ -704,6 +730,11 @@ export class SqliteEvidenceStore implements IEvidenceStore {
   async deleteByPackId(packId: string): Promise<number> {
     return this.writeQueue.enqueue(() => {
       this.ensureOpen();
+      this.db
+        ?.prepare(
+          'DELETE FROM evidence_passages WHERE doc_anchor IN (SELECT anchor FROM evidence_docs WHERE pack_id = ?)',
+        )
+        .run(packId);
       const result = this.db?.prepare('DELETE FROM evidence_docs WHERE pack_id = ?').run(packId);
       return result?.changes ?? 0;
     });
@@ -724,6 +755,27 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  checkAndRepairFts(): { checked: boolean; repaired: boolean; error?: string } {
+    this.ensureOpen();
+    const ftsNames = ['evidence_fts', 'passage_fts'];
+    let wasCorrupted = false;
+    for (const fts of ftsNames) {
+      try {
+        this.db!.prepare(`INSERT INTO ${fts}(${fts}) VALUES('integrity-check')`).run();
+      } catch {
+        wasCorrupted = true;
+      }
+    }
+    try {
+      for (const fts of ftsNames) {
+        this.db!.prepare(`INSERT INTO ${fts}(${fts}) VALUES('rebuild')`).run();
+      }
+      return { checked: true, repaired: wasCorrupted };
+    } catch (err) {
+      return { checked: true, repaired: false, error: String(err) };
     }
   }
 

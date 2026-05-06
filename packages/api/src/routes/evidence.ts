@@ -34,6 +34,7 @@ const searchSchema = z.object({
   activeFeatureIds: z.string().optional(),
   truthSourceRef: z.string().optional(),
   recentArtifactRefs: z.string().optional(),
+  packId: z.string().optional(),
 });
 
 export type { EvidenceConfidence, EvidenceSourceType } from './evidence-helpers.js';
@@ -98,6 +99,7 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
       activeFeatureIds: rawFeatureIds,
       truthSourceRef,
       recentArtifactRefs: rawArtifactRefs,
+      packId,
     } = parseResult.data;
 
     const effectiveLimit = limit ?? 5;
@@ -127,6 +129,7 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
         contextWindow,
         threadId,
         dimension,
+        packId,
       };
       // F-4: Use KnowledgeResolver for federated project + global search
       const resolveResult = opts.knowledgeResolver ? await opts.knowledgeResolver.resolve(q, searchOpts) : null;
@@ -176,9 +179,9 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
       // F163 AC-A3: report always_on injection sources in response envelope
       let injectionSources: string[] | undefined;
       if (f163Flags.alwaysOnInjection !== 'off') {
-        const queryAlwaysOn = (opts.evidenceStore as { queryAlwaysOn?: () => Array<{ anchor: string }> }).queryAlwaysOn;
-        if (queryAlwaysOn) {
-          injectionSources = queryAlwaysOn().map((d) => d.anchor);
+        const store = opts.evidenceStore as { queryAlwaysOn?: () => Array<{ anchor: string }> };
+        if (store.queryAlwaysOn) {
+          injectionSources = store.queryAlwaysOn().map((d) => d.anchor);
         }
       }
 
