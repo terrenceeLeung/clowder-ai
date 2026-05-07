@@ -86,10 +86,7 @@ describe('MCP Evidence Tools', () => {
       result.content[0].text.includes('embedding unavailable'),
       'expected embedding-unavailable message in response text',
     );
-    assert.ok(
-      result.content[0].text.includes('fell back to lexical'),
-      'expected fallback signal in response text',
-    );
+    assert.ok(result.content[0].text.includes('fell back to lexical'), 'expected fallback signal in response text');
     assert.ok(!result.content[0].text.includes('Evidence store error'), 'must not misreport graceful degradation');
   });
 });

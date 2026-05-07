@@ -107,8 +107,7 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
     // Only flag as degraded when embedding is unavailable so the store actually fell back
     // to BM25-only — otherwise the "lexical-only" banner misrepresents successful hybrid runs.
     const requestedMode = mode ?? 'lexical';
-    const embeddingReady =
-      (opts.evidenceStore as { isEmbeddingReady?: () => boolean }).isEmbeddingReady?.() ?? false;
+    const embeddingReady = (opts.evidenceStore as { isEmbeddingReady?: () => boolean }).isEmbeddingReady?.() ?? false;
     const isRawDegraded = depth === 'raw' && requestedMode !== 'lexical' && !embeddingReady;
     // F163: freeze flags once per request, compute variant ID
     const f163Flags = freezeFlags();

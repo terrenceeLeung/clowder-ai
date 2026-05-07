@@ -146,12 +146,10 @@ describe('F179 AC-2.5.1: depth=raw routes to searchPassagesHybrid for hybrid/sem
     // Insert an old passage and a new passage
     db.prepare(`INSERT INTO evidence_passages
       (doc_anchor, passage_id, content, position, created_at, passage_kind)
-      VALUES (?, ?, ?, ?, ?, 'domain_chunk')`)
-      .run('dk:packA:lex-doc', 'old-p', 'tunneling old data', 1, oldDate);
+      VALUES (?, ?, ?, ?, ?, 'domain_chunk')`).run('dk:packA:lex-doc', 'old-p', 'tunneling old data', 1, oldDate);
     db.prepare(`INSERT INTO evidence_passages
       (doc_anchor, passage_id, content, position, created_at, passage_kind)
-      VALUES (?, ?, ?, ?, ?, 'domain_chunk')`)
-      .run('dk:packA:lex-doc', 'new-p', 'tunneling new data', 2, newDate);
+      VALUES (?, ?, ?, ?, ?, 'domain_chunk')`).run('dk:packA:lex-doc', 'new-p', 'tunneling new data', 2, newDate);
 
     // Also give old-p and new-p vectors so hybrid path picks them up
     const targetVec = new Float32Array([0.1, 0.2, 0.3]);
