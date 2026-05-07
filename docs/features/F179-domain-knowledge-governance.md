@@ -275,11 +275,11 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 **不做：** 完整 eval 框架、A/B 测试基础设施、面向用户的 UI 改动
 
 **验收标准：**
-- [ ] AC-2.5.1: `depth=raw` + `mode=hybrid/semantic` 走 `searchPassagesHybrid()`——passage 向量搜索可用，不再降级为 lexical-only
-- [ ] AC-2.5.2: KnowledgeImporter 导入时同步写 `evidence_vectors`——`mode=semantic` 在 doc-level 能命中 pack-knowledge 文档
-- [ ] AC-2.5.3: `searchPassages()` / `searchPassagesHybrid()` 支持 packId 过滤——`depth=raw` + `packId` 只返回指定 pack 的 passage
-- [ ] AC-2.5.4: Fixture query set 跑 Recall@5 / Precision@5 baseline，分 mode（lexical/semantic/hybrid）分 pack，CI 可回归
-- [ ] AC-2.5.5: FTS 质量验证——Normalizer summary vs 300 字截断，同组查询 Recall@5 有可测量改善
+- [x] AC-2.5.1: `depth=raw` + `mode=hybrid/semantic` 走 `searchPassagesHybrid()`——passage 向量搜索可用，不再降级为 lexical-only
+- [x] AC-2.5.2: KnowledgeImporter 导入时同步写 `evidence_vectors`（同时补齐 passage_vectors embedder wiring）——`mode=semantic/hybrid` 在 doc/passage 双层能命中 pack-knowledge 文档
+- [x] AC-2.5.3: `searchPassages()` / `searchPassagesHybrid()` 支持 packId 过滤——`depth=raw` + `packId` 只返回指定 pack 的 passage
+- [x] AC-2.5.4: Fixture query set 跑 Recall@5 / Precision@5 baseline，分 mode（lexical/semantic/hybrid）分 pack，CI 可回归
+- [x] AC-2.5.5: FTS 质量验证——Normalizer summary vs 300 字截断，同组查询 Recall@5 有可测量改善
 
 ### Phase 3A: Versioning + Safe Federation — 版本管理 + 安全只读联邦
 

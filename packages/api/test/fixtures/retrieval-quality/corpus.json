@@ -1,0 +1,137 @@
+{
+  "comment": "F179 Phase 2.5 AC-2.5.4 fixture corpus. Each doc lists chunks with deterministic-vocab content. semanticVector encodes salient terms so vec0 NN reflects topical similarity.",
+  "vocabulary": ["auth", "token", "session", "redis", "cache", "queue", "worker", "embed", "vector", "fts"],
+  "docs": [
+    {
+      "anchor": "dk:retrieval-pack:auth-overview",
+      "title": "Auth System Overview",
+      "summary": "authentication tokens and session lifecycle",
+      "packId": "retrieval-pack",
+      "chunks": [
+        {
+          "id": "auth-1",
+          "content": "auth tokens are issued at login and expire after 24 hours",
+          "vector": [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+        },
+        {
+          "id": "auth-2",
+          "content": "session storage uses redis with a 30 day sliding window",
+          "vector": [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+        }
+      ]
+    },
+    {
+      "anchor": "dk:retrieval-pack:redis-cache",
+      "title": "Redis Cache Architecture",
+      "summary": "redis cache layer for session and queue data",
+      "packId": "retrieval-pack",
+      "chunks": [
+        {
+          "id": "redis-1",
+          "content": "redis clusters serve as the primary cache and message queue",
+          "vector": [0, 0, 0, 1, 1, 1, 0, 0, 0, 0]
+        },
+        {
+          "id": "redis-2",
+          "content": "session keys are stored with hashed token suffix",
+          "vector": [0, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+        }
+      ]
+    },
+    {
+      "anchor": "dk:retrieval-pack:worker-queue",
+      "title": "Worker Queue System",
+      "summary": "queue workers process jobs in batches",
+      "packId": "retrieval-pack",
+      "chunks": [
+        {
+          "id": "worker-1",
+          "content": "queue workers consume jobs and apply retry policies",
+          "vector": [0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+        },
+        {
+          "id": "worker-2",
+          "content": "redis backs the queue with persistence enabled",
+          "vector": [0, 0, 0, 1, 0, 1, 1, 0, 0, 0]
+        }
+      ]
+    },
+    {
+      "anchor": "dk:retrieval-pack:embedding-pipeline",
+      "title": "Embedding Pipeline",
+      "summary": "vector embeddings and FTS indexing",
+      "packId": "retrieval-pack",
+      "chunks": [
+        {
+          "id": "embed-1",
+          "content": "embed model produces 384 dim vectors for each passage",
+          "vector": [0, 0, 0, 0, 0, 0, 0, 1, 1, 0]
+        },
+        {
+          "id": "embed-2",
+          "content": "fts indexes passages alongside the vector store",
+          "vector": [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
+        }
+      ]
+    },
+    {
+      "anchor": "dk:retrieval-pack:fts-tuning",
+      "title": "FTS Tuning Notes",
+      "summary": "fts5 ranker bm25 weights and tokenizer choice",
+      "packId": "retrieval-pack",
+      "chunks": [
+        {
+          "id": "fts-1",
+          "content": "bm25 weights favor title and summary over body content",
+          "vector": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+        }
+      ]
+    },
+    {
+      "anchor": "dk:other-pack:unrelated",
+      "title": "Unrelated Doc",
+      "summary": "from a different pack — should not appear in pack-scoped queries",
+      "packId": "other-pack",
+      "chunks": [
+        {
+          "id": "other-1",
+          "content": "auth token redis vector embed fts queue",
+          "vector": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "q1-auth-tokens",
+      "text": "auth tokens",
+      "queryVector": [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      "expectedAnchors": ["dk:retrieval-pack:auth-overview", "dk:retrieval-pack:redis-cache"],
+      "comment": "lexical AND semantic should both find auth-overview; redis-cache mentions tokens too"
+    },
+    {
+      "id": "q2-session-storage",
+      "text": "session storage",
+      "queryVector": [0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+      "expectedAnchors": ["dk:retrieval-pack:auth-overview", "dk:retrieval-pack:redis-cache"]
+    },
+    {
+      "id": "q3-cache-queue",
+      "text": "cache queue",
+      "queryVector": [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+      "expectedAnchors": ["dk:retrieval-pack:redis-cache", "dk:retrieval-pack:worker-queue"]
+    },
+    {
+      "id": "q4-vector-embedding",
+      "text": "vector embedding pipeline",
+      "queryVector": [0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+      "expectedAnchors": ["dk:retrieval-pack:embedding-pipeline"]
+    },
+    {
+      "id": "q5-fts-bm25",
+      "text": "fts bm25 ranker",
+      "queryVector": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      "expectedAnchors": ["dk:retrieval-pack:fts-tuning", "dk:retrieval-pack:embedding-pipeline"]
+    }
+  ]
+}

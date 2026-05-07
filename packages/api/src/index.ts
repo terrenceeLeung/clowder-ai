@@ -1819,6 +1819,10 @@ async function main(): Promise<void> {
     governance: new GovernanceStateMachine(knowledgeDb),
     packs: new DomainPackManager(knowledgeDb),
     piiDetector: new PiiDetector(),
+    // Phase 2.5 AC-2.5.2: wire embedder + vectorStore so pack-knowledge gets indexed in
+    // both passage_vectors (chunk-level) and evidence_vectors (doc-level).
+    embedder: memoryServices.embeddingService,
+    vectorStore: memoryServices.vectorStore,
   });
   await app.register(knowledgeRoutes, {
     db: knowledgeDb,

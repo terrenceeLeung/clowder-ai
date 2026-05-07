@@ -1,4 +1,6 @@
 // F179: Knowledge Importer — orchestrator (KD-1, AC-01, AC-04, AC-013)
+// F179 Phase 2.5 (AC-2.5.2): also writes evidence_vectors (doc-level) + passage_vectors
+// (chunk-level) so semantic/hybrid retrieval can hit pack-knowledge.
 
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -23,6 +25,11 @@ export interface PassageEmbedder {
   embed(texts: string[]): Promise<Float32Array[]>;
 }
 
+export interface DocVectorStore {
+  upsert(anchor: string, embedding: Float32Array): void;
+  delete(anchor: string): void;
+}
+
 interface ImporterDeps {
   db: Database.Database;
   storage: KnowledgeStorage;
@@ -31,6 +38,7 @@ interface ImporterDeps {
   packs: DomainPackManager;
   piiDetector: IPiiDetector;
   embedder?: PassageEmbedder;
+  vectorStore?: DocVectorStore;
 }
 
 export class KnowledgeImporter {
@@ -68,6 +76,9 @@ export class KnowledgeImporter {
 
     const rawHash = await this.deps.storage.saveRaw(content, filePath.split('/').pop() ?? 'unknown.md');
 
+    // Phase 2.5: collect stale passage_ids before/inside the tx so post-commit cleanup can clear vectors.
+    const stalePassageIds: string[] = [];
+
     try {
       const packId = opts?.packId ?? this.deps.packs.ensureDefaultPack();
       const now = new Date().toISOString();
@@ -80,6 +91,12 @@ export class KnowledgeImporter {
               .prepare('UPDATE evidence_docs SET governance_status = ? WHERE anchor = ?')
               .run('stale', existing.anchor);
           }
+          // Phase 2.5: collect stale passage_ids so we can clear their vectors after the tx commits.
+          // (Reading from the same db inside the tx is fine — same connection.)
+          const rows = this.deps.db
+            .prepare('SELECT passage_id FROM evidence_passages WHERE doc_anchor = ?')
+            .all(existing.anchor) as Array<{ passage_id: string }>;
+          for (const r of rows) stalePassageIds.push(r.passage_id);
         }
 
         this.deps.db
@@ -142,7 +159,28 @@ export class KnowledgeImporter {
       return { sourcePath, anchor: null, status: 'failed', reason: (err as Error).message };
     }
 
+    // Phase 2.5: clear stale vectors for the previous version (kept around for governance trail
+    // but vectors must not survive — they would otherwise still rank in semantic/hybrid).
+    if (existing && this.deps.vectorStore) {
+      try {
+        this.deps.vectorStore.delete(existing.anchor);
+      } catch {
+        // fail-open
+      }
+    }
+    if (existing && stalePassageIds.length > 0) {
+      try {
+        const placeholders = stalePassageIds.map(() => '?').join(',');
+        this.deps.db
+          .prepare(`DELETE FROM passage_vectors WHERE passage_id IN (${placeholders})`)
+          .run(...stalePassageIds);
+      } catch {
+        // fail-open: passage_vectors may not exist if sqlite-vec unavailable
+      }
+    }
+
     if (this.deps.embedder && normalized.chunks.length > 0) {
+      // Passage-level embeddings (passage_vectors).
       try {
         const texts = normalized.chunks.map((c) => c.contentMarkdown);
         const vectors = await this.deps.embedder.embed(texts);
@@ -157,6 +195,20 @@ export class KnowledgeImporter {
         embedTx();
       } catch {
         // Fail-open: embedding failure doesn't block import
+      }
+    }
+
+    // Phase 2.5 AC-2.5.2: doc-level embedding (evidence_vectors). Independent of passage embedding —
+    // a passage embed failure should not skip doc embed and vice versa.
+    if (this.deps.embedder && this.deps.vectorStore) {
+      try {
+        const docText = `${normalized.title}\n\n${normalized.summary ?? ''}`.trim();
+        if (docText) {
+          const [docVec] = await this.deps.embedder.embed([docText]);
+          if (docVec) this.deps.vectorStore.upsert(normalized.anchor, docVec);
+        }
+      } catch {
+        // Fail-open: doc embedding failure doesn't block import
       }
     }
 

@@ -310,15 +310,67 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       }
     }
 
-    // Phase E + AC-I9: passage search when depth=raw and scope includes threads
+    // Phase E + AC-I9: passage search when depth=raw and scope includes threads.
+    // F179 Phase 2.5 AC-2.5.1: route hybrid/semantic modes through searchPassagesHybrid so
+    // vector-only passages surface; lexical mode keeps the BM25-only path.
     if (options?.depth === 'raw' && (!options?.scope || options.scope === 'all' || options.scope === 'threads')) {
       const cw = options?.contextWindow;
-      const passages = this.searchPassages(
-        trimmed,
-        limit,
-        { dateFrom: options?.dateFrom, dateTo: options?.dateTo },
-        cw && cw > 0 ? { contextWindow: cw } : undefined,
-      );
+      const requestedMode = options?.mode ?? 'lexical';
+      const embedAvailable = this.embedDeps?.embedding.isReady() && this.embedDeps.mode === 'on';
+      const useHybrid = (requestedMode === 'hybrid' || requestedMode === 'semantic') && embedAvailable;
+
+      let passages;
+      if (useHybrid) {
+        try {
+          passages = await this.searchPassagesHybrid(trimmed, limit, {
+            packId: options?.packId,
+          });
+          // searchPassagesHybrid does not honor dateFilter/contextWindow yet; if asked, do a
+          // post-pass lookup for surrounding passages and date narrowing.
+          if (cw && cw > 0 && passages.length > 0 && this.db) {
+            const ctxStmt = this.db.prepare(
+              `SELECT doc_anchor, passage_id, content, speaker, position, created_at
+               FROM evidence_passages
+               WHERE doc_anchor = ? AND position BETWEEN ? AND ? AND passage_id != ?
+               ORDER BY position`,
+            );
+            for (const r of passages) {
+              if (r.position == null) continue;
+              const ctxRows = ctxStmt.all(r.docAnchor, r.position - cw, r.position + cw, r.passageId) as Array<{
+                doc_anchor: string;
+                passage_id: string;
+                content: string;
+                speaker: string | null;
+                position: number | null;
+                created_at: string | null;
+              }>;
+              r.context = ctxRows.map((c) => ({
+                docAnchor: c.doc_anchor,
+                passageId: c.passage_id,
+                content: c.content,
+                speaker: c.speaker ?? undefined,
+                position: c.position ?? undefined,
+                createdAt: c.created_at ?? undefined,
+              }));
+            }
+          }
+        } catch {
+          // Hybrid path failure → fall back to BM25-only
+          passages = this.searchPassages(
+            trimmed,
+            limit,
+            { dateFrom: options?.dateFrom, dateTo: options?.dateTo },
+            { ...(cw && cw > 0 ? { contextWindow: cw } : {}), ...(options?.packId ? { packId: options.packId } : {}) },
+          );
+        }
+      } else {
+        passages = this.searchPassages(
+          trimmed,
+          limit,
+          { dateFrom: options?.dateFrom, dateTo: options?.dateTo },
+          { ...(cw && cw > 0 ? { contextWindow: cw } : {}), ...(options?.packId ? { packId: options.packId } : {}) },
+        );
+      }
       // Group passages by docAnchor for structured return
       // P1-2 fix: when threadId filter is active, skip passages from other threads
       const passagesByAnchor = new Map<string, typeof passages>();
@@ -938,7 +990,7 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     query: string,
     limit = 10,
     timeFilter?: { dateFrom?: string; dateTo?: string },
-    options?: { contextWindow?: number; passageKind?: string },
+    options?: { contextWindow?: number; passageKind?: string; packId?: string },
   ): PassageResult[] {
     this.ensureOpen();
     const trimmed = query.trim();
@@ -962,6 +1014,12 @@ export class SqliteEvidenceStore implements IEvidenceStore {
            WHERE passage_fts MATCH ?
              AND (d.governance_status IS NULL OR d.governance_status = 'active')`;
       const params: unknown[] = [ftsQuery];
+
+      // F179 Phase 2.5 AC-2.5.3: pack-scoped passage retrieval (parity with doc-level search).
+      if (options?.packId) {
+        sql += ' AND d.pack_id = ?';
+        params.push(options.packId);
+      }
 
       if (options?.passageKind) {
         sql += ' AND p.passage_kind = ?';
@@ -1053,12 +1111,17 @@ export class SqliteEvidenceStore implements IEvidenceStore {
    * Ensures long-document tail chunks are retrievable via vector similarity
    * even when BM25 keyword match fails.
    */
-  async searchPassagesHybrid(query: string, limit = 10, options?: { passageKind?: string }): Promise<PassageResult[]> {
+  async searchPassagesHybrid(
+    query: string,
+    limit = 10,
+    options?: { passageKind?: string; packId?: string },
+  ): Promise<PassageResult[]> {
     this.ensureOpen();
     if (!this.db) return [];
 
     const bm25Results = this.searchPassages(query, Math.min(Math.max(limit * 4, 20), 100), undefined, {
       passageKind: options?.passageKind,
+      packId: options?.packId,
     });
 
     if (!this.embedDeps || this.embedDeps.mode !== 'on') {
@@ -1078,6 +1141,24 @@ export class SqliteEvidenceStore implements IEvidenceStore {
            LIMIT ?`,
         )
         .all(queryVec[0], pool) as Array<{ passage_id: string; distance: number }>;
+
+      // F179 Phase 2.5 AC-2.5.3: filter vec0 nn hits by packId + governance to mirror BM25 path.
+      if (nnPassages.length > 0) {
+        const placeholders = nnPassages.map(() => '?').join(',');
+        let eligibleSql = `SELECT p.passage_id
+             FROM evidence_passages p
+             LEFT JOIN evidence_docs d ON d.anchor = p.doc_anchor
+             WHERE p.passage_id IN (${placeholders})
+               AND (d.governance_status IS NULL OR d.governance_status = 'active')`;
+        const eligibleParams: unknown[] = nnPassages.map((n) => n.passage_id);
+        if (options?.packId) {
+          eligibleSql += ' AND d.pack_id = ?';
+          eligibleParams.push(options.packId);
+        }
+        const eligibleRows = this.db.prepare(eligibleSql).all(...eligibleParams) as Array<{ passage_id: string }>;
+        const eligible = new Set(eligibleRows.map((r) => r.passage_id));
+        nnPassages = nnPassages.filter((n) => eligible.has(n.passage_id));
+      }
     } catch {
       return bm25Results.slice(0, limit);
     }
@@ -1104,6 +1185,12 @@ export class SqliteEvidenceStore implements IEvidenceStore {
            WHERE p.passage_id IN (${placeholders})
              AND (d.governance_status IS NULL OR d.governance_status = 'active')`;
       const params: unknown[] = [...missingIds];
+
+      // F179 Phase 2.5: keep packId scoping consistent during backfill of vector-only hits.
+      if (options?.packId) {
+        sql += ' AND d.pack_id = ?';
+        params.push(options.packId);
+      }
 
       if (options?.passageKind) {
         sql += ' AND p.passage_kind = ?';
