@@ -259,24 +259,54 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - [x] AC-206: Agent 对话中可通过工具调用检索 pack 知识并注入上下文——用户导入的知识在对话中可被 AI 引用
 - [x] AC-207: 端到端验证：导入知识 → 重启 API → pack-scoped 搜索仍返回结果 → 删除文档后无孤儿数据
 
-### Phase 3: Federation + Evolution — 外部知识联邦 + 知识进化
+### Phase 2.5: Retrieval Quality Hardening — 检索质量加固
+
+**背景：** Phase 2 合入后，四猫讨论（opus+codex+sonnet+gpt55）结合上游反馈（#569 评论 + #652 issue）发现：(1) `searchPassagesHybrid()` 方法和 `passage_vectors` 表已存在但未接入主搜索路径（`depth=raw` 被 short-circuit 强制 lexical-only）；(2) pack-knowledge 文档在 `evidence_vectors` 表里没有 doc-level 向量（KnowledgeImporter 只写 passage_vectors，IndexBuilder.rebuild 跳过 pack-knowledge）；(3) `searchPassages()` 缺 packId 过滤。
 
 **范围：**
-- KnowledgeResolver 新增 external source registry
-- Mirror 模式：同步进 Domain Pack（全治理 + 可进化 Skill）
-- Federated 模式：查询时 citation-only 透传（不参与 Skill 进化），含 ACL 校验 + cache TTL
-- Conflict detection（async audit，非 query-time）：版本感知 + 用户手动标记冲突
-- 知识 → Pack workflow draft → 人审 → 可选晋升 Skill（需证据链）
-- Federated 结果禁止自动回流本地，必须显式 promote/mirror
+- 修复 1：`depth=raw` 路径替换 `searchPassages()` 为 `searchPassagesHybrid()`，接上 passage 向量能力（short-circuit 保留，阻止 doc-level 向量乱入）
+- 修复 2：KnowledgeImporter 导入时同步写 `evidence_vectors`（doc-level 向量），修复不对称
+- 修复 3：`searchPassages()` 和 `searchPassagesHybrid()` 增加 packId + governance 过滤
+- 验证 1：fixture query set 固化 Recall@K / Precision@5 baseline，分 mode 分 pack
+- 验证 2：FTS + Normalizer 质量联动——对比 Normalizer summary vs 300 字截断的 BM25 召回差异
+- 增强：导入/更新/删除后 passage/embedding/FTS 实时一致性验证
+- 增强：Retrieval API 返回命中来源诊断（BM25/vector/hybrid、pack_id、governance_status、heading/char refs）
 
-**不做：** active skill 自动生成、实时双向同步、企业权限图、自动语义冲突检测
+**不做：** 完整 eval 框架、A/B 测试基础设施、面向用户的 UI 改动
+
+**验收标准：**
+- [ ] AC-2.5.1: `depth=raw` + `mode=hybrid/semantic` 走 `searchPassagesHybrid()`——passage 向量搜索可用，不再降级为 lexical-only
+- [ ] AC-2.5.2: KnowledgeImporter 导入时同步写 `evidence_vectors`——`mode=semantic` 在 doc-level 能命中 pack-knowledge 文档
+- [ ] AC-2.5.3: `searchPassages()` / `searchPassagesHybrid()` 支持 packId 过滤——`depth=raw` + `packId` 只返回指定 pack 的 passage
+- [ ] AC-2.5.4: Fixture query set 跑 Recall@5 / Precision@5 baseline，分 mode（lexical/semantic/hybrid）分 pack，CI 可回归
+- [ ] AC-2.5.5: FTS 质量验证——Normalizer summary vs 300 字截断，同组查询 Recall@5 有可测量改善
+
+### Phase 3A: Versioning + Safe Federation — 版本管理 + 安全只读联邦
+
+**范围：**
+- 同 subject_key 多版本文档管理（新版本从 ingested 开始，旧版本标 stale）
+- Federated MVP：外部结果 citation-only 透传，不混排，含 ACL 校验 + cache TTL
+- 安全不变量：Federated 结果禁止自动回流本地，必须显式 promote/mirror
+
+**不做：** Mirror 双向同步、知识进化、自动语义冲突检测
 
 **验收标准：**
 - [ ] AC-21: 同 subject_key 多版本文档，默认返回最新版 + 旧版本标注
 - [ ] AC-22: Federated MVP：外部结果 citation-only 透传，不混排，含 ACL 校验 + cache TTL 策略
+- [ ] AC-25: Federated 结果禁止自动回流本地，必须显式 promote/mirror（AC-22 的内嵌安全约束）
+
+### Phase 3B: Mirror — 外部数据同步
+
+**范围：**
+- Mirror 路径：外部数据同步进 Domain Pack，走完整治理链
+- 依赖 Phase 3A 的版本语义和 Federated 基础设施
+
+**验收标准：**
 - [ ] AC-23: Mirror 路径：外部数据同步进本地走完整治理
-- [ ] AC-24: 知识进化：稳定知识可生成 workflow/guardrail 草案（带 evidence chain + validation cases）供人审
-- [ ] AC-25: Federated 结果禁止自动回流本地，必须显式 promote/mirror
+
+### 移出 F179（四猫全票 + CVO 确认）
+
+- ~~AC-24: 知识进化~~：稳定知识生成 workflow/guardrail 草案 → 归 self-evolution / writing-skills 流程，不属于知识治理 scope
 
 ## User Journey
 
@@ -365,6 +395,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | KD-22 | 版本身份三层模型：source_path（源级）+ anchor dk:uuid（版本级，每版本新 UUID）+ pack_id（组织级，可变不影响数据） | 迁移/拆包只改 pack_id，不影响 passages/索引；新版本新 UUID 保持旧版本可追溯 | 2026-05-01 |
 | KD-23 | Federated 结果不缓存、不注入 prompt、不自动回流，display-only | KD-7 citation-only 的具体化：外部结果只展示给用户，沉淀需显式 promote/mirror | 2026-05-01 |
 | KD-24 | Normalizer 可复现性仅记录版本信息用于溯源，不做重跑机制 | Normalizer 是格式转换不是实验，输出不对就重新导入走新版本流程 | 2026-05-01 |
+| KD-25 | packId 是组织隔离不是安全隔离，单用户下无 ACL | pack_id 防止搜索结果互相污染，不做访问控制。知道 packId 就能查——单用户下是设计意图。多用户/F152 外部项目场景若需 ACL，在 search 路径加鉴权 | 2026-05-07 |
 
 ## Timeline
 
@@ -384,6 +415,7 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | 2026-05-06 | Phase 1.5 merged (PR #21)：治理闭环修复——PATCH governance API + GovernanceRibbon + autoRoute chain + search gating + e2e test fix |
 | 2026-05-06 | CVO 真机验收暴露 5 个存量问题（rebuild 删知识 / 级联缺失致 FTS 腐化 / this 绑定 / pack 检索缺失 / RAG 注入缺失）→ Phase 2 立项 |
 | 2026-05-06 | Phase 2 merged (PR #22)：3 bug fixes (rebuild 保护/级联删除/FTS 自愈/this 绑定) + pack-scoped 检索 (5 路径全覆盖 + governance 门控) + RAG 注入。16 tests, codex + cloud review 3 轮 P1 修复 |
+| 2026-05-07 | 四猫讨论（opus+codex+sonnet+gpt55）F179 后续演进：结合上游反馈（#569 评论 + #652 issue）确认 evidence_vectors 不对称 + passage 向量未接入 + searchPassages 缺 packId 过滤。全票共识插入 Phase 2.5，AC-24 砍出归 F163/F169，CVO 确认 |
 
 ## Review Gate
 
@@ -391,7 +423,9 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 - Phase 1: 前端 UI → 铲屎官确认 wireframe
 - Phase 1.5: 后端 + 前端 → gpt52 code review + CVO 验收
 - Phase 2: 后端 bug fix + 检索扩展 → 纯后端，猫猫 collaborative-thinking
-- Phase 3: 架构级 → 猫猫讨论 + 铲屎官拍板
+- Phase 2.5: 检索质量加固 → 纯后端，猫猫 collaborative-thinking + fixture 验证
+- Phase 3A: 版本 + 安全联邦 → 架构级，猫猫讨论 + 铲屎官拍板
+- Phase 3B: Mirror → 依赖 Phase 3A 验证，铲屎官拍板
 
 ## Links
 
@@ -401,3 +435,4 @@ MarkerQueue 只适合轻量候选态，后半段状态（active/stale/retired）
 | **Discussion** | `docs/discussions/issue-569-comment-draft.md` | 代码核查 + 设计方向评论文稿 |
 | **Feature** | `docs/features/F129-pack-system-multi-agent-mod.md` | Pack 系统（共享存储层） |
 | **Feature** | `docs/features/F169-agent-memory-reflex.md` | Agent Memory Reflex 愿景 |
+| **Discussion** | `docs/discussions/f179-phase2-evolution-discussion.md` | Phase 2 后续演进四猫讨论（evidence_vectors 不对称 + passage 向量接入 + packId 隔离边界） |

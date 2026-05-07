@@ -1106,6 +1106,31 @@ created: 2026-02-26
 
 ---
 
+### LL-054: "跳过删除"也跳过了"生成"——rebuild 保护的副作用盲区
+- 状态：draft
+- 更新时间：2026-05-07
+
+- 坑：Phase 2 AC-201 让 `IndexBuilder.rebuild()` 跳过 `kind='pack-knowledge'` 的 stale-anchor cleanup（防止重启删除 API 导入的知识文档）。但跳过删除的 `continue` 语句也跳过了同一循环里后续的 embedding 生成逻辑。结果：pack-knowledge 文档在 `evidence_vectors` 表（doc-level 向量）里没有任何条目——`mode=semantic` 搜知识文档 → 零结果，`mode=hybrid` 向量部分无贡献（降级为纯 lexical）。
+- 根因：
+  1. **一个 `continue` 的副作用不止一个**：`rebuild()` 的循环体包含删除逻辑和生成逻辑。跳过删除时用 `continue` 而不是条件分支，把后续生成也一起跳过了。
+  2. **双写入路径的不对称**：KnowledgeImporter 写 passage-level embedding（`passage_vectors`），IndexBuilder 写 doc-level embedding（`evidence_vectors`）。保护了一条路径的写入（passage），另一条路径（doc-level）的写入是零——但没人发现，因为没有测试验证 `evidence_vectors` 对 pack-knowledge 有数据。
+  3. **Phase 2 给 semantic/hybrid 加的 packId 过滤技术上正确但实际上是空操作**：过滤了一个空集。
+- 触发条件：任何"跳过 X 路径"的保护性代码变更——`continue`/`return`/`skip` 可能连带跳过同一作用域内的其他逻辑。
+- 修复：Phase 2.5 AC-2.5.2 KnowledgeImporter 导入时同步写 `evidence_vectors`（doc-level 向量），不再依赖 IndexBuilder.rebuild() 补写。
+- 防护：
+  1. 写"跳过"逻辑时，逐行检查同一循环/函数体后续还有什么会被跳过
+  2. 对关键数据表，测试不仅验证"写入的数据正确"，还验证"应该有数据的表不为空"
+- 来源锚点：
+  - `packages/api/src/domains/memory/IndexBuilder.ts:390` (`if (row.kind === 'pack-knowledge') continue`)
+  - `packages/api/src/domains/knowledge/KnowledgeImporter.ts:148-154` (只写 passage_vectors)
+  - `packages/api/src/domains/memory/VectorStore.ts` (只操作 evidence_vectors)
+  - `docs/discussions/f179-phase2-evolution-discussion.md` (四猫讨论发现)
+- 原理：**`continue` 是对当前迭代的全面放弃，不是精准跳过**。在复合循环体中，保护性跳过的意图是"不删除"，但工具（`continue`）的语义是"不做任何剩余操作"。意图和工具不匹配时，副作用就藏在被跳过的代码里。
+
+- 关联：`docs/features/F179-domain-knowledge-governance.md` | `docs/discussions/f179-phase2-evolution-discussion.md`
+
+---
+
 ## 8) 维护约定
 
 - 本文件是入口，不替代 ADR/bug-report 原文。
