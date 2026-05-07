@@ -113,12 +113,41 @@ A: 不会。两个修复作用在不同层面：
 
 **结论**：两条修复路径独立，short-circuit 保留且不受影响。
 
+### 深挖：packId 隔离边界（CVO 追问收敛）
+
+**Q: packId 是猫猫自己传的，猫猫知道 packId 吗？知道的话隔离边界是否被打破？**
+
+当前状态：
+- `GET /api/knowledge/packs` 列出所有 Domain Pack（HTTP API，Knowledge Hub UI 用）
+- `search_evidence` MCP 工具有 `packId` 参数，但没有专门的 MCP 工具给猫猫列 pack
+- 实际流程：**用户告诉猫猫 packId** → 猫猫传参调用。猫猫不会自主发现和遍历 pack
+
+隔离性质：**组织边界，不是安全边界**（KD-19: "单用户系统无 ACL"）。pack_id 防止搜索结果互相污染，不做访问控制。知道 packId 就能查——在单用户下这是设计意图。
+
+**→ 记为 F179 KD（待编号）：packId 是组织隔离不是安全隔离，单用户下无 ACL。多用户/F152 外部项目场景若需 ACL，在 search 路径加鉴权。**
+
+### 深挖：FTS + Normalizer 质量验证方式（CVO 追问收敛）
+
+**Q: "FTS external-content + Normalizer 质量联动"是搞 CI 吗？**
+
+不是额外的 CI 基础设施。是一个普通的 `node:test` 测试文件（`test/memory/normalizer-fts-quality.test.js`），和 Phase 2 的 16 个测试同级，用 `pnpm test` 跑，GitHub Actions `Test (Public)` job 自动执行。
+
+验证逻辑：
+1. 同一文档分别用 300 字截断 summary 和 Normalizer 结构化 summary
+2. 同组查询跑 BM25 搜索
+3. 对比 Recall@5
+
+不需要 embedding 模型（纯 BM25/FTS5），用 `:memory:` SQLite。
+
+**CVO 确认**：就是在 CI 跑，不需要额外搭建。
+
 ### 铲屎官确认（2026-05-07）
 
-演进路线确认，按此执行。
+演进路线确认，按此执行。含 packId 隔离边界定义 + FTS 质量验证方式。
 
 ## 收敛检查
 
 1. 否决理由 → ADR？没有
 2. 踩坑教训 → lessons-learned？有 → evidence_vectors 不对称（Phase 2 AC-201 跳过 rebuild 的副作用——跳过删除也跳过了 embedding 生成）
 3. 操作规则 → 指引文件？没有
+4. 新增 KD？有 → packId 组织隔离 vs 安全隔离（待编号写入 F179 spec）
