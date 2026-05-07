@@ -99,11 +99,10 @@ describe('parseSearchResults', () => {
 
 // ── Phase K: Contract Closure (AC-K1 + AC-K2) ──────────────────────
 
-describe('AC-K1: depth=raw forces lexical mode', () => {
-  it('buildSearchUrl overrides mode to lexical when depth=raw', () => {
+describe('Phase 2.5: depth=raw supports all modes', () => {
+  it('buildSearchUrl passes through hybrid mode when depth=raw', () => {
     const url = buildSearchUrl({ q: 'test', depth: 'raw', mode: 'hybrid' });
-    expect(url).toContain('mode=lexical');
-    expect(url).not.toContain('mode=hybrid');
+    expect(url).toContain('mode=hybrid');
   });
 
   it('buildSearchUrl keeps mode when depth is not raw', () => {

@@ -86,8 +86,8 @@ export function parseInitialQuery(search: string): string {
 export function buildSearchUrl(params: EvidenceSearchParams): string {
   const sp = new URLSearchParams();
   sp.set('q', params.q);
-  // AC-K1: depth=raw forces lexical — passage-level vectors not yet available
-  const effectiveMode = params.depth === 'raw' ? 'lexical' : params.mode;
+  // Phase 2.5: depth=raw now supports all modes; pass through as-is.
+  const effectiveMode = params.mode;
   if (effectiveMode) sp.set('mode', effectiveMode);
   if (params.scope) sp.set('scope', params.scope);
   if (params.depth) sp.set('depth', params.depth);

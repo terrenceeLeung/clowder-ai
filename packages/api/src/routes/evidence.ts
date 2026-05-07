@@ -57,7 +57,7 @@ export interface EvidenceSearchResponse {
   results: EvidenceResult[];
   degraded: boolean;
   degradeReason?: string;
-  /** AC-K1: actual retrieval mode when depth=raw forces lexical */
+  /** Retrieval mode — depth=raw supports all modes since Phase 2.5 */
   effectiveMode?: 'lexical' | 'semantic' | 'hybrid';
   freshness?: EvidenceFreshness;
   reimportTrigger?: EvidenceReimportTrigger;
@@ -103,9 +103,13 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
     } = parseResult.data;
 
     const effectiveLimit = limit ?? 5;
-    // AC-K1: depth=raw forces lexical-only (passage-level vectors not yet available)
+    // Phase 2.5: depth=raw + mode=hybrid/semantic now routes through searchPassagesHybrid.
+    // Only flag as degraded when embedding is unavailable so the store actually fell back
+    // to BM25-only — otherwise the "lexical-only" banner misrepresents successful hybrid runs.
     const requestedMode = mode ?? 'lexical';
-    const isRawDegraded = depth === 'raw' && requestedMode !== 'lexical';
+    const embeddingReady =
+      (opts.evidenceStore as { isEmbeddingReady?: () => boolean }).isEmbeddingReady?.() ?? false;
+    const isRawDegraded = depth === 'raw' && requestedMode !== 'lexical' && !embeddingReady;
     // F163: freeze flags once per request, compute variant ID
     const f163Flags = freezeFlags();
     const rawVariantId = computeVariantId(f163Flags);

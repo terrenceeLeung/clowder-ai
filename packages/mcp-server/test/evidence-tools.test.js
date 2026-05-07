@@ -58,7 +58,7 @@ describe('MCP Evidence Tools', () => {
     assert.equal(parsed.searchParams.get('mode'), 'hybrid');
   });
 
-  test('handleSearchEvidence renders raw_lexical_only as graceful degradation, not store error', async () => {
+  test('handleSearchEvidence renders raw_lexical_only as embedding-unavailable hint', async () => {
     const { handleSearchEvidence } = await import('../dist/tools/evidence-tools.js');
 
     globalThis.fetch = async () => ({
@@ -83,8 +83,12 @@ describe('MCP Evidence Tools', () => {
 
     assert.equal(result.isError, undefined);
     assert.ok(
-      result.content[0].text.includes('depth=raw currently uses lexical retrieval only'),
-      'expected graceful raw degrade message in response text',
+      result.content[0].text.includes('embedding unavailable'),
+      'expected embedding-unavailable message in response text',
+    );
+    assert.ok(
+      result.content[0].text.includes('fell back to lexical'),
+      'expected fallback signal in response text',
     );
     assert.ok(!result.content[0].text.includes('Evidence store error'), 'must not misreport graceful degradation');
   });

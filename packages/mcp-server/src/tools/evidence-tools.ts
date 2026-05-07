@@ -177,7 +177,7 @@ function formatDegradedBanner(
   if (!degraded) return null;
   if (degradeReason === 'raw_lexical_only') {
     const modeNote = effectiveMode ? ` (effectiveMode=${effectiveMode})` : '';
-    return `[DEGRADED] depth=raw currently uses lexical retrieval only${modeNote}`;
+    return `[DEGRADED] embedding unavailable — depth=raw fell back to lexical retrieval${modeNote}`;
   }
   return '[DEGRADED] Evidence store error — results may be incomplete';
 }

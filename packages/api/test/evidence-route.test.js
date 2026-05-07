@@ -18,6 +18,9 @@ function createMockEvidenceStore(overrides = {}) {
     upsert: async () => {},
     deleteByAnchor: async () => {},
     getByAnchor: async () => null,
+    // F179 Phase 2.5: route checks embedding readiness to decide if raw+hybrid degraded.
+    // Default to ready so existing tests reflect the post-Phase-2.5 happy path.
+    isEmbeddingReady: () => true,
     ...overrides,
   };
 }
@@ -160,8 +163,8 @@ describe('GET /api/evidence/search', () => {
     assert.deepEqual(body.results, []);
   });
 
-  // ── AC-K1: depth=raw + non-lexical mode returns degradation signal ──
-  it('returns degraded=true with effectiveMode for depth=raw + mode=hybrid', async () => {
+  // ── Phase 2.5: depth=raw + hybrid/semantic is no longer degraded ──
+  it('returns degraded=false for depth=raw + mode=hybrid (Phase 2.5 enabled hybrid)', async () => {
     await setup({
       search: async () => [
         {
@@ -182,10 +185,9 @@ describe('GET /api/evidence/search', () => {
 
     assert.equal(res.statusCode, 200);
     const body = res.json();
-    assert.equal(body.degraded, true);
-    assert.equal(body.degradeReason, 'raw_lexical_only');
-    assert.equal(body.effectiveMode, 'lexical');
-    // Results must still be returned (not swallowed)
+    assert.equal(body.degraded, false);
+    assert.equal(body.degradeReason, undefined);
+    assert.equal(body.effectiveMode, undefined);
     assert.equal(body.results.length, 1);
   });
 
@@ -208,6 +210,40 @@ describe('GET /api/evidence/search', () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/evidence/search?q=test&mode=semantic',
+    });
+
+    const body = res.json();
+    assert.equal(body.degraded, false);
+  });
+
+  // F179 Phase 2.5 P2: depth=raw + hybrid/semantic IS degraded when embedding is unavailable
+  // (store would internally fall back to BM25-only — surface that to callers honestly).
+  it('returns degraded=true with raw_lexical_only when embedding unavailable for raw+hybrid', async () => {
+    await setup({
+      search: async () => [],
+      isEmbeddingReady: () => false,
+    });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/evidence/search?q=test&depth=raw&mode=hybrid',
+    });
+
+    const body = res.json();
+    assert.equal(body.degraded, true);
+    assert.equal(body.degradeReason, 'raw_lexical_only');
+    assert.equal(body.effectiveMode, 'lexical');
+  });
+
+  it('returns degraded=false for raw+lexical even when embedding unavailable (lexical needs no embedding)', async () => {
+    await setup({
+      search: async () => [],
+      isEmbeddingReady: () => false,
+    });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/evidence/search?q=test&depth=raw&mode=lexical',
     });
 
     const body = res.json();

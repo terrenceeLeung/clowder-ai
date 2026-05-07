@@ -67,6 +67,15 @@ export class SqliteEvidenceStore implements IEvidenceStore {
     this.embedDeps = deps;
   }
 
+  /**
+   * Whether the embedding service is wired and on. Used by callers (e.g. evidence
+   * route) to distinguish a successful hybrid path from a silent BM25 fallback when
+   * `depth=raw + mode=hybrid/semantic` is requested.
+   */
+  isEmbeddingReady(): boolean {
+    return Boolean(this.embedDeps?.embedding.isReady() && this.embedDeps.mode === 'on');
+  }
+
   async initialize(): Promise<void> {
     this.db = new Database(this.dbPath);
     this.db.pragma('journal_mode = WAL');
@@ -324,9 +333,10 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         try {
           passages = await this.searchPassagesHybrid(trimmed, limit, {
             packId: options?.packId,
+            dateFrom: options?.dateFrom,
+            dateTo: options?.dateTo,
           });
-          // searchPassagesHybrid does not honor dateFilter/contextWindow yet; if asked, do a
-          // post-pass lookup for surrounding passages and date narrowing.
+          // contextWindow is applied as a post-pass to attach surrounding passages.
           if (cw && cw > 0 && passages.length > 0 && this.db) {
             const ctxStmt = this.db.prepare(
               `SELECT doc_anchor, passage_id, content, speaker, position, created_at
@@ -419,8 +429,8 @@ export class SqliteEvidenceStore implements IEvidenceStore {
       }
     }
 
-    // P1 fix (砚砚 review): depth=raw must stay lexical-only — no passage vectors yet.
-    // Short-circuit BEFORE mode split to prevent semantic/hybrid from eating raw results.
+    // Short-circuit: depth=raw returns early BEFORE doc-level semantic/hybrid branches.
+    // Phase 2.5 routes raw+hybrid/semantic through passage-level searchPassagesHybrid above.
     if (options?.depth === 'raw') {
       // Passage ranking fix: results with passage matches must rank before
       // doc-only hits so low-limit queries surface message-level content.
@@ -1114,12 +1124,14 @@ export class SqliteEvidenceStore implements IEvidenceStore {
   async searchPassagesHybrid(
     query: string,
     limit = 10,
-    options?: { passageKind?: string; packId?: string },
+    options?: { passageKind?: string; packId?: string; dateFrom?: string; dateTo?: string },
   ): Promise<PassageResult[]> {
     this.ensureOpen();
     if (!this.db) return [];
 
-    const bm25Results = this.searchPassages(query, Math.min(Math.max(limit * 4, 20), 100), undefined, {
+    const timeFilter =
+      options?.dateFrom || options?.dateTo ? { dateFrom: options?.dateFrom, dateTo: options?.dateTo } : undefined;
+    const bm25Results = this.searchPassages(query, Math.min(Math.max(limit * 4, 20), 100), timeFilter, {
       passageKind: options?.passageKind,
       packId: options?.packId,
     });
@@ -1154,6 +1166,15 @@ export class SqliteEvidenceStore implements IEvidenceStore {
         if (options?.packId) {
           eligibleSql += ' AND d.pack_id = ?';
           eligibleParams.push(options.packId);
+        }
+        if (options?.dateFrom) {
+          eligibleSql += ' AND p.created_at >= ?';
+          eligibleParams.push(options.dateFrom);
+        }
+        if (options?.dateTo) {
+          const dt = options.dateTo;
+          eligibleSql += ' AND p.created_at <= ?';
+          eligibleParams.push(dt.length === 10 ? `${dt}T23:59:59` : dt);
         }
         const eligibleRows = this.db.prepare(eligibleSql).all(...eligibleParams) as Array<{ passage_id: string }>;
         const eligible = new Set(eligibleRows.map((r) => r.passage_id));

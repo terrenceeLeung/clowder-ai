@@ -139,6 +139,40 @@ describe('F179 AC-2.5.1: depth=raw routes to searchPassagesHybrid for hybrid/sem
     assert.ok(hasVecOnly, 'mode=semantic surfaces vec-1 even with zero BM25 hits');
   });
 
+  it('P1 fix: depth=raw + mode=hybrid respects dateFrom/dateTo (no time leak)', async () => {
+    const oldDate = '2025-01-15T00:00:00Z';
+    const newDate = '2026-04-01T00:00:00Z';
+
+    // Insert an old passage and a new passage
+    db.prepare(`INSERT INTO evidence_passages
+      (doc_anchor, passage_id, content, position, created_at, passage_kind)
+      VALUES (?, ?, ?, ?, ?, 'domain_chunk')`)
+      .run('dk:packA:lex-doc', 'old-p', 'tunneling old data', 1, oldDate);
+    db.prepare(`INSERT INTO evidence_passages
+      (doc_anchor, passage_id, content, position, created_at, passage_kind)
+      VALUES (?, ?, ?, ?, ?, 'domain_chunk')`)
+      .run('dk:packA:lex-doc', 'new-p', 'tunneling new data', 2, newDate);
+
+    // Also give old-p and new-p vectors so hybrid path picks them up
+    const targetVec = new Float32Array([0.1, 0.2, 0.3]);
+    setupVecMockEmbed(targetVec);
+    db.prepare('INSERT INTO passage_vectors (passage_id, embedding) VALUES (?, ?)').run('old-p', targetVec);
+    db.prepare('INSERT INTO passage_vectors (passage_id, embedding) VALUES (?, ?)').run('new-p', targetVec);
+
+    const results = await store.search('tunneling', {
+      depth: 'raw',
+      mode: 'hybrid',
+      limit: 10,
+      packId: 'packA',
+      dateFrom: '2026-01-01',
+    });
+
+    // Collect all passage IDs across all results
+    const allPassageIds = results.flatMap((r) => (r.passages ?? []).map((p) => p.passageId));
+    assert.ok(allPassageIds.includes('new-p'), 'new passage within date range is returned');
+    assert.ok(!allPassageIds.includes('old-p'), 'old passage outside dateFrom must NOT leak through hybrid path');
+  });
+
   it('depth=raw + mode=hybrid: embedding unavailable → degrades to BM25-only (no error)', async () => {
     // No embedDeps wired
     const results = await store.search('tunneling', { depth: 'raw', mode: 'hybrid', limit: 5, packId: 'packA' });
