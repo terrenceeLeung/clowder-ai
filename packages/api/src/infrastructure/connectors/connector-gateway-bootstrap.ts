@@ -96,8 +96,8 @@ export interface ConnectorGatewayDeps {
       limit?: number,
       userId?: string,
     ):
-      | Array<{ catId: string | null; content: string; timestamp: number; source?: string }>
-      | Promise<Array<{ catId: string | null; content: string; timestamp: number; source?: string }>>;
+      | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
+      | Promise<Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>>;
   };
   readonly threadStore: {
     create(userId: string, title?: string): { id: string } | Promise<{ id: string }>;

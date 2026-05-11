@@ -1805,4 +1805,49 @@ describe('F181: /history command', () => {
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
     assert.equal(result.contextThreadId, 't1');
   });
+
+  it('system messages (catId:null, userId:system) do not create round boundaries', async () => {
+    const messages = [
+      { id: '001', threadId: 't1', catId: null, userId: 'u1', content: '用户提问', timestamp: 1000 },
+      { id: '002', threadId: 't1', catId: 'opus', userId: 'opus', content: '猫回答', timestamp: 2000 },
+      { id: '003', threadId: 't1', catId: null, userId: 'system', content: '系统通知：配置已更新', timestamp: 3000 },
+      { id: '004', threadId: 't1', catId: null, userId: 'u1', content: '第二个问题', timestamp: 4000 },
+      { id: '005', threadId: 't1', catId: 'opus', userId: 'opus', content: '第二个回答', timestamp: 5000 },
+    ];
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 2');
+    assert.equal(result.kind, 'history');
+    assert.ok(result.response.includes('用户提问'), 'should include first user question');
+    assert.ok(result.response.includes('第二个问题'), 'should include second user question');
+    assert.ok(
+      !result.response.includes('👤 你') || !result.response.match(/👤 你.*系统通知/),
+      'system message should not be labeled as user',
+    );
+  });
+
+  it('scheduler messages (catId:null, userId:scheduler) are labeled as system, not user', async () => {
+    const messages = [
+      { id: '001', threadId: 't1', catId: null, userId: 'u1', content: '用户提问', timestamp: 1000 },
+      { id: '002', threadId: 't1', catId: null, userId: 'scheduler', content: '定时任务完成', timestamp: 2000 },
+      { id: '003', threadId: 't1', catId: 'opus', userId: 'opus', content: '猫回答', timestamp: 3000 },
+    ];
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
+    assert.equal(result.kind, 'history');
+    assert.ok(result.response.includes('🔔'), 'scheduler message should have system indicator');
+    assert.ok(
+      !result.response.includes('👤 你') || result.response.indexOf('👤 你') < result.response.indexOf('🔔'),
+      'scheduler should not be labeled as user',
+    );
+  });
 });

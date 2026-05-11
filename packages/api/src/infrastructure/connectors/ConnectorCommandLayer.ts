@@ -95,8 +95,8 @@ export interface ConnectorCommandLayerDeps {
       limit?: number,
       userId?: string,
     ):
-      | Array<{ catId: string | null; content: string; timestamp: number; source?: string }>
-      | Promise<Array<{ catId: string | null; content: string; timestamp: number; source?: string }>>;
+      | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
+      | Promise<Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>>;
   };
 }
 
@@ -402,11 +402,13 @@ export class ConnectorCommandLayer {
     }
 
     type Msg = Awaited<ReturnType<NonNullable<typeof this.deps.messageStore>['getByThread']>>[number];
+    const SYSTEM_UIDS = new Set(['system', 'scheduler']);
+    const isUserMsg = (m: Msg): boolean => m.catId === null && !SYSTEM_UIDS.has(m.userId ?? '');
     const splitRounds = (msgs: Msg[]): Msg[][] => {
       const result: Msg[][] = [];
       let cur: Msg[] = [];
       for (const m of msgs) {
-        if (m.catId === null && cur.length > 0) {
+        if (isUserMsg(m) && cur.length > 0) {
           result.push(cur);
           cur = [];
         }
@@ -427,7 +429,7 @@ export class ConnectorCommandLayer {
       if (messages.length < fetchLimit || fetchLimit >= MAX_FETCH) return false;
       if (rounds.length < roundCount) return true;
       const first = rounds[rounds.length - roundCount];
-      return first !== undefined && first[0].catId !== null;
+      return first !== undefined && !isUserMsg(first[0]);
     };
     while (needsMore()) {
       fetchLimit = Math.min(fetchLimit * 2, MAX_FETCH);
@@ -441,7 +443,8 @@ export class ConnectorCommandLayer {
     for (const round of selected) {
       for (const msg of round) {
         const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        const sender = msg.catId ? `🐱 ${msg.catId}` : '👤 你';
+        const isSystem = msg.catId === null && SYSTEM_UIDS.has(msg.userId ?? '');
+        const sender = msg.catId ? `🐱 ${msg.catId}` : isSystem ? '🔔 系统' : '👤 你';
         lines.push(`**${sender}** [${time}]: ${msg.content}`);
       }
       lines.push('---');
