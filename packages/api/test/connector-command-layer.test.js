@@ -1764,8 +1764,8 @@ describe('#687: /history command', () => {
     assert.ok(result.response.includes('没有绑定'));
   });
 
-  it('truncates long messages and shows truncation footer (feishu 4000 budget)', async () => {
-    const longContent = 'A'.repeat(5000);
+  it('truncates long messages and shows truncation footer (feishu 10000 budget)', async () => {
+    const longContent = 'A'.repeat(12000);
     const messages = [
       { id: '001', threadId: 't1', catId: null, content: '问题', timestamp: 1000 },
       { id: '002', threadId: 't1', catId: 'opus', content: longContent, timestamp: 2000 },
@@ -1779,7 +1779,7 @@ describe('#687: /history command', () => {
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
     assert.ok(result.response.includes('…'), 'should show truncation marker');
     assert.ok(result.response.includes('⚠️'), 'should show truncation footer');
-    assert.ok(result.response.length <= 4000, `feishu output must be <= 4000 chars, got ${result.response.length}`);
+    assert.ok(result.response.length <= 10000, `feishu output must be <= 10000 chars, got ${result.response.length}`);
   });
 
   it('unknown connector defaults to 2000 budget', async () => {
@@ -1998,7 +1998,7 @@ describe('#687: /history command', () => {
     assert.ok(result.response.length <= 2000, `weixin must be <= 2000 chars, got ${result.response.length}`);
   });
 
-  it('feishu gets higher budget (4000) than weixin (2000)', async () => {
+  it('feishu gets higher budget (10000) than weixin (2000)', async () => {
     const messages = [];
     for (let r = 0; r < 3; r++) {
       messages.push({
@@ -2029,7 +2029,7 @@ describe('#687: /history command', () => {
     const feishuX = (rf.response.match(/X+/g) ?? []).reduce((s, m) => s + m.length, 0);
     const weixinX = (rw.response.match(/X+/g) ?? []).reduce((s, m) => s + m.length, 0);
     assert.ok(feishuX > weixinX, `feishu should show more content (${feishuX}) than weixin (${weixinX})`);
-    assert.ok(rf.response.length <= 4000, `feishu must be <= 4000, got ${rf.response.length}`);
+    assert.ok(rf.response.length <= 10000, `feishu must be <= 10000, got ${rf.response.length}`);
     assert.ok(rw.response.length <= 2000, `weixin must be <= 2000, got ${rw.response.length}`);
   });
 

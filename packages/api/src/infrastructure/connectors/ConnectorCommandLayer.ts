@@ -427,9 +427,9 @@ export class ConnectorCommandLayer {
     const selected = rounds.slice(-roundCount);
 
     const PLATFORM_BUDGET: Record<string, number> = {
-      feishu: 4000,
+      feishu: 10000,
+      dingtalk: 6000,
       telegram: 4000,
-      dingtalk: 4000,
       'wecom-bot': 2000,
       'wecom-agent': 2000,
       weixin: 2000,
