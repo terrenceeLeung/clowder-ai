@@ -426,7 +426,15 @@ export class ConnectorCommandLayer {
     const rounds = splitRounds(messages);
     const selected = rounds.slice(-roundCount);
 
-    const TOTAL_BUDGET = 2000;
+    const PLATFORM_BUDGET: Record<string, number> = {
+      feishu: 4000,
+      telegram: 4000,
+      dingtalk: 4000,
+      'wecom-bot': 2000,
+      'wecom-agent': 2000,
+      weixin: 2000,
+    };
+    const TOTAL_BUDGET = PLATFORM_BUDGET[connectorId] ?? 2000;
     const roster = this.deps.catRoster;
     const resolveSender = (msg: Msg): string => {
       if (msg.catId) {

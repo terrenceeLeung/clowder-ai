@@ -1764,8 +1764,8 @@ describe('#687: /history command', () => {
     assert.ok(result.response.includes('没有绑定'));
   });
 
-  it('truncates long messages and shows truncation footer', async () => {
-    const longContent = 'A'.repeat(2000);
+  it('truncates long messages and shows truncation footer (feishu 4000 budget)', async () => {
+    const longContent = 'A'.repeat(5000);
     const messages = [
       { id: '001', threadId: 't1', catId: null, content: '问题', timestamp: 1000 },
       { id: '002', threadId: 't1', catId: 'opus', content: longContent, timestamp: 2000 },
@@ -1779,7 +1779,23 @@ describe('#687: /history command', () => {
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
     assert.ok(result.response.includes('…'), 'should show truncation marker');
     assert.ok(result.response.includes('⚠️'), 'should show truncation footer');
-    assert.ok(result.response.length <= 2000, `total output must be <= 2000 chars, got ${result.response.length}`);
+    assert.ok(result.response.length <= 4000, `feishu output must be <= 4000 chars, got ${result.response.length}`);
+  });
+
+  it('unknown connector defaults to 2000 budget', async () => {
+    const longContent = 'A'.repeat(3000);
+    const messages = [
+      { id: '001', threadId: 't1', catId: null, content: '问题', timestamp: 1000 },
+      { id: '002', threadId: 't1', catId: 'opus', content: longContent, timestamp: 2000 },
+    ];
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'unknown-im', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('unknown-im', 'chat1', 'u1', '/history');
+    assert.ok(result.response.length <= 2000, `unknown connector must be <= 2000 chars, got ${result.response.length}`);
   });
 
   it('dynamic budget: /history 1 shows more content per message than /history 5', async () => {
@@ -1790,14 +1806,14 @@ describe('#687: /history command', () => {
       messages.push({ id: `a${r}`, threadId: 't1', catId: 'opus', content: content600, timestamp: r * 10000 + 1 });
     }
     const makeDeps = () => ({
-      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      bindingStore: stubStore({ connectorId: 'weixin', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
       threadStore: stubThreadStore(),
       frontendBaseUrl: 'https://cafe.example.com',
       messageStore: stubMessageStore(messages),
     });
     const layer = new ConnectorCommandLayer(makeDeps());
-    const r1 = await layer.handle('feishu', 'chat1', 'u1', '/history 1');
-    const r5 = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
+    const r1 = await layer.handle('weixin', 'chat1', 'u1', '/history 1');
+    const r5 = await layer.handle('weixin', 'chat1', 'u1', '/history 5');
     const content1 = r1.response.match(/X+/)?.[0]?.length ?? 0;
     const content5Matches = r5.response.match(/X+/g) ?? [];
     const maxContent5 = Math.max(...content5Matches.map((m) => m.length));
@@ -1943,7 +1959,7 @@ describe('#687: /history command', () => {
     assert.ok(result.response.includes('🐱 opus'), 'should fall back to raw catId');
   });
 
-  it('response never exceeds TOTAL_BUDGET (2000 chars) even with 5 rounds × 3 msgs', async () => {
+  it('response never exceeds platform budget (weixin 2000)', async () => {
     const messages = [];
     for (let r = 0; r < 5; r++) {
       messages.push({
@@ -1972,14 +1988,49 @@ describe('#687: /history command', () => {
       });
     }
     const layer = new ConnectorCommandLayer({
-      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      bindingStore: stubStore({ connectorId: 'weixin', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
       threadStore: stubThreadStore(),
       frontendBaseUrl: 'https://cafe.example.com',
       messageStore: stubMessageStore(messages),
       catRoster: { opus: { displayName: '布偶猫' }, codex: { displayName: '缅因猫' } },
     });
-    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
-    assert.ok(result.response.length <= 2000, `response must be <= 2000 chars, got ${result.response.length}`);
+    const result = await layer.handle('weixin', 'chat1', 'u1', '/history 5');
+    assert.ok(result.response.length <= 2000, `weixin must be <= 2000 chars, got ${result.response.length}`);
+  });
+
+  it('feishu gets higher budget (4000) than weixin (2000)', async () => {
+    const messages = [];
+    for (let r = 0; r < 3; r++) {
+      messages.push({
+        id: `u${r}`,
+        threadId: 't1',
+        catId: null,
+        content: `Q${r}`,
+        timestamp: r * 10000,
+      });
+      messages.push({
+        id: `a${r}`,
+        threadId: 't1',
+        catId: 'opus',
+        content: 'X'.repeat(800),
+        timestamp: r * 10000 + 1,
+      });
+    }
+    const makeDeps = (cId) => ({
+      bindingStore: stubStore({ connectorId: cId, externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const feishuLayer = new ConnectorCommandLayer(makeDeps('feishu'));
+    const weixinLayer = new ConnectorCommandLayer(makeDeps('weixin'));
+    const rf = await feishuLayer.handle('feishu', 'chat1', 'u1', '/history 3');
+    const rw = await weixinLayer.handle('weixin', 'chat1', 'u1', '/history 3');
+    const feishuX = (rf.response.match(/X+/g) ?? []).reduce((s, m) => s + m.length, 0);
+    const weixinX = (rw.response.match(/X+/g) ?? []).reduce((s, m) => s + m.length, 0);
+    assert.ok(feishuX > weixinX, `feishu should show more content (${feishuX}) than weixin (${weixinX})`);
+    assert.ok(rf.response.length <= 4000, `feishu must be <= 4000, got ${rf.response.length}`);
+    assert.ok(rw.response.length <= 2000, `weixin must be <= 2000, got ${rw.response.length}`);
   });
 
   it('no truncation footer when content fits within budget', async () => {
