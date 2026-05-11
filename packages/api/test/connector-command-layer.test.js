@@ -1783,11 +1783,11 @@ describe('#687: /history command', () => {
   });
 
   it('dynamic budget: /history 1 shows more content per message than /history 5', async () => {
-    const content300 = 'X'.repeat(300);
+    const content600 = 'X'.repeat(600);
     const messages = [];
     for (let r = 0; r < 5; r++) {
       messages.push({ id: `u${r}`, threadId: 't1', catId: null, content: `Q${r}`, timestamp: r * 10000 });
-      messages.push({ id: `a${r}`, threadId: 't1', catId: 'opus', content: content300, timestamp: r * 10000 + 1 });
+      messages.push({ id: `a${r}`, threadId: 't1', catId: 'opus', content: content600, timestamp: r * 10000 + 1 });
     }
     const makeDeps = () => ({
       bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),

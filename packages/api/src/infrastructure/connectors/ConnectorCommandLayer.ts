@@ -460,7 +460,21 @@ export class ConnectorCommandLayer {
       meta.length +
       footerText.length;
     const contentBudget = Math.max(0, TOTAL_BUDGET - overhead);
-    const perMsgBudget = Math.max(20, Math.floor(contentBudget / Math.max(meta.length, 1)));
+    // Progressive distribution: short messages keep full content, savings go to longer ones
+    const sortedLens = meta.map(({ msg }) => msg.content.length).sort((a, b) => a - b);
+    let budgetLeft = contentBudget;
+    let countLeft = sortedLens.length;
+    let perMsgBudget = Infinity;
+    for (const len of sortedLens) {
+      const share = Math.floor(budgetLeft / countLeft);
+      if (len <= share) {
+        budgetLeft -= len;
+        countLeft--;
+      } else {
+        perMsgBudget = Math.max(20, share);
+        break;
+      }
+    }
 
     let anyTruncated = false;
     const lines: string[] = [];
