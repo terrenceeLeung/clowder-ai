@@ -2450,8 +2450,8 @@ async function main(): Promise<void> {
         const resolved = msg instanceof Promise ? await msg : msg;
         return resolved ? { source: resolved.source } : null;
       },
-      async getByThread(threadId: string, limit?: number, userId?: string) {
-        const msgs = await messageStore.getByThread(threadId, limit, userId);
+      async getByThread(threadId: string, limit?: number) {
+        const msgs = await messageStore.getByThread(threadId, limit);
         return msgs.map((m) => ({
           catId: m.catId,
           userId: m.userId,

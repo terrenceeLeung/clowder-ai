@@ -94,7 +94,6 @@ export interface ConnectorGatewayDeps {
     getByThread?(
       threadId: string,
       limit?: number,
-      userId?: string,
     ):
       | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
       | Promise<Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>>;

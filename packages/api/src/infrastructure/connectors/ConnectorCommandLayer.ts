@@ -88,12 +88,11 @@ export interface ConnectorCommandLayerDeps {
   readonly catRoster?: Record<string, { displayName: string; available?: boolean }>;
   /** F142-B: unified command registry for /commands listing + skill detection + audit */
   readonly commandRegistry?: CommandRegistry;
-  /** F181: message store for /history round-based retrieval */
+  /** #687: message store for /history round-based retrieval */
   readonly messageStore?: {
     getByThread(
       threadId: string,
       limit?: number,
-      userId?: string,
     ):
       | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
       | Promise<Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>>;
@@ -378,12 +377,12 @@ export class ConnectorCommandLayer {
     };
   }
 
-  // ── F181: /history — round-based thread history ────────────────────────
+  // ── #687: /history — round-based thread history ────────────────────────
 
   private async handleHistory(
     connectorId: string,
     externalChatId: string,
-    userId: string,
+    _userId: string,
     args: string,
   ): Promise<CommandResult> {
     const binding = await this.deps.bindingStore.getByExternal(connectorId, externalChatId);
@@ -418,43 +417,51 @@ export class ConnectorCommandLayer {
       return result;
     };
 
-    let fetchLimit = roundCount * 100;
-    let messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
+    const FETCH_LIMIT = 500;
+    const messages = await this.deps.messageStore.getByThread(binding.threadId, FETCH_LIMIT);
     if (messages.length === 0) {
       return { kind: 'history', response: '📜 本线程还没有消息。', contextThreadId: binding.threadId };
     }
-    let rounds = splitRounds(messages);
-    const MAX_FETCH = 5000;
-    const needsMore = (): boolean => {
-      if (messages.length < fetchLimit || fetchLimit >= MAX_FETCH) return false;
-      if (rounds.length < roundCount) return true;
-      const first = rounds[rounds.length - roundCount];
-      return first !== undefined && !isUserMsg(first[0]);
-    };
-    while (needsMore()) {
-      fetchLimit = Math.min(fetchLimit * 2, MAX_FETCH);
-      messages = await this.deps.messageStore.getByThread(binding.threadId, fetchLimit, userId);
-      rounds = splitRounds(messages);
-    }
-
+    const rounds = splitRounds(messages);
     const selected = rounds.slice(-roundCount);
 
+    const TOTAL_BUDGET = 2000;
+    const OVERHEAD = 150;
+    const roster = this.deps.catRoster;
+    const resolveSender = (msg: Msg): string => {
+      if (msg.catId) {
+        const display = roster?.[msg.catId]?.displayName;
+        return `🐱 ${display ?? msg.catId}`;
+      }
+      if (SYSTEM_UIDS.has(msg.userId ?? '')) return '🔔 系统';
+      return '👤 你';
+    };
+
+    const allMsgs = selected.flat();
+    const perMsgBudget = Math.max(60, Math.floor((TOTAL_BUDGET - OVERHEAD) / Math.max(allMsgs.length, 1)));
+    let anyTruncated = false;
     const lines: string[] = [];
     for (const round of selected) {
       for (const msg of round) {
         const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        const isSystem = msg.catId === null && SYSTEM_UIDS.has(msg.userId ?? '');
-        const sender = msg.catId ? `🐱 ${msg.catId}` : isSystem ? '🔔 系统' : '👤 你';
-        lines.push(`**${sender}** [${time}]: ${msg.content}`);
+        const sender = resolveSender(msg);
+        let content = msg.content;
+        if (content.length > perMsgBudget) {
+          content = content.slice(0, perMsgBudget) + '…';
+          anyTruncated = true;
+        }
+        lines.push(`**${sender}** [${time}]: ${content}`);
       }
       lines.push('---');
     }
     if (lines[lines.length - 1] === '---') lines.pop();
 
     const header = roundCount === 1 ? '📜 最近 1 轮对话：' : `📜 最近 ${selected.length} 轮对话：`;
+    const deepLink = buildThreadDeepLink(this.deps.frontendBaseUrl, binding.threadId);
+    const footer = anyTruncated ? `\n\n⚠️ 内容已精简，完整对话请打开 thread\n🔗 ${deepLink}` : '';
     return {
       kind: 'history',
-      response: `${header}\n\n${lines.join('\n')}`,
+      response: `${header}\n\n${lines.join('\n')}${footer}`,
       contextThreadId: binding.threadId,
     };
   }
