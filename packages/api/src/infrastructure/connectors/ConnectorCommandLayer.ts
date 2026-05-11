@@ -418,8 +418,9 @@ export class ConnectorCommandLayer {
       return result;
     };
 
-    // AC-8: cursor-based windowed fetch (replaces blanket getByThread 500)
-    const messages = await this.deps.messageStore.getByThreadBefore(binding.threadId, Date.now(), roundCount * 50);
+    // AC-8: cursor-based windowed fetch; floor 200 covers A2A-heavy rounds
+    const fetchLimit = Math.max(200, roundCount * 100);
+    const messages = await this.deps.messageStore.getByThreadBefore(binding.threadId, Date.now(), fetchLimit);
     if (messages.length === 0) {
       return { kind: 'history', response: '📜 本线程还没有消息。', contextThreadId: binding.threadId };
     }

@@ -1823,6 +1823,29 @@ describe('#687: /history command', () => {
     );
   });
 
+  it('fetches enough messages when a single round has >50 entries', async () => {
+    const messages = [];
+    messages.push({ id: 'u0', threadId: 't1', catId: null, userId: 'u1', content: '用户提问', timestamp: 1000 });
+    for (let i = 1; i <= 60; i++) {
+      messages.push({
+        id: `cat${i}`,
+        threadId: 't1',
+        catId: 'opus',
+        content: `reply ${i}`,
+        timestamp: 1000 + i,
+      });
+    }
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
+    assert.ok(result.response.includes('用户提问'), 'user message at start of 61-message round must be included');
+    assert.ok(result.response.includes('reply 60'), 'last cat reply must be included');
+  });
+
   it('sets contextThreadId in result', async () => {
     const messages = [{ id: '001', threadId: 't1', catId: null, content: 'hello', timestamp: 1000 }];
     const layer = new ConnectorCommandLayer({
