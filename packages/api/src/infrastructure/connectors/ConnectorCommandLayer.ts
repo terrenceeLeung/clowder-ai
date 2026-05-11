@@ -88,10 +88,11 @@ export interface ConnectorCommandLayerDeps {
   readonly catRoster?: Record<string, { displayName: string; available?: boolean }>;
   /** F142-B: unified command registry for /commands listing + skill detection + audit */
   readonly commandRegistry?: CommandRegistry;
-  /** #687: message store for /history round-based retrieval */
+  /** #687: message store for /history round-based retrieval (AC-8: cursor-based) */
   readonly messageStore?: {
-    getByThread(
+    getByThreadBefore(
       threadId: string,
+      timestamp: number,
       limit?: number,
     ):
       | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
@@ -400,7 +401,7 @@ export class ConnectorCommandLayer {
       return { kind: 'history', response: '❌ 消息存储不可用', contextThreadId: binding.threadId };
     }
 
-    type Msg = Awaited<ReturnType<NonNullable<typeof this.deps.messageStore>['getByThread']>>[number];
+    type Msg = Awaited<ReturnType<NonNullable<typeof this.deps.messageStore>['getByThreadBefore']>>[number];
     const SYSTEM_UIDS = new Set(['system', 'scheduler']);
     const isUserMsg = (m: Msg): boolean => m.catId === null && !SYSTEM_UIDS.has(m.userId ?? '');
     const splitRounds = (msgs: Msg[]): Msg[][] => {
@@ -417,8 +418,8 @@ export class ConnectorCommandLayer {
       return result;
     };
 
-    const FETCH_LIMIT = 500;
-    const messages = await this.deps.messageStore.getByThread(binding.threadId, FETCH_LIMIT);
+    // AC-8: cursor-based windowed fetch (replaces blanket getByThread 500)
+    const messages = await this.deps.messageStore.getByThreadBefore(binding.threadId, Date.now(), roundCount * 50);
     if (messages.length === 0) {
       return { kind: 'history', response: '📜 本线程还没有消息。', contextThreadId: binding.threadId };
     }
@@ -426,7 +427,6 @@ export class ConnectorCommandLayer {
     const selected = rounds.slice(-roundCount);
 
     const TOTAL_BUDGET = 2000;
-    const OVERHEAD = 150;
     const roster = this.deps.catRoster;
     const resolveSender = (msg: Msg): string => {
       if (msg.catId) {
@@ -437,31 +437,59 @@ export class ConnectorCommandLayer {
       return '👤 你';
     };
 
+    const header = roundCount === 1 ? '📜 最近 1 轮对话：' : `📜 最近 ${selected.length} 轮对话：`;
+    const deepLink = buildThreadDeepLink(this.deps.frontendBaseUrl, binding.threadId);
+    const footerText = `\n\n⚠️ 内容已精简，完整对话请打开 thread\n🔗 ${deepLink}`;
+
+    // P1-1: pre-compute per-message metadata for overhead-aware budget
     const allMsgs = selected.flat();
-    const perMsgBudget = Math.max(60, Math.floor((TOTAL_BUDGET - OVERHEAD) / Math.max(allMsgs.length, 1)));
+    const meta = allMsgs.map((msg) => {
+      const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      return { msg, prefix: `**${resolveSender(msg)}** [${time}]: ` };
+    });
+
+    // Deduct header, line prefixes, separators, join newlines, truncation markers, footer reserve
+    const separatorCount = selected.length - 1;
+    const totalLineCount = meta.length + separatorCount;
+    const overhead =
+      header.length +
+      2 +
+      meta.reduce((s, m) => s + m.prefix.length, 0) +
+      separatorCount * 3 +
+      (totalLineCount > 1 ? totalLineCount - 1 : 0) +
+      meta.length +
+      footerText.length;
+    const contentBudget = Math.max(0, TOTAL_BUDGET - overhead);
+    const perMsgBudget = Math.max(20, Math.floor(contentBudget / Math.max(meta.length, 1)));
+
     let anyTruncated = false;
     const lines: string[] = [];
+    let metaIdx = 0;
     for (const round of selected) {
-      for (const msg of round) {
-        const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        const sender = resolveSender(msg);
+      for (let i = 0; i < round.length; i++) {
+        const { msg, prefix } = meta[metaIdx++]!;
         let content = msg.content;
         if (content.length > perMsgBudget) {
           content = content.slice(0, perMsgBudget) + '…';
           anyTruncated = true;
         }
-        lines.push(`**${sender}** [${time}]: ${content}`);
+        lines.push(`${prefix}${content}`);
       }
       lines.push('---');
     }
     if (lines[lines.length - 1] === '---') lines.pop();
 
-    const header = roundCount === 1 ? '📜 最近 1 轮对话：' : `📜 最近 ${selected.length} 轮对话：`;
-    const deepLink = buildThreadDeepLink(this.deps.frontendBaseUrl, binding.threadId);
-    const footer = anyTruncated ? `\n\n⚠️ 内容已精简，完整对话请打开 thread\n🔗 ${deepLink}` : '';
+    const footer = anyTruncated ? footerText : '';
+    let response = `${header}\n\n${lines.join('\n')}${footer}`;
+
+    // Hard cap safety net
+    if (response.length > TOTAL_BUDGET) {
+      response = response.slice(0, TOTAL_BUDGET - footerText.length) + footerText;
+    }
+
     return {
       kind: 'history',
-      response: `${header}\n\n${lines.join('\n')}${footer}`,
+      response,
       contextThreadId: binding.threadId,
     };
   }

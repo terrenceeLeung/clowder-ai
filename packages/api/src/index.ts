@@ -2460,6 +2460,16 @@ async function main(): Promise<void> {
           source: m.source as string | undefined,
         }));
       },
+      async getByThreadBefore(threadId: string, timestamp: number, limit?: number) {
+        const msgs = await messageStore.getByThreadBefore(threadId, timestamp, limit);
+        return msgs.map((m) => ({
+          catId: m.catId,
+          userId: m.userId,
+          content: m.content,
+          timestamp: m.timestamp,
+          source: m.source as string | undefined,
+        }));
+      },
     },
     threadStore,
     invokeTrigger,

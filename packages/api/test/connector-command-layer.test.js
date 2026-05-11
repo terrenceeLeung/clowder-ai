@@ -20,16 +20,18 @@ function stubStore(binding) {
 
 function stubMessageStore(messages = []) {
   return {
-    getByThread: async (threadId, limit) => {
-      return messages.filter((m) => m.threadId === threadId && !m.deletedAt).slice(-(limit ?? 50));
+    getByThreadBefore: async (threadId, timestamp, limit) => {
+      return messages
+        .filter((m) => m.threadId === threadId && !m.deletedAt && m.timestamp < timestamp)
+        .slice(-(limit ?? 50));
     },
   };
 }
 
 function stubMessageStoreWithUserFilter(messages = []) {
   return {
-    getByThread: async (threadId, limit, userId) => {
-      let filtered = messages.filter((m) => m.threadId === threadId && !m.deletedAt);
+    getByThreadBefore: async (threadId, timestamp, limit, userId) => {
+      let filtered = messages.filter((m) => m.threadId === threadId && !m.deletedAt && m.timestamp < timestamp);
       if (userId) filtered = filtered.filter((m) => m.userId === userId || m.catId != null);
       return filtered.slice(-(limit ?? 50));
     },
@@ -1777,7 +1779,7 @@ describe('#687: /history command', () => {
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
     assert.ok(result.response.includes('…'), 'should show truncation marker');
     assert.ok(result.response.includes('⚠️'), 'should show truncation footer');
-    assert.ok(result.response.length < 2500, `total output should be bounded, got ${result.response.length}`);
+    assert.ok(result.response.length <= 2000, `total output must be <= 2000 chars, got ${result.response.length}`);
   });
 
   it('dynamic budget: /history 1 shows more content per message than /history 5', async () => {
@@ -1894,7 +1896,7 @@ describe('#687: /history command', () => {
       { id: '004', threadId: 't1', catId: 'opus', userId: 'opus', content: '回答2', timestamp: 4000 },
     ];
     const filteredStore = stubMessageStoreWithUserFilter(messages);
-    const filtered = await filteredStore.getByThread('t1', 50, 'feishu_u1');
+    const filtered = await filteredStore.getByThreadBefore('t1', Infinity, 50, 'feishu_u1');
     assert.ok(!filtered.some((m) => m.content === 'Web消息'), 'userId-filtered store should miss web messages');
 
     const layer = new ConnectorCommandLayer({
@@ -1939,6 +1941,45 @@ describe('#687: /history command', () => {
     });
     const result = await layer.handle('feishu', 'chat1', 'u1', '/history');
     assert.ok(result.response.includes('🐱 opus'), 'should fall back to raw catId');
+  });
+
+  it('response never exceeds TOTAL_BUDGET (2000 chars) even with 5 rounds × 3 msgs', async () => {
+    const messages = [];
+    for (let r = 0; r < 5; r++) {
+      messages.push({
+        id: `u${r}`,
+        threadId: 't1',
+        catId: null,
+        userId: 'u1',
+        content: 'Q'.repeat(400),
+        timestamp: r * 10000,
+      });
+      messages.push({
+        id: `a${r}`,
+        threadId: 't1',
+        catId: 'opus',
+        userId: 'opus',
+        content: 'A'.repeat(400),
+        timestamp: r * 10000 + 1,
+      });
+      messages.push({
+        id: `b${r}`,
+        threadId: 't1',
+        catId: 'codex',
+        userId: 'codex',
+        content: 'B'.repeat(400),
+        timestamp: r * 10000 + 2,
+      });
+    }
+    const layer = new ConnectorCommandLayer({
+      bindingStore: stubStore({ connectorId: 'feishu', externalChatId: 'chat1', threadId: 't1', userId: 'u1' }),
+      threadStore: stubThreadStore(),
+      frontendBaseUrl: 'https://cafe.example.com',
+      messageStore: stubMessageStore(messages),
+      catRoster: { opus: { displayName: '布偶猫' }, codex: { displayName: '缅因猫' } },
+    });
+    const result = await layer.handle('feishu', 'chat1', 'u1', '/history 5');
+    assert.ok(result.response.length <= 2000, `response must be <= 2000 chars, got ${result.response.length}`);
   });
 
   it('no truncation footer when content fits within budget', async () => {

@@ -97,6 +97,13 @@ export interface ConnectorGatewayDeps {
     ):
       | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
       | Promise<Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>>;
+    getByThreadBefore?(
+      threadId: string,
+      timestamp: number,
+      limit?: number,
+    ):
+      | Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>
+      | Promise<Array<{ catId: string | null; userId?: string; content: string; timestamp: number; source?: string }>>;
   };
   readonly threadStore: {
     create(userId: string, title?: string): { id: string } | Promise<{ id: string }>;
@@ -319,7 +326,7 @@ export async function startConnectorGateway(
     agentRegistry: deps.agentRegistry,
     catRoster,
     commandRegistry: deps.commandRegistry,
-    ...(deps.messageStore.getByThread
+    ...(deps.messageStore.getByThreadBefore
       ? { messageStore: deps.messageStore as ConnectorCommandLayerDeps['messageStore'] }
       : {}),
   });
