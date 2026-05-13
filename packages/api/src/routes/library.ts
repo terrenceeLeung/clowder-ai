@@ -21,6 +21,7 @@ export interface LibraryRoutesOptions {
   stores: Map<string, IEvidenceStore>;
   dataDir?: string;
   embeddingService?: IEmbeddingService;
+  embedMode?: 'shadow' | 'on';
 }
 
 type StoreWithDb = IEvidenceStore & { getDb?: () => import('better-sqlite3').Database };
@@ -178,7 +179,10 @@ export const libraryRoutes: FastifyPluginAsync<LibraryRoutesOptions> = async (ap
         sqliteVecMod.load(db);
         const dim = opts.embeddingService.getModelInfo().dim;
         if (ensureVectorTable(db, dim)) {
-          embedDeps = { embedding: opts.embeddingService, vectorStore: new VectorStore(db, dim) };
+          const vectorStore = new VectorStore(db, dim);
+          embedDeps = { embedding: opts.embeddingService, vectorStore };
+          const mode = opts.embedMode ?? 'shadow';
+          (store as SqliteEvidenceStore).setEmbedDeps({ embedding: opts.embeddingService, vectorStore, mode });
         }
       } catch {
         // fail-open: sqlite-vec not available → FTS-only
