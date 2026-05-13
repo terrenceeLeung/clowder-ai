@@ -2,6 +2,7 @@ import { mkdirSync, statSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { FastifyPluginAsync } from 'fastify';
 import { BindingDryRun } from '../domains/memory/BindingDryRun.js';
+import type { CollectionEmbedDeps } from '../domains/memory/CollectionIndexBuilder.js';
 import { CollectionIndexBuilder } from '../domains/memory/CollectionIndexBuilder.js';
 import { CollectionReadModel } from '../domains/memory/CollectionReadModel.js';
 import type { CollectionKind, CollectionManifest, CollectionSensitivity } from '../domains/memory/collection-types.js';
@@ -17,6 +18,7 @@ export interface LibraryRoutesOptions {
   catalog: LibraryCatalog;
   stores: Map<string, IEvidenceStore>;
   dataDir?: string;
+  embedDeps?: CollectionEmbedDeps;
 }
 
 type StoreWithDb = IEvidenceStore & { getDb?: () => import('better-sqlite3').Database };
@@ -164,8 +166,9 @@ export const libraryRoutes: FastifyPluginAsync<LibraryRoutesOptions> = async (ap
       return { error: 'Store not found' };
     }
     const scanner = resolveCollectionScanner(manifest);
-    const builder = new CollectionIndexBuilder(store as SqliteEvidenceStore, manifest, scanner);
-    const result = await builder.rebuild();
+    const body = request.body as { force?: boolean } | undefined;
+    const builder = new CollectionIndexBuilder(store as SqliteEvidenceStore, manifest, scanner, opts.embedDeps);
+    const result = await builder.rebuild({ force: body?.force ?? false });
     return result;
   });
 
