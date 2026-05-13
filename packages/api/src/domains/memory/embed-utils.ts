@@ -8,7 +8,9 @@ export async function embedIndexedItems(
   embedding: IEmbeddingService,
   vectorStore: VectorStore,
 ): Promise<void> {
-  if (!embedding.isReady() || items.length === 0) return;
+  if (items.length === 0) return;
+  await embedding.reprobeIfNeeded();
+  if (!embedding.isReady()) return;
 
   for (let offset = 0; offset < items.length; offset += EMBED_BATCH_SIZE) {
     const batch = items.slice(offset, offset + EMBED_BATCH_SIZE);

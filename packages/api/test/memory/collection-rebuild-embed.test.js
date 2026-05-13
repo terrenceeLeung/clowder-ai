@@ -46,6 +46,7 @@ describe('CollectionIndexBuilder embedding integration (bug #6)', () => {
     const embedded = [];
     const mockEmbedding = {
       isReady: () => true,
+      reprobeIfNeeded: async () => {},
       embed: async (texts) => texts.map(() => new Float32Array([0.1, 0.2])),
       getModelInfo: () => ({ modelId: 'test', modelRev: 'v1', dim: 2 }),
     };

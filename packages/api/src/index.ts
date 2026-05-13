@@ -1848,6 +1848,7 @@ async function main(): Promise<void> {
       catalog: memoryServices.catalog,
       stores: libraryStores,
       dataDir: memoryServices.dataDir,
+      embeddingService: memoryServices.embeddingService,
     });
   }
 
