@@ -30,7 +30,7 @@ import type { IOutboundAdapter } from './OutboundDeliveryHook.js';
 const QUICK_COMMAND_ACTIONS: readonly CardAction[] = [
   { label: '➕ 新建', value: { cmd: '/new' } },
   { label: '📋 选择会话', value: { cmd: '/threads' } },
-  { label: '📜 历史', value: { cmd: '/history' } },
+  { label: '📜 历史', value: { cmd: '/history', args: 'pick' } },
   { label: '❓ 帮助', value: { cmd: '/commands' } },
 ];
 

@@ -402,10 +402,7 @@ export class ConnectorCommandLayer {
     }
 
     const rawArg = args.trim();
-    if (rawArg && !/^[1-5]$/.test(rawArg)) {
-      return { kind: 'history', response: '❌ 用法: /history [1-5]（默认 1 轮）', contextThreadId: binding.threadId };
-    }
-    if (!rawArg) {
+    if (rawArg === 'pick') {
       return {
         kind: 'history',
         response: '📜 查看几轮对话？',
@@ -417,7 +414,10 @@ export class ConnectorCommandLayer {
         contextThreadId: binding.threadId,
       };
     }
-    const roundCount = parseInt(rawArg, 10);
+    if (rawArg && !/^[1-5]$/.test(rawArg)) {
+      return { kind: 'history', response: '❌ 用法: /history [1-5]（默认 1 轮）', contextThreadId: binding.threadId };
+    }
+    const roundCount = rawArg ? parseInt(rawArg, 10) : 1;
 
     if (!this.deps.messageStore) {
       return { kind: 'history', response: '❌ 消息存储不可用', contextThreadId: binding.threadId };

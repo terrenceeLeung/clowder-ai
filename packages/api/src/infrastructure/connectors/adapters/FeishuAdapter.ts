@@ -653,6 +653,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
       elements.push({ tag: 'hr' });
       elements.push({
         tag: 'action',
+        layout: 'trisected',
         actions: envelope.cardActions.map((a) => ({
           tag: 'button',
           text: { tag: 'plain_text', content: a.label },
