@@ -501,10 +501,14 @@ export async function startConnectorGateway(
           const cardAction = feishu.parseCardAction(envelope);
           if (!cardAction) return;
           const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
-          if (typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')) {
-            const cmdText = actionValue.args
-              ? `${actionValue.cmd} ${actionValue.args}`
-              : actionValue.cmd;
+          const cmdFromBtn =
+            typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')
+              ? actionValue.args ? `${actionValue.cmd} ${actionValue.args}` : actionValue.cmd
+              : null;
+          const cmdFromSelect =
+            !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
+          const cmdText = cmdFromBtn ?? cmdFromSelect;
+          if (cmdText) {
             await connectorRouter.route(
               'feishu',
               cardAction.chatId,
@@ -578,10 +582,14 @@ export async function startConnectorGateway(
           const cardAction = feishu.parseCardAction(body);
           if (cardAction) {
             const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
-            if (typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')) {
-              const cmdText = actionValue.args
-                ? `${actionValue.cmd} ${actionValue.args}`
-                : actionValue.cmd;
+            const cmdFromBtn =
+              typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')
+                ? actionValue.args ? `${actionValue.cmd} ${actionValue.args}` : actionValue.cmd
+                : null;
+            const cmdFromSelect =
+              !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
+            const cmdText = cmdFromBtn ?? cmdFromSelect;
+            if (cmdText) {
               const result = await connectorRouter.route(
                 'feishu',
                 cardAction.chatId,

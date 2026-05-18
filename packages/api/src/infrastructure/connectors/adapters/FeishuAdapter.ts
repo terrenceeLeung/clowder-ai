@@ -51,6 +51,7 @@ export interface FeishuCardAction {
   chatId: string;
   senderId: string;
   actionValue: Record<string, unknown>;
+  option?: string;
 }
 
 export interface FeishuMediaPayload {
@@ -288,13 +289,14 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
 
     if (!operator || !action || !context) return null;
 
-    const actionValue = action.value as Record<string, unknown> | undefined;
-    if (!actionValue || typeof actionValue !== 'object') return null;
+    const actionValue = (action.value as Record<string, unknown> | undefined) ?? {};
+    const option = typeof action.option === 'string' ? action.option : undefined;
 
     return {
       chatId: context.open_chat_id as string,
       senderId: operator.open_id as string,
       actionValue,
+      option,
     };
   }
 
@@ -651,16 +653,20 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
     }
     if (envelope.cardActions?.length) {
       elements.push({ tag: 'hr' });
+      const options = envelope.cardActions.map((a) => {
+        const v = a.value as { cmd?: string; args?: string };
+        const optVal = v.cmd ? (v.args ? `${v.cmd} ${v.args}` : v.cmd) : JSON.stringify(a.value);
+        return { text: { tag: 'plain_text', content: a.label }, value: optVal };
+      });
       elements.push({
         tag: 'action',
-        layout: 'flow',
-        actions: envelope.cardActions.map((a) => ({
-          tag: 'button',
-          text: { tag: 'plain_text', content: a.label },
-          type: 'default',
-          size: 'small',
-          value: a.value,
-        })),
+        actions: [
+          {
+            tag: 'select_static',
+            placeholder: { tag: 'plain_text', content: '选择操作...' },
+            options,
+          },
+        ],
       });
     }
     const card = {
