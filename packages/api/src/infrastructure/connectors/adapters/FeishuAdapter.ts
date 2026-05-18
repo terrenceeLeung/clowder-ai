@@ -651,16 +651,34 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
     }
     if (envelope.cardActions?.length) {
       elements.push({ tag: 'hr' });
-      elements.push({
-        tag: 'action',
-        layout: 'trisected',
-        actions: envelope.cardActions.map((a) => ({
-          tag: 'button',
-          text: { tag: 'plain_text', content: a.label },
-          type: 'default',
-          value: a.value,
-        })),
-      });
+      const actions = [...envelope.cardActions];
+      for (let i = 0; i < actions.length; i += 3) {
+        const row = actions.slice(i, i + 3);
+        const columns: Record<string, unknown>[] = row.map((a) => ({
+          tag: 'column',
+          width: 'weighted',
+          weight: 1,
+          vertical_align: 'center',
+          elements: [
+            {
+              tag: 'action',
+              actions: [
+                {
+                  tag: 'button',
+                  text: { tag: 'plain_text', content: a.label },
+                  type: 'default',
+                  size: 'small',
+                  value: a.value,
+                },
+              ],
+            },
+          ],
+        }));
+        while (columns.length < 3) {
+          columns.push({ tag: 'column', width: 'weighted', weight: 1, elements: [] });
+        }
+        elements.push({ tag: 'column_set', flex_mode: 'none', background_style: 'default', columns });
+      }
     }
     const card = {
       header: {
