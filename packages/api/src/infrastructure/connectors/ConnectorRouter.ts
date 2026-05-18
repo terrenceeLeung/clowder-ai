@@ -194,7 +194,7 @@ export class ConnectorRouter {
 
     // F157: Fire-and-forget emoji reaction as instant ack (< 500ms)
     const ackAdapter = this.opts.adapters?.get(connectorId);
-    if (ackAdapter?.addReaction && externalMessageId) {
+    if (ackAdapter?.addReaction && externalMessageId && !externalMessageId.startsWith('card-action-')) {
       ackAdapter.addReaction(externalMessageId, 'HEART').catch((err) => {
         log.warn({ err, connectorId, externalMessageId }, '[ConnectorRouter] addReaction failed (non-fatal)');
       });
