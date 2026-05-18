@@ -38,7 +38,7 @@ function buildForest(spans: TraceSpan[]): SpanNode[] {
   const childMap = new Map<string, TraceSpan[]>();
   const roots: TraceSpan[] = [];
   for (const span of spans) {
-    if (span.parentSpanId && byId.has(span.parentSpanId)) {
+    if (span.parentSpanId && span.parentSpanId !== span.spanId && byId.has(span.parentSpanId)) {
       const arr = childMap.get(span.parentSpanId) ?? [];
       arr.push(span);
       childMap.set(span.parentSpanId, arr);
@@ -46,8 +46,11 @@ function buildForest(spans: TraceSpan[]): SpanNode[] {
       roots.push(span);
     }
   }
+  const visited = new Set<string>();
   function build(s: TraceSpan, depth: number): SpanNode {
+    visited.add(s.spanId);
     const children = (childMap.get(s.spanId) ?? [])
+      .filter((c) => !visited.has(c.spanId))
       .sort((a, b) => a.startTimeMs - b.startTimeMs)
       .map((c) => build(c, depth + 1));
     return { span: s, children, depth };
