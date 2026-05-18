@@ -852,6 +852,36 @@ describe('FeishuAdapter', () => {
       };
       assert.equal(adapter.parseCardAction(body), null);
     });
+
+    it('extracts chatType from context.open_chat_type when present', () => {
+      const adapter = new FeishuAdapter('app-id', 'app-secret', noopLog());
+      const body = {
+        header: { event_type: 'card.action.trigger', event_id: 'evt-card-ct' },
+        event: {
+          operator: { open_id: 'ou_op_ct' },
+          action: { value: { cmd: '/new' }, tag: 'button' },
+          context: { open_chat_id: 'oc_group_chat', open_chat_type: 'group' },
+        },
+      };
+      const result = adapter.parseCardAction(body);
+      assert.ok(result);
+      assert.equal(result.chatType, 'group');
+    });
+
+    it('chatType is undefined when context lacks open_chat_type', () => {
+      const adapter = new FeishuAdapter('app-id', 'app-secret', noopLog());
+      const body = {
+        header: { event_type: 'card.action.trigger', event_id: 'evt-card-no-ct' },
+        event: {
+          operator: { open_id: 'ou_op_no_ct' },
+          action: { value: { cmd: '/threads' }, tag: 'button' },
+          context: { open_chat_id: 'oc_p2p_chat' },
+        },
+      };
+      const result = adapter.parseCardAction(body);
+      assert.ok(result);
+      assert.equal(result.chatType, undefined);
+    });
   });
 
   describe('sendPlaceholder()', () => {
