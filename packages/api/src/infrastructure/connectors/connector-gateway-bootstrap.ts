@@ -510,6 +510,10 @@ export async function startConnectorGateway(
           const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
           const cmdText = cmdFromBtn ?? cmdFromSelect;
           const chatType = cardAction.chatType ?? (await feishu.resolveChatType(cardAction.chatId));
+          if (!chatType) {
+            log.warn({ chatId: cardAction.chatId }, '[Feishu] Card action rejected: chatType unknown (fail-closed)');
+            return;
+          }
           if (cmdText) {
             await connectorRouter.route(
               'feishu',
@@ -597,6 +601,10 @@ export async function startConnectorGateway(
             const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
             const cmdText = cmdFromBtn ?? cmdFromSelect;
             const chatType = cardAction.chatType ?? (await feishu.resolveChatType(cardAction.chatId));
+            if (!chatType) {
+              log.warn({ chatId: cardAction.chatId }, '[Feishu] Card action rejected: chatType unknown (fail-closed)');
+              return { kind: 'skipped', reason: 'chat_type_unknown' };
+            }
             if (cmdText) {
               const result = await connectorRouter.route(
                 'feishu',
