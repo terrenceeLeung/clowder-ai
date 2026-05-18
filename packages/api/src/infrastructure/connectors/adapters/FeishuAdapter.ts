@@ -658,18 +658,16 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
           tag: 'button',
           text: { tag: 'plain_text', content: a.label },
           type: 'default',
-          size: 'small',
           value: a.value,
         })),
       });
     }
     const card = {
-      schema: '2.0',
       header: {
         title: { tag: 'plain_text' as const, content: headerTitle },
         template: headerTemplate as 'blue' | 'purple',
       },
-      body: { elements },
+      elements,
     };
     await this.sendLarkMessage(externalChatId, 'interactive', JSON.stringify(card));
   }
