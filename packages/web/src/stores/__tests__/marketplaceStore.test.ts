@@ -152,12 +152,14 @@ describe('marketplaceStore', () => {
     expect(mocks.apiFetch).not.toHaveBeenCalled();
   });
 
-  it('setEcosystemFilter does not search when no query', async () => {
+  it('setEcosystemFilter triggers browse when no query', async () => {
+    mocks.apiFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({ results: [MOCK_RESULT] }) });
     const { useMarketplaceStore } = await import('../marketplaceStore');
 
     useMarketplaceStore.getState().setEcosystemFilter(['codex']);
+    await vi.waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledTimes(1));
 
-    expect(mocks.apiFetch).not.toHaveBeenCalled();
+    expect(mocks.apiFetch).toHaveBeenCalledWith(expect.stringContaining('ecosystems=codex'));
   });
 
   it('setTrustFilter re-triggers search when query exists', async () => {
