@@ -1,6 +1,7 @@
 import './helpers/setup-cat-registry.js';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { FeishuTokenManager } from '../dist/infrastructure/connectors/adapters/FeishuTokenManager.js';
 import { TelegramAdapter } from '../dist/infrastructure/connectors/adapters/TelegramAdapter.js';
 import { startConnectorGateway } from '../dist/infrastructure/connectors/connector-gateway-bootstrap.js';
 
@@ -318,6 +319,16 @@ describe('ConnectorGateway Bootstrap', () => {
       feishuVerificationToken: 'test-token',
     };
     const handle = await startConnectorGateway(config, deps);
+
+    // Inject a no-network token manager so resolveChatType returns undefined
+    // without hitting open.feishu.cn
+    const stubTm = new FeishuTokenManager({
+      appId: 'stub',
+      appSecret: 'stub',
+      fetchFn: async () => new Response(null, { status: 401 }),
+    });
+    handle.feishuAdapter._injectTokenManager(stubTm);
+
     const feishuHandler = handle.webhookHandlers.get('feishu');
     const result = await feishuHandler.handleWebhook(
       {

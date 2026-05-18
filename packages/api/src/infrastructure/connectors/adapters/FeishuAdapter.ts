@@ -617,9 +617,9 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
     const cached = this.chatTypeCache.get(chatId);
     if (cached && cached.expiresAt > Date.now()) return cached.chatType;
 
-    const token = await this.tokenManager?.getTenantAccessToken();
-    if (!token) return undefined;
     try {
+      const token = await this.tokenManager?.getTenantAccessToken();
+      if (!token) return undefined;
       const res = await (this.uploadFetchFn ?? globalThis.fetch)(
         `https://open.feishu.cn/open-apis/im/v1/chats/${chatId}`,
         { headers: { Authorization: `Bearer ${token}` } },

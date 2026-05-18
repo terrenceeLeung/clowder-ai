@@ -197,6 +197,7 @@ export interface ConnectorGatewayHandle {
   readonly streamingHook: StreamingOutboundHook;
   readonly webhookHandlers: Map<string, ConnectorWebhookHandler>;
   readonly weixinAdapter: InstanceType<typeof WeixinAdapter> | null;
+  readonly feishuAdapter: InstanceType<typeof FeishuAdapter> | null;
   readonly permissionStore: IConnectorPermissionStore;
   readonly startWeixinPolling: () => void;
   /** F132 Phase E: dynamically start WeCom Bot adapter after credential validation */
@@ -1031,6 +1032,7 @@ export async function startConnectorGateway(
     streamingHook,
     webhookHandlers,
     weixinAdapter: weixin,
+    feishuAdapter: (adapters.get('feishu') as InstanceType<typeof FeishuAdapter>) ?? null,
     permissionStore,
     startWeixinPolling,
     startWeComBotStream,
