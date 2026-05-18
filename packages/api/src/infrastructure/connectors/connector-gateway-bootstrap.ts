@@ -484,7 +484,6 @@ export async function startConnectorGateway(
             },
             '[Feishu] WS event received',
           );
-          // Wrap into the envelope format parseEvent expects: { header, event }
           const envelope = {
             header: { event_type: 'im.message.receive_v1' },
             event: data,
@@ -492,6 +491,37 @@ export async function startConnectorGateway(
           const parsed = feishu.parseEvent(envelope);
           if (!parsed) return;
           await routeFeishuParsedEvent(parsed);
+        },
+        'card.action.trigger': async (data: Record<string, unknown>) => {
+          log.info('[Feishu] WS card.action.trigger received');
+          const envelope = {
+            header: { event_type: 'card.action.trigger' },
+            event: data,
+          };
+          const cardAction = feishu.parseCardAction(envelope);
+          if (!cardAction) return;
+          const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
+          if (typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')) {
+            const cmdText = actionValue.args
+              ? `${actionValue.cmd} ${actionValue.args}`
+              : actionValue.cmd;
+            await connectorRouter.route(
+              'feishu',
+              cardAction.chatId,
+              cmdText,
+              `card-action-${Date.now()}`,
+              undefined,
+              cardAction.senderId ? { id: cardAction.senderId } : undefined,
+            );
+            return;
+          }
+          const actionText = JSON.stringify(cardAction.actionValue);
+          await connectorRouter.route(
+            'feishu',
+            cardAction.chatId,
+            actionText,
+            `card-action-${Date.now()}`,
+          );
         },
       });
 
