@@ -657,6 +657,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
           tag: 'button',
           text: { tag: 'plain_text', content: a.label },
           type: 'default',
+          size: 'small',
           value: a.value,
         })),
       });

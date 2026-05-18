@@ -92,6 +92,7 @@ export function buildCommandActionButtons(): LarkCardElement {
       tag: 'button',
       text: { tag: 'plain_text', content: btn.label },
       type: 'default',
+      size: 'small',
       value: { cmd: btn.cmd, ...(btn.args ? { args: btn.args } : {}) },
     })),
   };
@@ -111,6 +112,7 @@ export function buildThreadPickerCard(
     tag: 'button' as const,
     text: { tag: 'plain_text' as const, content: `${t.index}. ${t.title}${t.badge ? ` [${t.badge}]` : ''}` },
     type: 'default' as const,
+    size: 'small' as const,
     value: { cmd: '/use', args: String(t.index) },
   }));
   elements.push({ tag: 'action', actions });
@@ -123,6 +125,7 @@ export function buildHistoryPickerCard(): LarkCardElement[] {
     tag: 'button' as const,
     text: { tag: 'plain_text' as const, content: `最近 ${n} 轮` },
     type: 'default' as const,
+    size: 'small' as const,
     value: { cmd: '/history', args: String(n) },
   }));
   return [

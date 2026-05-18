@@ -261,7 +261,7 @@ export class ConnectorRouter {
         const adapter = this.opts.adapters?.get(connectorId);
         if (adapter) {
           if (adapter.sendFormattedReply) {
-            const envelope = this.formatter.formatCommand(cmdResult.response, QUICK_COMMAND_ACTIONS);
+            const envelope = this.formatter.formatCommand(cmdResult.response, cmdResult.cardActions ?? QUICK_COMMAND_ACTIONS);
             await adapter.sendFormattedReply(externalChatId, envelope);
           } else {
             await adapter.sendReply(externalChatId, cmdResult.response);

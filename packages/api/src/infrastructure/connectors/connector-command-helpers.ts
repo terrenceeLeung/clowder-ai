@@ -59,13 +59,31 @@ const FALLBACK_COMMANDS = [
   { cmd: '/unbind', desc: '解除当前绑定' },
 ];
 
+const COMMAND_BUTTON_LABELS: Record<string, string> = {
+  '/new': '➕ 新建',
+  '/threads': '📋 会话列表',
+  '/history': '📜 历史',
+  '/where': '📍 位置',
+  '/cats': '🐾 猫猫',
+  '/status': '📊 状态',
+  '/focus': '🎯 聚焦',
+  '/ask': '💬 问猫',
+  '/commands': '❓ 帮助',
+};
+
 export function buildCommandsList(registry?: CommandRegistry): CommandResult {
-  // F142-B: dynamic listing from registry when available
   const commands = registry
     ? registry.listBySurface('connector').map((c) => ({ cmd: c.usage || c.name, desc: c.description }))
     : FALLBACK_COMMANDS;
   const lines = commands.map((c) => `  ${c.cmd} — ${c.desc}`);
-  return { kind: 'commands', response: `📋 可用命令：\n\n${lines.join('\n')}` };
+  const commandActions = commands
+    .map((c) => {
+      const base = c.cmd.split(' ')[0]!;
+      const label = COMMAND_BUTTON_LABELS[base];
+      return label ? { label, value: { cmd: base } } : null;
+    })
+    .filter((a): a is { label: string; value: { cmd: string } } => a !== null);
+  return { kind: 'commands', response: `📋 可用命令：\n\n${lines.join('\n')}`, cardActions: commandActions };
 }
 
 export async function buildCatsInfo(threadId: string, deps: CommandInfoDeps): Promise<CommandResult> {
