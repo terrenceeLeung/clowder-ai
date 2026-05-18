@@ -197,6 +197,7 @@ export interface ConnectorGatewayHandle {
   readonly streamingHook: StreamingOutboundHook;
   readonly webhookHandlers: Map<string, ConnectorWebhookHandler>;
   readonly weixinAdapter: InstanceType<typeof WeixinAdapter> | null;
+  readonly feishuAdapter: InstanceType<typeof FeishuAdapter> | null;
   readonly permissionStore: IConnectorPermissionStore;
   readonly startWeixinPolling: () => void;
   /** F132 Phase E: dynamically start WeCom Bot adapter after credential validation */
@@ -484,7 +485,6 @@ export async function startConnectorGateway(
             },
             '[Feishu] WS event received',
           );
-          // Wrap into the envelope format parseEvent expects: { header, event }
           const envelope = {
             header: { event_type: 'im.message.receive_v1' },
             event: data,
@@ -492,6 +492,51 @@ export async function startConnectorGateway(
           const parsed = feishu.parseEvent(envelope);
           if (!parsed) return;
           await routeFeishuParsedEvent(parsed);
+        },
+        'card.action.trigger': async (data: Record<string, unknown>) => {
+          log.info('[Feishu] WS card.action.trigger received');
+          const envelope = {
+            header: { event_type: 'card.action.trigger' },
+            event: data,
+          };
+          const cardAction = feishu.parseCardAction(envelope);
+          if (!cardAction) return;
+          const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
+          const cmdFromBtn =
+            typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')
+              ? actionValue.args
+                ? `${actionValue.cmd} ${actionValue.args}`
+                : actionValue.cmd
+              : null;
+          const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
+          const cmdText = cmdFromBtn ?? cmdFromSelect;
+          const chatType = cardAction.chatType ?? (await feishu.resolveChatType(cardAction.chatId));
+          if (!chatType) {
+            log.warn({ chatId: cardAction.chatId }, '[Feishu] Card action rejected: chatType unknown (fail-closed)');
+            return;
+          }
+          if (cmdText) {
+            await connectorRouter.route(
+              'feishu',
+              cardAction.chatId,
+              cmdText,
+              `card-action-${Date.now()}`,
+              undefined,
+              cardAction.senderId ? { id: cardAction.senderId } : undefined,
+              chatType,
+            );
+            return;
+          }
+          const actionText = JSON.stringify(cardAction.actionValue);
+          await connectorRouter.route(
+            'feishu',
+            cardAction.chatId,
+            actionText,
+            `card-action-${Date.now()}`,
+            undefined,
+            undefined,
+            chatType,
+          );
         },
       });
 
@@ -547,12 +592,43 @@ export async function startConnectorGateway(
 
           const cardAction = feishu.parseCardAction(body);
           if (cardAction) {
+            const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
+            const cmdFromBtn =
+              typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')
+                ? actionValue.args
+                  ? `${actionValue.cmd} ${actionValue.args}`
+                  : actionValue.cmd
+                : null;
+            const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
+            const cmdText = cmdFromBtn ?? cmdFromSelect;
+            const chatType = cardAction.chatType ?? (await feishu.resolveChatType(cardAction.chatId));
+            if (!chatType) {
+              log.warn({ chatId: cardAction.chatId }, '[Feishu] Card action rejected: chatType unknown (fail-closed)');
+              return { kind: 'skipped', reason: 'chat_type_unknown' };
+            }
+            if (cmdText) {
+              const result = await connectorRouter.route(
+                'feishu',
+                cardAction.chatId,
+                cmdText,
+                `card-action-${Date.now()}`,
+                undefined,
+                cardAction.senderId ? { id: cardAction.senderId } : undefined,
+                chatType,
+              );
+              return result.kind === 'skipped'
+                ? { kind: 'skipped', reason: result.reason }
+                : { kind: 'processed', messageId: result.kind === 'routed' ? result.messageId : 'card-action' };
+            }
             const actionText = JSON.stringify(cardAction.actionValue);
             const result = await connectorRouter.route(
               'feishu',
               cardAction.chatId,
               actionText,
               `card-action-${Date.now()}`,
+              undefined,
+              undefined,
+              chatType,
             );
             return result.kind === 'skipped'
               ? { kind: 'skipped', reason: result.reason }
@@ -956,6 +1032,7 @@ export async function startConnectorGateway(
     streamingHook,
     webhookHandlers,
     weixinAdapter: weixin,
+    feishuAdapter: (adapters.get('feishu') as InstanceType<typeof FeishuAdapter>) ?? null,
     permissionStore,
     startWeixinPolling,
     startWeComBotStream,

@@ -20,12 +20,19 @@ import { catRegistry, getConnectorDefinition } from '@cat-cafe/shared';
 import type { FastifyBaseLogger } from 'fastify';
 import { findMonorepoRoot } from '../../utils/monorepo-root.js';
 import type { ConnectorCommandLayer } from './ConnectorCommandLayer.js';
-import { ConnectorMessageFormatter } from './ConnectorMessageFormatter.js';
+import { type CardAction, ConnectorMessageFormatter } from './ConnectorMessageFormatter.js';
 import type { IConnectorPermissionStore } from './ConnectorPermissionStore.js';
 import type { IConnectorThreadBindingStore } from './ConnectorThreadBindingStore.js';
 import type { InboundMessageDedup } from './InboundMessageDedup.js';
 import { parseMentions } from './mention-parser.js';
 import type { IOutboundAdapter } from './OutboundDeliveryHook.js';
+
+const QUICK_COMMAND_ACTIONS: readonly CardAction[] = [
+  { label: '➕ 新建', value: { cmd: '/new' } },
+  { label: '📋 选择会话', value: { cmd: '/threads' } },
+  { label: '📜 历史', value: { cmd: '/history', args: 'pick' } },
+  { label: '❓ 帮助', value: { cmd: '/commands' } },
+];
 
 /** Emit a connector_message socket event using the canonical protocol.
  *  All emit sites MUST use this to avoid protocol drift (旧/新 payload 不一致). */
@@ -187,7 +194,7 @@ export class ConnectorRouter {
 
     // F157: Fire-and-forget emoji reaction as instant ack (< 500ms)
     const ackAdapter = this.opts.adapters?.get(connectorId);
-    if (ackAdapter?.addReaction && externalMessageId) {
+    if (ackAdapter?.addReaction && externalMessageId && !externalMessageId.startsWith('card-action-')) {
       ackAdapter.addReaction(externalMessageId, 'HEART').catch((err) => {
         log.warn({ err, connectorId, externalMessageId }, '[ConnectorRouter] addReaction failed (non-fatal)');
       });
@@ -254,7 +261,10 @@ export class ConnectorRouter {
         const adapter = this.opts.adapters?.get(connectorId);
         if (adapter) {
           if (adapter.sendFormattedReply) {
-            const envelope = this.formatter.formatCommand(cmdResult.response);
+            const envelope = this.formatter.formatCommand(
+              cmdResult.response,
+              cmdResult.cardActions ?? QUICK_COMMAND_ACTIONS,
+            );
             await adapter.sendFormattedReply(externalChatId, envelope);
           } else {
             await adapter.sendReply(externalChatId, cmdResult.response);
