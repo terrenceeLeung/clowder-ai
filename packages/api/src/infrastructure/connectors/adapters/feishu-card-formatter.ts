@@ -105,9 +105,7 @@ export function appendCommandButtons(elements: LarkCardElement[]): LarkCardEleme
 export function buildThreadPickerCard(
   threads: Array<{ index: number; title: string; id: string; badge?: string }>,
 ): LarkCardElement[] {
-  const elements: LarkCardElement[] = [
-    { tag: 'markdown', content: '📋 **选择要切换的会话：**' },
-  ];
+  const elements: LarkCardElement[] = [{ tag: 'markdown', content: '📋 **选择要切换的会话：**' }];
   const actions = threads.slice(0, 5).map((t) => ({
     tag: 'button' as const,
     text: { tag: 'plain_text' as const, content: `${t.index}. ${t.title}${t.badge ? ` [${t.badge}]` : ''}` },

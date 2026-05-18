@@ -503,10 +503,11 @@ export async function startConnectorGateway(
           const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
           const cmdFromBtn =
             typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')
-              ? actionValue.args ? `${actionValue.cmd} ${actionValue.args}` : actionValue.cmd
+              ? actionValue.args
+                ? `${actionValue.cmd} ${actionValue.args}`
+                : actionValue.cmd
               : null;
-          const cmdFromSelect =
-            !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
+          const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
           const cmdText = cmdFromBtn ?? cmdFromSelect;
           if (cmdText) {
             await connectorRouter.route(
@@ -520,12 +521,7 @@ export async function startConnectorGateway(
             return;
           }
           const actionText = JSON.stringify(cardAction.actionValue);
-          await connectorRouter.route(
-            'feishu',
-            cardAction.chatId,
-            actionText,
-            `card-action-${Date.now()}`,
-          );
+          await connectorRouter.route('feishu', cardAction.chatId, actionText, `card-action-${Date.now()}`);
         },
       });
 
@@ -584,10 +580,11 @@ export async function startConnectorGateway(
             const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
             const cmdFromBtn =
               typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')
-                ? actionValue.args ? `${actionValue.cmd} ${actionValue.args}` : actionValue.cmd
+                ? actionValue.args
+                  ? `${actionValue.cmd} ${actionValue.args}`
+                  : actionValue.cmd
                 : null;
-            const cmdFromSelect =
-              !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
+            const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
             const cmdText = cmdFromBtn ?? cmdFromSelect;
             if (cmdText) {
               const result = await connectorRouter.route(

@@ -291,6 +291,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
 
     const actionValue = (action.value as Record<string, unknown> | undefined) ?? {};
     const option = typeof action.option === 'string' ? action.option : undefined;
+    if (Object.keys(actionValue).length === 0 && !option) return null;
 
     return {
       chatId: context.open_chat_id as string,
