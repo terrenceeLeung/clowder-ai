@@ -55,7 +55,11 @@ function buildForest(spans: TraceSpan[]): SpanNode[] {
       .map((c) => build(c, depth + 1));
     return { span: s, children, depth };
   }
-  return roots.sort((a, b) => a.startTimeMs - b.startTimeMs).map((r) => build(r, 0));
+  const forest = roots.sort((a, b) => a.startTimeMs - b.startTimeMs).map((r) => build(r, 0));
+  for (const span of spans) {
+    if (!visited.has(span.spanId)) forest.push(build(span, 0));
+  }
+  return forest;
 }
 
 function flattenForest(nodes: SpanNode[]): SpanNode[] {
