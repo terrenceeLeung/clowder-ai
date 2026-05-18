@@ -547,6 +547,23 @@ export async function startConnectorGateway(
 
           const cardAction = feishu.parseCardAction(body);
           if (cardAction) {
+            const actionValue = cardAction.actionValue as { cmd?: string; args?: string };
+            if (typeof actionValue.cmd === 'string' && actionValue.cmd.startsWith('/')) {
+              const cmdText = actionValue.args
+                ? `${actionValue.cmd} ${actionValue.args}`
+                : actionValue.cmd;
+              const result = await connectorRouter.route(
+                'feishu',
+                cardAction.chatId,
+                cmdText,
+                `card-action-${Date.now()}`,
+                undefined,
+                cardAction.senderId ? { id: cardAction.senderId } : undefined,
+              );
+              return result.kind === 'skipped'
+                ? { kind: 'skipped', reason: result.reason }
+                : { kind: 'processed', messageId: result.kind === 'routed' ? result.messageId : 'card-action' };
+            }
             const actionText = JSON.stringify(cardAction.actionValue);
             const result = await connectorRouter.route(
               'feishu',

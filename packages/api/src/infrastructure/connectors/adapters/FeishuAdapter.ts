@@ -640,7 +640,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
     const sender = (metadata as { replyToSender?: { id: string; name?: string } } | undefined)?.replyToSender;
     const atPrefix = sender ? `<at id=${sender.id}>${sender.name ?? '用户'}</at> ` : '';
 
-    const elements: Array<{ tag: string; content?: string }> = [];
+    const elements: Array<Record<string, unknown>> = [];
     if (envelope.subtitle) {
       elements.push({ tag: 'markdown', content: `**${envelope.subtitle}**` });
     }
@@ -648,6 +648,18 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
     if (envelope.footer) {
       elements.push({ tag: 'hr' });
       elements.push({ tag: 'markdown', content: envelope.footer });
+    }
+    if (envelope.cardActions?.length) {
+      elements.push({ tag: 'hr' });
+      elements.push({
+        tag: 'action',
+        actions: envelope.cardActions.map((a) => ({
+          tag: 'button',
+          text: { tag: 'plain_text', content: a.label },
+          type: 'default',
+          value: a.value,
+        })),
+      });
     }
     const card = {
       header: {
