@@ -12,6 +12,11 @@
 
 export type MessageOrigin = 'callback' | 'agent' | 'system';
 
+export interface CardAction {
+  readonly label: string;
+  readonly value: Record<string, unknown>;
+}
+
 export interface MessageEnvelope {
   /** Cat identity line, e.g. "🐱 布偶猫/宪宪" */
   readonly header: string;
@@ -23,6 +28,8 @@ export interface MessageEnvelope {
   readonly footer: string;
   /** Where this message originated from — adapters can render differently */
   readonly origin?: MessageOrigin | undefined;
+  /** Optional action buttons rendered as card actions (Feishu buttons, etc.) */
+  readonly cardActions?: readonly CardAction[] | undefined;
 }
 
 export interface FormatInput {
@@ -82,12 +89,13 @@ export class ConnectorMessageFormatter {
   }
 
   /** Format a system/command response (no cat identity, lightweight envelope). */
-  formatCommand(body: string): MessageEnvelope {
+  formatCommand(body: string, cardActions?: readonly CardAction[]): MessageEnvelope {
     return {
       header: 'Clowder AI',
       subtitle: '',
       body,
       footer: new Date().toISOString().slice(11, 16),
+      cardActions,
     };
   }
 }
