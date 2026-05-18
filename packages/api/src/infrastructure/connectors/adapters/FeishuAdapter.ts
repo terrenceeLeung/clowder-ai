@@ -52,6 +52,7 @@ export interface FeishuCardAction {
   senderId: string;
   actionValue: Record<string, unknown>;
   option?: string;
+  chatType?: 'p2p' | 'group';
 }
 
 export interface FeishuMediaPayload {
@@ -87,6 +88,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
   private static CACHE_TTL_MS = 30 * 60 * 1000;
   private senderNameCache = new Map<string, { name: string; expiresAt: number }>();
   private chatNameCache = new Map<string, { name: string; expiresAt: number }>();
+  private chatTypeCache = new Map<string, { chatType: 'p2p' | 'group'; expiresAt: number }>();
 
   constructor(appId: string, appSecret: string, log: FastifyBaseLogger, options?: FeishuAdapterOptions) {
     this.client = new lark.Client({
@@ -293,11 +295,15 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
     const option = typeof action.option === 'string' ? action.option : undefined;
     if (Object.keys(actionValue).length === 0 && !option) return null;
 
+    const rawChatType = context.open_chat_type as string | undefined;
+    const chatType = rawChatType === 'p2p' || rawChatType === 'group' ? rawChatType : undefined;
+
     return {
       chatId: context.open_chat_id as string,
       senderId: operator.open_id as string,
       actionValue,
       option,
+      chatType,
     };
   }
 
@@ -602,6 +608,30 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
         this.chatNameCache.set(chatId, { name, expiresAt: Date.now() + FeishuAdapter.CACHE_TTL_MS });
       }
       return name;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async resolveChatType(chatId: string): Promise<'p2p' | 'group' | undefined> {
+    const cached = this.chatTypeCache.get(chatId);
+    if (cached && cached.expiresAt > Date.now()) return cached.chatType;
+
+    const token = await this.tokenManager?.getTenantAccessToken();
+    if (!token) return undefined;
+    try {
+      const res = await (this.uploadFetchFn ?? globalThis.fetch)(
+        `https://open.feishu.cn/open-apis/im/v1/chats/${chatId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) return undefined;
+      const data = (await res.json()) as { data?: { chat_mode?: string } };
+      const mode = data?.data?.chat_mode;
+      if (mode === 'p2p' || mode === 'group') {
+        this.chatTypeCache.set(chatId, { chatType: mode, expiresAt: Date.now() + FeishuAdapter.CACHE_TTL_MS });
+        return mode;
+      }
+      return undefined;
     } catch {
       return undefined;
     }

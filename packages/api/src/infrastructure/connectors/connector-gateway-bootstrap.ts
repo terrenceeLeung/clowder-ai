@@ -509,6 +509,7 @@ export async function startConnectorGateway(
               : null;
           const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
           const cmdText = cmdFromBtn ?? cmdFromSelect;
+          const chatType = cardAction.chatType ?? (await feishu.resolveChatType(cardAction.chatId));
           if (cmdText) {
             await connectorRouter.route(
               'feishu',
@@ -517,11 +518,20 @@ export async function startConnectorGateway(
               `card-action-${Date.now()}`,
               undefined,
               cardAction.senderId ? { id: cardAction.senderId } : undefined,
+              chatType,
             );
             return;
           }
           const actionText = JSON.stringify(cardAction.actionValue);
-          await connectorRouter.route('feishu', cardAction.chatId, actionText, `card-action-${Date.now()}`);
+          await connectorRouter.route(
+            'feishu',
+            cardAction.chatId,
+            actionText,
+            `card-action-${Date.now()}`,
+            undefined,
+            undefined,
+            chatType,
+          );
         },
       });
 
@@ -586,6 +596,7 @@ export async function startConnectorGateway(
                 : null;
             const cmdFromSelect = !cmdFromBtn && cardAction.option?.startsWith('/') ? cardAction.option : null;
             const cmdText = cmdFromBtn ?? cmdFromSelect;
+            const chatType = cardAction.chatType ?? (await feishu.resolveChatType(cardAction.chatId));
             if (cmdText) {
               const result = await connectorRouter.route(
                 'feishu',
@@ -594,6 +605,7 @@ export async function startConnectorGateway(
                 `card-action-${Date.now()}`,
                 undefined,
                 cardAction.senderId ? { id: cardAction.senderId } : undefined,
+                chatType,
               );
               return result.kind === 'skipped'
                 ? { kind: 'skipped', reason: result.reason }
@@ -605,6 +617,9 @@ export async function startConnectorGateway(
               cardAction.chatId,
               actionText,
               `card-action-${Date.now()}`,
+              undefined,
+              undefined,
+              chatType,
             );
             return result.kind === 'skipped'
               ? { kind: 'skipped', reason: result.reason }
