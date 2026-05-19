@@ -231,7 +231,7 @@ export class ConnectorCommandLayer {
     });
     const result: CommandResult = {
       kind: 'threads',
-      response: `📋 最近的 threads:\n\n${lines.join('\n')}`,
+      response: `📋 最近的 threads:\n\n${lines.join('\n')}\n\n用 /use F088 或 /use 关键词 或 /use 3 切换`,
       cardActions: threadActions,
     };
     return binding ? { ...result, contextThreadId: binding.threadId } : result;
