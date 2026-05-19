@@ -787,9 +787,11 @@ describe('FeishuAdapter', () => {
 
     const card = JSON.parse(sendCalls[0].content);
     assert.equal(card.header.title.content, '🐱 布偶猫');
-    // Should only have the body markdown element, no subtitle/hr/footer
-    assert.equal(card.elements.length, 1, 'minimal card should have only body element');
+    // body + hr + select_static action (default quick actions always injected)
+    assert.equal(card.elements.length, 3, 'minimal card should have body + hr + action');
     assert.equal(card.elements[0].content, 'Hello from cat!');
+    assert.equal(card.elements[1].tag, 'hr');
+    assert.equal(card.elements[2].tag, 'action');
   });
 
   // P1-2: textContent must not be discarded when both text and blocks present
