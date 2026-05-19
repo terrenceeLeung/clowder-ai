@@ -688,9 +688,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
       elements.push({ tag: 'hr' });
       elements.push({ tag: 'markdown', content: envelope.footer });
     }
-    const actions = envelope.cardActions?.length
-      ? envelope.cardActions
-      : FeishuAdapter.DEFAULT_QUICK_ACTIONS;
+    const actions = envelope.cardActions?.length ? envelope.cardActions : FeishuAdapter.DEFAULT_QUICK_ACTIONS;
     if (actions.length) {
       elements.push({ tag: 'hr' });
       const options = actions.map((a) => {
