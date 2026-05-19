@@ -21,7 +21,7 @@ const execFileAsync = promisify(execFile);
 
 import * as lark from '@larksuiteoapi/node-sdk';
 import type { FastifyBaseLogger } from 'fastify';
-import type { MessageEnvelope } from '../ConnectorMessageFormatter.js';
+import { DEFAULT_QUICK_ACTIONS, type MessageEnvelope } from '../ConnectorMessageFormatter.js';
 import type { IStreamableOutboundAdapter } from '../OutboundDeliveryHook.js';
 import type { FeishuTokenManager } from './FeishuTokenManager.js';
 import { formatFeishuCard } from './feishu-card-formatter.js';
@@ -86,12 +86,6 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
   private addReactionFn: ((params: { messageId: string; emojiType: string }) => Promise<unknown>) | null = null;
   private botOpenId: string | null = null;
   private static CACHE_TTL_MS = 30 * 60 * 1000;
-  private static DEFAULT_QUICK_ACTIONS = [
-    { label: '➕ 新建', value: { cmd: '/new' } },
-    { label: '📋 选择会话', value: { cmd: '/threads' } },
-    { label: '📜 历史', value: { cmd: '/history', args: 'pick' } },
-    { label: '❓ 帮助', value: { cmd: '/commands' } },
-  ];
   private senderNameCache = new Map<string, { name: string; expiresAt: number }>();
   private chatNameCache = new Map<string, { name: string; expiresAt: number }>();
   private chatTypeCache = new Map<string, { chatType: 'p2p' | 'group'; expiresAt: number }>();
@@ -688,7 +682,7 @@ export class FeishuAdapter implements IStreamableOutboundAdapter {
       elements.push({ tag: 'hr' });
       elements.push({ tag: 'markdown', content: envelope.footer });
     }
-    const actions = envelope.cardActions?.length ? envelope.cardActions : FeishuAdapter.DEFAULT_QUICK_ACTIONS;
+    const actions = envelope.cardActions?.length ? envelope.cardActions : DEFAULT_QUICK_ACTIONS;
     if (actions.length) {
       elements.push({ tag: 'hr' });
       const options = actions.map((a) => {

@@ -195,6 +195,7 @@ describe('ConnectorCommandLayer', () => {
     assert.ok(result.response.includes('飞书Bug'));
     assert.ok(result.response.includes('新功能讨论'));
     assert.ok(result.cardActions?.length > 0);
+    assert.ok(result.response.includes('/use'), 'response should include /use instruction');
   });
 
   it('/threads shows full thread IDs (not truncated)', async () => {

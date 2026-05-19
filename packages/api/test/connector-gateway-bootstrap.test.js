@@ -313,21 +313,21 @@ describe('ConnectorGateway Bootstrap', () => {
       },
     };
 
-    const config = {
-      feishuAppId: 'test-app-id',
-      feishuAppSecret: 'test-app-secret',
-      feishuVerificationToken: 'test-token',
-    };
-    const handle = await startConnectorGateway(config, deps);
-
-    // Inject a no-network token manager so resolveChatType returns undefined
-    // without hitting open.feishu.cn
     const stubTm = new FeishuTokenManager({
       appId: 'stub',
       appSecret: 'stub',
       fetchFn: async () => new Response(null, { status: 401 }),
     });
-    handle.feishuAdapter._injectTokenManager(stubTm);
+
+    const config = {
+      feishuAppId: 'test-app-id',
+      feishuAppSecret: 'test-app-secret',
+      feishuVerificationToken: 'test-token',
+    };
+    const handle = await startConnectorGateway(config, {
+      ...deps,
+      _feishuTokenManagerOverride: stubTm,
+    });
 
     const feishuHandler = handle.webhookHandlers.get('feishu');
     const result = await feishuHandler.handleWebhook(

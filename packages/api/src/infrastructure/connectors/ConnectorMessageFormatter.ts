@@ -17,6 +17,13 @@ export interface CardAction {
   readonly value: Record<string, unknown>;
 }
 
+export const DEFAULT_QUICK_ACTIONS: readonly CardAction[] = [
+  { label: '➕ 新建', value: { cmd: '/new' } },
+  { label: '📋 选择会话', value: { cmd: '/threads' } },
+  { label: '📜 历史', value: { cmd: '/history', args: 'pick' } },
+  { label: '❓ 帮助', value: { cmd: '/commands' } },
+];
+
 export interface MessageEnvelope {
   /** Cat identity line, e.g. "🐱 布偶猫/宪宪" */
   readonly header: string;
