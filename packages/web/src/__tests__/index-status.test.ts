@@ -67,8 +67,14 @@ describe('parseIndexStatus', () => {
 });
 
 describe('isEmbeddingWarmingUp (F209)', () => {
-  const make = (passages: number, vectors: number) =>
-    parseIndexStatus({ backend: 'sqlite', healthy: true, passages_count: passages, passage_vectors_count: vectors });
+  const make = (passages: number, vectors: number, supported = true) =>
+    parseIndexStatus({
+      backend: 'sqlite',
+      healthy: true,
+      passages_count: passages,
+      passage_vectors_count: vectors,
+      passage_vectors_supported: supported,
+    });
 
   it('parses passage_vectors_count', () => {
     expect(make(8608, 2368).passageVectorsCount).toBe(2368);
@@ -76,6 +82,11 @@ describe('isEmbeddingWarmingUp (F209)', () => {
 
   it('defaults passageVectorsCount to 0 when the field is absent', () => {
     expect(parseIndexStatus({ backend: 'sqlite', healthy: true }).passageVectorsCount).toBe(0);
+  });
+
+  it('parses passage_vectors_supported (defaults false when absent)', () => {
+    expect(make(8608, 2368, true).passageVectorsSupported).toBe(true);
+    expect(parseIndexStatus({ backend: 'sqlite', healthy: true }).passageVectorsSupported).toBe(false);
   });
 
   it('is warming up when vectors lag behind passages', () => {
@@ -88,6 +99,11 @@ describe('isEmbeddingWarmingUp (F209)', () => {
 
   it('is not warming up when there are no passages', () => {
     expect(isEmbeddingWarmingUp(make(0, 0))).toBe(false);
+  });
+
+  it('is NOT warming up when passage vectors are unsupported (embed off / no sqlite-vec)', () => {
+    // codex P2 regression: a missing vec table must NOT render "暖机中" forever and poll every 3s.
+    expect(isEmbeddingWarmingUp(make(8608, 0, false))).toBe(false);
   });
 });
 

@@ -11,6 +11,7 @@ interface RawStatusResponse {
   threads_count?: number;
   passages_count?: number;
   passage_vectors_count?: number;
+  passage_vectors_supported?: boolean;
   edges_count?: number;
   last_rebuild_at?: string | null;
   embedding_model?: string | null;
@@ -24,6 +25,7 @@ export interface IndexStatusData {
   threadsCount: number;
   passagesCount: number;
   passageVectorsCount: number;
+  passageVectorsSupported: boolean;
   edgesCount: number;
   lastRebuildAt: string | null;
   embeddingModel: string | null;
@@ -41,6 +43,7 @@ export function parseIndexStatus(raw: RawStatusResponse): IndexStatusData {
     threadsCount: raw.threads_count ?? 0,
     passagesCount: raw.passages_count ?? 0,
     passageVectorsCount: raw.passage_vectors_count ?? 0,
+    passageVectorsSupported: raw.passage_vectors_supported ?? false,
     edgesCount: raw.edges_count ?? 0,
     lastRebuildAt: raw.last_rebuild_at ?? null,
     embeddingModel: raw.embedding_model ?? null,
@@ -50,10 +53,14 @@ export function parseIndexStatus(raw: RawStatusResponse): IndexStatusData {
 
 /**
  * F209 Pure: is passage-vector embedding still warming up in the background?
- * True when there are passages but not all of them have vectors yet.
+ * True only when passage vectors are SUPPORTED (sqlite-vec available / embedding on) and there
+ * are passages whose vectors are not all computed yet. When unsupported (embed off / no vec table),
+ * the count stays 0 forever — this guard prevents a perpetual "warming up" banner + 3s poll loop.
  */
 export function isEmbeddingWarmingUp(status: IndexStatusData): boolean {
-  return status.passagesCount > 0 && status.passageVectorsCount < status.passagesCount;
+  return (
+    status.passageVectorsSupported && status.passagesCount > 0 && status.passageVectorsCount < status.passagesCount
+  );
 }
 
 // ── F188 Phase A: Rebuild job types + parser ──
