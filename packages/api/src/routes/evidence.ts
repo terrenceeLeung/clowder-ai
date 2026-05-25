@@ -305,6 +305,15 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
         /* table may not exist */
       }
 
+      // F209: embedded passage-vector count — lets the UI surface background embedding warm-up
+      // (passage_vectors < passages means semantic recall is still warming up; passage_fts is complete).
+      let passageVectorCount = 0;
+      try {
+        passageVectorCount = (db.prepare('SELECT count(*) AS c FROM passage_vectors').get() as { c: number }).c;
+      } catch {
+        /* vec0 table may not exist (sqlite-vec unavailable / embedding off) */
+      }
+
       // Embedding model from embedding_meta (VectorStore.initMeta writes embedding_model_id)
       let embeddingModel: string | null = null;
       try {
@@ -322,6 +331,7 @@ export const evidenceRoutes: FastifyPluginAsync<EvidenceRoutesOptions> = async (
         docs_count: docCount,
         threads_count: threadCount,
         passages_count: passageCount,
+        passage_vectors_count: passageVectorCount,
         edges_count: edgeCount,
         last_rebuild_at: lastUpdated,
         embedding_model: embeddingModel,

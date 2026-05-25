@@ -4,7 +4,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { filterEvidenceVars, getConfigVars, parseIndexStatus, parseRebuildJob } from '@/components/memory/IndexStatus';
+import {
+  filterEvidenceVars,
+  getConfigVars,
+  isEmbeddingWarmingUp,
+  parseIndexStatus,
+  parseRebuildJob,
+} from '@/components/memory/IndexStatus';
 
 describe('parseIndexStatus', () => {
   it('parses healthy response', () => {
@@ -57,6 +63,31 @@ describe('parseIndexStatus', () => {
     expect(status.threadsCount).toBe(12);
     expect(status.passagesCount).toBe(340);
     expect(status.embeddingModel).toBe('text-embedding-3-small');
+  });
+});
+
+describe('isEmbeddingWarmingUp (F209)', () => {
+  const make = (passages: number, vectors: number) =>
+    parseIndexStatus({ backend: 'sqlite', healthy: true, passages_count: passages, passage_vectors_count: vectors });
+
+  it('parses passage_vectors_count', () => {
+    expect(make(8608, 2368).passageVectorsCount).toBe(2368);
+  });
+
+  it('defaults passageVectorsCount to 0 when the field is absent', () => {
+    expect(parseIndexStatus({ backend: 'sqlite', healthy: true }).passageVectorsCount).toBe(0);
+  });
+
+  it('is warming up when vectors lag behind passages', () => {
+    expect(isEmbeddingWarmingUp(make(8608, 2368))).toBe(true);
+  });
+
+  it('is done once every passage has a vector', () => {
+    expect(isEmbeddingWarmingUp(make(8608, 8608))).toBe(false);
+  });
+
+  it('is not warming up when there are no passages', () => {
+    expect(isEmbeddingWarmingUp(make(0, 0))).toBe(false);
   });
 });
 
