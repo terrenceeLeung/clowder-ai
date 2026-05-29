@@ -46,11 +46,7 @@ describe('cron-utils — computeNextCronSlot (boundary-race guard)', () => {
     const now = Date.UTC(2026, 4, 29, 2, 59, 59, 950); // .finally running, still before slot
     const lastFired = Date.UTC(2026, 4, 29, 3, 0, 0, 0); // today's 03:00 already fired
     const next = computeNextCronSlot('0 3 * * *', 'UTC', now, lastFired);
-    assert.equal(
-      next,
-      Date.UTC(2026, 4, 30, 3, 0, 0, 0),
-      'must skip the already-fired slot and land on the next day',
-    );
+    assert.equal(next, Date.UTC(2026, 4, 30, 3, 0, 0, 0), 'must skip the already-fired slot and land on the next day');
   });
 
   it('returns next slot when lastFired is older than current next (normal case)', async () => {
