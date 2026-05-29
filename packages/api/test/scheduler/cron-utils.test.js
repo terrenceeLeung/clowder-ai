@@ -18,9 +18,10 @@ describe('cron-utils — getNextCronMs (backward compat)', () => {
 
 // ─── Cron boundary-race guard (F167 verdict 2026-05-29 fix) ──────────
 //
-// Bug: TaskRunnerV2 fires the same cron slot twice when setTimeout drifts
-//      slightly before the target slot and `.finally` reschedules before the
-//      slot has passed. See vhp_eval_a2a_2026_05_29T03_11_28Z_double_cron_fire.
+// Bug: TaskRunnerV2 fires the same cron slot twice when wall-clock divergence
+//      from the monotonic timer (NTP step-back, VM pause, container clock drift)
+//      causes Date.now() to be before the target slot at callback time, and
+//      `.finally` reschedules the same slot. See vhp_eval_a2a_2026_05_29T03_11_28Z_double_cron_fire.
 //
 // Fix: computeNextCronSlot accepts `lastFiredSlotMs` and advances past it so
 //      the same slot can never be returned twice.
@@ -36,7 +37,7 @@ describe('cron-utils — computeNextCronSlot (boundary-race guard)', () => {
 
   it('BOUNDARY RACE: now is before slot, lastFired equals that slot → advance to next day', async () => {
     // Repro the production bug:
-    //   - setTimeout fires at 02:59:59.860 UTC (~140ms early, timer drift)
+    //   - setTimeout fires at 02:59:59.860 UTC (wall clock behind monotonic due to NTP/clock adjustment)
     //   - executePipeline marks cronSlotFired = 03:00:00.000
     //   - executePipeline returns fast (~90ms); .finally runs at 02:59:59.95X
     //   - Without guard: parsed.next() with currentDate=02:59:59.95X returns
@@ -91,6 +92,29 @@ describe('cron-utils — computeNextCronSlot (boundary-race guard)', () => {
       () => computeNextCronSlot('not a cron', 'UTC', Date.UTC(2026, 4, 29, 0, 0, 0, 0), undefined),
       /invalid|parse|validation|resolve/i,
     );
+  });
+
+  it('severely late trigger (cross-slot): timer lag beyond one full cron period', async () => {
+    // When event-loop lag causes setTimeout to fire well past the target slot,
+    // cronSlotFired records the *expected* slot (nextSlotMs), not the actual
+    // trigger time. The next computeNextCronSlot must still advance correctly.
+    const { computeNextCronSlot } = await import('../../dist/infrastructure/scheduler/cron-utils.js');
+    // Target was 03:00 today, but timer fired at 04:30 (1.5h late, past the slot).
+    // lastFired = 03:00 (the expected slot that was marked synchronously).
+    const now = Date.UTC(2026, 4, 29, 4, 30, 0, 0);
+    const lastFired = Date.UTC(2026, 4, 29, 3, 0, 0, 0);
+    const next = computeNextCronSlot('0 3 * * *', 'UTC', now, lastFired);
+    // Next slot is tomorrow 03:00 — same as if the timer had fired on time.
+    assert.equal(next, Date.UTC(2026, 4, 30, 3, 0, 0, 0), 'late trigger must still advance to the next future slot');
+  });
+
+  it('throws when max iterations exceeded (dirty far-future lastFiredSlotMs)', async () => {
+    const { computeNextCronSlot } = await import('../../dist/infrastructure/scheduler/cron-utils.js');
+    const now = Date.UTC(2026, 4, 29, 2, 0, 0, 0);
+    // lastFired set to ~3 years in the future — per-minute cron would need
+    // >1.5M iterations to advance past it, exceeding the 1440 cap.
+    const lastFired = Date.UTC(2029, 4, 29, 3, 0, 0, 0);
+    assert.throws(() => computeNextCronSlot('* * * * *', 'UTC', now, lastFired), /exceeded 1440 iterations/);
   });
 
   it('undefined lastFiredSlotMs is treated as no guard (initial scheduling)', async () => {
