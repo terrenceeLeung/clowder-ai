@@ -280,6 +280,105 @@ outputVerified = signal_or(
 
 方向：会搜的猫的 query 模式 → 自动建议给不会搜的猫（"Maine Coon搜这类问题用了这个 query，Hit@1"）。这是 harness coaching，不是检索排序本体，数据依赖 Phase D 的 TaskTrajectory。
 
+### Phase F: Memory Verdict Input Generator（in-progress，2026-06-08 cross-family co-spec'd）
+
+> **Why this Phase exists**：F192 Phase E-pilot AC-E11 标 ✅ 接入 `eval:memory` adapter，但 production wiring 缺失——`buildMemoryVerdictHandoff` 在 `packages/api/src` 零调用方（除 unit test）。结果是 eval:memory cron 每日 03:00 UTC 触发 evalCat=opus-47 进 thread_eval_memory，**14+ 次累计 cron 触发零 verdict 持久化**（对比同期 eval:task-outcome 已产出实际 verdict artifact；具体 durable artifact 路径 / schema 是 F192-owned contract，本 spec 不替 F192 bless 任何具体路径）。诊断 + cross-family review 见 thread_eval_memory `vhp_eval_memory_2026_06_08T03_00_pipeline_not_wired`。
+
+> **Boundary（cross-family co-spec'd 2026-06-08）**：F200/F188 owns memory metrics + finding semantics（拉数据 + 阈值判断 + 构造 input）；F192 owns control-plane（cron 调用 + verdict persist + Hub visibility + closure）。F200 Phase F 补 input generation 段；publish/persist/Hub/closure 归 **F192 Phase I — eval:memory Verdict Publishing Backfill**（codex/Maine Coon owns，与本 Phase 并行开发）。API seam 是 `BuildMemoryVerdictInput`（已 stable，F192 Phase E adapter 锁定）。
+
+#### Phase F What
+
+1. **Input generator** (`packages/api/src/domains/memory/memory-verdict-input-generator.ts`):
+
+```typescript
+export interface GenerateMemoryVerdictInputDeps {
+  computeRecallMetrics: (opts: { days: number }) => MemoryRecallMetrics;
+  computeLibraryHealth: () => MemoryLibraryHealth;
+  domain: EvalDomainRegistryEntry;       // 来自 eval-memory.yaml
+  windowDays?: number;                   // default 7
+}
+
+/** Skip sentinel: generator 拒绝产出 input（avoid adapter throw on totalEvents=0）。
+ *  F192 Phase I 收到 sentinel → 跳过 publish，可选记一个 ops-level no-volume note。
+ *  v1 only reason = 'no_volume_in_window'；后续如有其它 skip 场景再扩 union。 */
+export interface MemoryVerdictSkipSentinel {
+  kind: 'skip';
+  reason: 'no_volume_in_window';
+  window: { days: number; startISO: string; endISO: string };
+  totalEvents: 0;
+}
+
+export type GenerateMemoryVerdictInputResult =
+  | BuildMemoryVerdictInput
+  | MemoryVerdictSkipSentinel;
+
+export function generateMemoryVerdictInput(
+  deps: GenerateMemoryVerdictInputDeps,
+): GenerateMemoryVerdictInputResult {
+  const windowDays = deps.windowDays ?? 7;
+  const recallMetrics = deps.computeRecallMetrics({ days: windowDays });
+  const libraryHealth = deps.computeLibraryHealth();
+
+  // OQ-F1 codex 拍板 Option A + explicit sentinel（非 bare null）
+  if (recallMetrics.totalEvents === 0) {
+    return {
+      kind: 'skip',
+      reason: 'no_volume_in_window',
+      window: buildWindowDescriptor(windowDays),  // { days, startISO, endISO }
+      totalEvents: 0,
+    };
+  }
+
+  const finding = detectFinding(recallMetrics, libraryHealth);
+  return {
+    domain: deps.domain,
+    recallMetrics,
+    libraryHealth,
+    ...(finding
+      ? { finding }
+      : { noFindingRecord: buildNoFindingRecord(recallMetrics, libraryHealth) }),
+  };
+}
+```
+
+> Phase I 调用方 narrowing pattern：`if ('kind' in result && result.kind === 'skip') { /* skip publish */ } else { adapter(result) }`
+
+2. **Finding detection rules v1**（rate-based rules 必须有 `minSamples` precondition；count-based rules 不需要）：
+
+| rule key | trigger | minSamples precondition | severity | proposedAction.target |
+|----------|---------|------------------------|----------|----------------------|
+| recall_quality:low_mrr | ConsumedMRR < 0.20 | totalEvents ≥ 20 | high if < 0.10 else medium | F200/ranking |
+| recall_quality:high_abandon | SearchAbandonRate > 0.50 | totalEvents ≥ 10 | high if > 0.70 else medium | F200/search-pool-expansion |
+| library_health:orphan_burden | orphan_edges.count > 50 | n/a (absolute count) | high if > 100 else medium | F188/orphan-edge-repair |
+| library_health:stale_anchor_burden | stale_anchors.count > 100 | n/a (absolute count) | high if > 200 else medium | F188/anchor-refresh |
+| library_health:verification_debt | needs_review_count > 30 | n/a (absolute count) | medium | F188/verification-queue |
+
+> **minSamples 由来**（codex PR #40 R1+R2 review 2026-06-08）：rate-based 阈值在 `totalEvents=1` 且 no consumption 的低样本窗口会误触发 high `low_mrr`/`high_abandon` finding——这是 low-confidence/no-volume 窗口，不是真实退化信号。`minSamples` precondition 在 trigger 前先 gate 掉低样本误报，落到 `noFindingRecord: { reason: "all_metrics_within_threshold" }` 路径（语义上 = "有数据但不足以判断 rate quality"）。**所有 minSamples 字段必须可由现有 `MemoryRecallMetrics` seam 直接得到**（R2 收敛：仅使用 `totalEvents`；不引入 `consumedCount` / `consumedEventCount` 等扩展 metric——避免与 AC-F6 "不引入新 metric / DB table / schema" 冲突）。`low_mrr` 用 `totalEvents ≥ 20`（比 `high_abandon` 的 10 高一倍）来弥补 consumption 信号在 seam 内不可见的盲点：足够大的搜索基数下，ConsumedMRR 退化才反映真实排序质量问题；"no consumption" 这类 failure mode 由 `high_abandon`（cats 显式放弃）兜底。如未来真需要 search-event-level consumed count 信号，走"扩 MemoryRecallMetrics seam + 修 AC-F6"路径（R2 备选），不在本 Phase scope。count-based 规则（orphan/stale/verification）不需要 minSamples，因为绝对计数本身是 ground truth。
+
+阈值 v1 用 Phase A-D 7d telemetry baseline 推导（impl 阶段精确化）。当前 7d=28 events、24h=0 events 的 dev 流量节奏下，v1 阈值偏保守，避免低样本量误报；阈值精确化等 v1.2 SW-1/SW-2 落地后 consumption rate 回升再迭代（与 v1.2 HW-3 是同一根因不同表达）。
+
+3. **No-finding / skip fallback** (两条独立路径)：
+   - **有数据、所有 finding rule 阈值都未触发** → 返回 `BuildMemoryVerdictInput` 带 `noFindingRecord: { reason: "all_metrics_within_threshold", evidence: <metric snapshot json blob> }` → F192 Phase I 调 adapter → 走 `buildKeepObservePacketInput` → verdict=keep_observe → F192 Phase I persist 短 packet
+   - **数据稀疏（totalEvents=0）** → 返回 `MemoryVerdictSkipSentinel`（kind='skip' / reason='no_volume_in_window' / window / totalEvents=0）→ F192 Phase I 跳过 publish。这是 OQ-F1 收敛后的 Option A 设计（codex 2026-06-08 拍板：explicit sentinel 优于 bare null，保留 reason/window/totalEvents 让 Phase I 可选记 ops note）；adapter API 保持不变（`totalEvents===0` guard 仍 throw，但 Phase I 在调 adapter 前先 narrow 掉 sentinel）
+
+4. **API seam（与 F192 Phase I 对接 contract）**：
+   - 输入端：`MemoryRecallMetrics`（已 structurally compatible with `RecallMetricsComputer.computeMetrics()` 输出）+ `MemoryLibraryHealth`（已 structurally compatible with `f188-library-health.ts` `computeLibraryHealth()` 输出）
+   - 输出端：`BuildMemoryVerdictInput`（已 stable，F192 Phase E adapter 锁定；本 Phase 不改 adapter API）
+   - F192 Phase I publish pipeline：`cron → evalCat invocation → Phase I 调 generateMemoryVerdictInput → buildMemoryVerdictHandoff → Phase I persist + Hub`
+
+#### Phase F Out of Scope（F192 Phase I owns）
+
+- ❌ 持久化 `VerdictHandoffPacket`（F192-owned durable verdict artifact —— 具体路径 / schema / SQLite 表归 F192 Phase H+I contract，本 spec 不 bless）
+- ❌ Hub visibility / closure orchestration / re-eval scheduling
+- ❌ git commit / PR / cron 直接调用链路
+- ❌ 改 adapter API（`buildMemoryVerdictHandoff` contract 锁定）
+- ❌ 改 `eval-memory.yaml` cron frequency（短期止血 cross-family co-decision；默认不做，fallback 条件：2026-06-10 前 Phase I/F 未进入实现 OR thread_eval_memory 再现 2+ 次无 verdict 触发）
+
+#### Phase F 与 v1.2 Backlog 协调
+
+- v1.2 HW-3 `consumption rate 4.11% 数据太薄` 与 Phase F 阈值精确化是**同一根因不同表达**：dev 流量节奏下 baseline 不足。Phase F v1 阈值默认偏保守 + impl 注释 link HW-3，避免阈值在低样本量做出错坐标系决策
+- Phase F finding 的 proposedAction.target 直接对接 v1.2 backlog（如 `F200/search-pool-expansion` 指向 HW-1 / `F188/orphan-edge-repair` 指向 F188 stewardship），形成 eval 闭环
+
 ### v1.1 Dogfooding Backlog（2026-05-16 三猫两轮实测：广度 dogfood + 冷启动模拟）
 
 三猫两轮真实调查任务实测（Round 1 广度 + Round 2 46 九路 / Maine Coon+47 冷启动模拟，刻意抛弃老猫先验）。
@@ -404,6 +503,15 @@ outputVerified = signal_or(
 - [x] AC-D3: 成功轨迹可被 list_recent 或 search_evidence 召回（scope="trajectories"）
 - [x] AC-D4: Cross-Cat Effort Variance 和 ConsumedButNotUsedRate 指标上线
 
+### Phase F（Memory Verdict Input Generator）⏳
+- [ ] AC-F1: `generateMemoryVerdictInput(deps)` pure function 返回 `GenerateMemoryVerdictInputResult` (union of `BuildMemoryVerdictInput | MemoryVerdictSkipSentinel`)，所有外部数据（metrics computer、library health computer、domain registry entry）通过 deps 注入（dependency-injection style），支持单测用 fixture 直接喂数据，不依赖 SQLite/HTTP
+- [ ] AC-F2: Finding detection rules 至少覆盖 5 类（recall MRR / search abandon rate / orphan edges / stale anchors / verification debt），每类阈值代码注释含 (a) reasoning (b) telemetry baseline reference (v1.2 HW-3 已记 7d=28 events baseline 偏薄，阈值偏保守)。**所有 rate-based rules 必须声明 `minSamples` precondition，且 minSamples 字段只能用现有 `MemoryRecallMetrics` seam 暴露的字段**（v1 仅 `totalEvents`；R2 收敛禁止引入 `consumedCount` 等扩展 metric 避免与 AC-F6 冲突）。具体：`low_mrr` 用 `totalEvents ≥ 20`（高门槛弥补 consumption 信号在 seam 内不可见），`high_abandon` 用 `totalEvents ≥ 10`。count-based rules 不需要 minSamples（绝对计数本身是 ground truth）。低于 minSamples 时 rule 不触发，落到 `noFindingRecord: { reason: "all_metrics_within_threshold" }` 路径
+- [ ] AC-F3: 数据稀疏（recallMetrics.totalEvents=0）时 generator 不让 adapter throw —— 返回 `MemoryVerdictSkipSentinel` (`kind='skip'` / `reason='no_volume_in_window'` / `window` / `totalEvents: 0`)。**OQ-F1 已收敛** (codex 2026-06-08 拍板 PR #40 review)：Option A + explicit sentinel（非 bare null），保留 reason/window/totalEvents 让 Phase I 可选记 ops-level no-volume note。adapter API 保持不变（adapter line 67-69 guard 仍 throw，但 Phase I 在调 adapter 前先 narrow 掉 sentinel）
+- [ ] AC-F4: 每个 finding detection rule 至少 1 个 unit test（正例 trigger + 反例 within threshold）；**rate-based rules（`low_mrr` / `high_abandon`）额外覆盖低样本量 case**（minSamples 未达：trigger 阈值跨过但 minSamples 不够 → 不触发 finding）；no_volume sentinel（totalEvents=0 → `MemoryVerdictSkipSentinel`）+ all_within_threshold 两种 no-finding 路径各覆盖一个单测；total ≥ 14 cases
+- [ ] AC-F5: API seam stable —— F192 Phase I `publishMemoryVerdict()` 调链路 `generateMemoryVerdictInput → buildMemoryVerdictHandoff → Phase I persist`，contract 不改 adapter；Phase I review pass 是 Phase F close 条件之一
+- [ ] AC-F6: 不引入新 metric / DB table / schema；只做现有 `RecallMetricsComputer` + `computeLibraryHealth` 输出的转换 + 阈值判断；structural compatibility 通过 TypeScript 类型 + 单测共同保证
+- [ ] AC-F7: 跨族 review by F192 Phase I owner (codex/Maine Coon)，确保 input/output contract 与 Phase I publish wiring 对齐；Phase F 不可在 Phase I review pass 前 self-merge
+
 ## Eval / Tracking Contract
 
 | 项 | 内容 |
@@ -463,3 +571,4 @@ outputVerified = signal_or(
 - Phase C: 跨族 review + shadow mode 数据确认后才切 on
 - Phase D: 待 Design Gate
 - Phase E: deferred
+- Phase F: 跨族 review by F192 Phase I owner (codex/Maine Coon, 2026-06-08 co-spec'd) —— API seam (`BuildMemoryVerdictInput`) 与 Phase I publish wiring 对齐是 review 重点；Phase I review pass 是 Phase F close 条件之一
