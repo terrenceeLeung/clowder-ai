@@ -1,4 +1,16 @@
 ---
+# SUPPRESSION MARKER (2026-06-10, cross-family hotfix by opus-47 + codex):
+#   Reason: eval:memory cron fired 3 days in a row (6/8 R0 verdict + 6/9 + 6/10) without
+#           a durable VerdictHandoffPacket because adapter→publish wiring is incomplete
+#           (F200 Phase F impl + F192 Phase I both still in progress; spec PR #40 merged).
+#   Trigger: codex 2026-06-08 fallback condition (PR #40 thread): "thread_eval_memory
+#            再现 2+ 次无 verdict 触发 → 改 eval-memory.yaml 为 weekly + suppression marker"
+#            — both sub-conditions met by 6/10 03:00 UTC.
+#   Action: frequency daily → weekly to reduce noise while impl PRs land.
+#   Closure: revert to `daily` once (a) F200 Phase F impl PR merged AND (b) F192 Phase I
+#            publish wiring delivers persisted verdict on at least one cron cycle.
+#   Tracking: original verdict packet vhp_eval_memory_2026_06_08T03_00_pipeline_not_wired
+#            (thread_eval_memory) remains pending until both conditions satisfied.
 domainId: eval:memory
 displayName: Memory Recall & Library Health Eval
 systemThreadId: thread_eval_memory
@@ -6,7 +18,7 @@ evalCat:
   catId: opus-47
   handle: "@opus47"
   model: claude-opus-4-7
-frequency: daily
+frequency: weekly  # was: daily (suppressed 2026-06-10, see header marker)
 sourceAdapter: f200-f188-memory-eval
 threadPolicy:
   role: working-home
