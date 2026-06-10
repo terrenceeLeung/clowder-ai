@@ -30,64 +30,59 @@ describe('eval-domain-daily task spec', () => {
     const result = await spec.admission.gate();
 
     assert.equal(result.run, true);
-    // Daily domains: eval:a2a + eval:memory + eval:task-outcome (eval:sop + eval:capability-wakeup are weekly)
-    assert.equal(result.workItems.length, 3, `expected exactly 3 daily domains, got ${result.workItems.length}`);
+    // Daily domains: eval:a2a + eval:task-outcome
+    // (eval:memory moved to weekly per 2026-06-10 hotfix; eval:sop + eval:capability-wakeup are also weekly)
+    assert.equal(result.workItems.length, 2, `expected exactly 2 daily domains, got ${result.workItems.length}`);
 
     const a2a = result.workItems.find((w) => w.subjectKey === 'eval:a2a');
     assert.ok(a2a, 'should have eval:a2a work item');
     assert.equal(a2a.signal.domainId, 'eval:a2a');
-
-    const memory = result.workItems.find((w) => w.subjectKey === 'eval:memory');
-    assert.ok(memory, 'should have eval:memory work item');
-    assert.equal(memory.signal.domainId, 'eval:memory');
 
     const taskOutcome = result.workItems.find((w) => w.subjectKey === 'eval:task-outcome');
     assert.ok(taskOutcome, 'should have eval:task-outcome work item');
     assert.equal(taskOutcome.signal.domainId, 'eval:task-outcome');
   });
 
-  it('gate skips domains whose legacy tasks are still active (P1-2)', async () => {
-    // Simulate: memory-recall-digest is still active for eval:memory
-    // (eval:a2a legacyScheduledTaskIds was cleaned to [] on 2026-06-01)
+  it('weekly gate skips domains whose legacy tasks are still active (P1-2, post-hotfix moves memory to weekly)', async () => {
+    // Simulate: memory-recall-digest is still active for eval:memory (now weekly per 2026-06-10 hotfix).
+    // Pre-hotfix this test ran against daily gate (memory was daily); now memory is weekly so the
+    // P1-2 legacy-task-skip behavior is verified on the weekly gate.
     const activeLegacyTasks = [{ id: 'memory-recall-digest', templateId: 'memory-recall-digest', enabled: true }];
-    const spec = createEvalDomainDailySpec({
+    const spec = createEvalDomainWeeklySpec({
       harnessFeedbackRoot: repoHarnessFeedbackRoot,
       listDynamicTasks: () => activeLegacyTasks,
     });
 
     const result = await spec.admission.gate();
 
-    assert.equal(result.run, true, 'should still run for domains without active legacy');
+    assert.equal(result.run, true, 'should still run for weekly domains without active legacy');
     // eval:memory should be skipped (memory-recall-digest is active)
     const memory = result.workItems.find((w) => w.subjectKey === 'eval:memory');
     assert.equal(memory, undefined, 'eval:memory must be skipped when its legacy task is active');
-    // eval:a2a and eval:task-outcome should remain (legacyScheduledTaskIds = [])
-    const a2a = result.workItems.find((w) => w.subjectKey === 'eval:a2a');
-    assert.ok(a2a, 'eval:a2a should still be included (no legacy tasks)');
-    const taskOutcome = result.workItems.find((w) => w.subjectKey === 'eval:task-outcome');
-    assert.ok(taskOutcome, 'eval:task-outcome should still be included (no legacy tasks)');
+    // eval:sop and eval:capability-wakeup should remain (legacyScheduledTaskIds = [])
+    const sop = result.workItems.find((w) => w.subjectKey === 'eval:sop');
+    assert.ok(sop, 'eval:sop should still be included (no legacy tasks)');
+    const capabilityWakeup = result.workItems.find((w) => w.subjectKey === 'eval:capability-wakeup');
+    assert.ok(capabilityWakeup, 'eval:capability-wakeup should still be included (no legacy tasks)');
   });
 
-  it('gate still runs when only one daily domain has active legacy tasks', async () => {
-    // With frequency filtering, daily gate only sees daily domains (a2a, memory, task-outcome).
-    // eval:a2a has legacyScheduledTaskIds=[] (cleaned), so we simulate a hypothetical
-    // legacy task for a2a + the real memory-recall-digest for memory.
-    // Since a2a/task-outcome have NO legacy tasks, even with memory blocked, gate still runs.
-    // To truly block all daily domains, every domain would need legacy tasks — but not all do.
-    // Updated: test now verifies that with only memory blocked, gate still runs.
+  it('weekly gate still runs when only one weekly domain (memory) has active legacy tasks', async () => {
+    // Post 2026-06-10 hotfix: memory is weekly. Weekly gate sees sop + capability-wakeup + memory.
+    // memory has memory-recall-digest legacy; sop + capability-wakeup have legacyScheduledTaskIds=[].
+    // With memory blocked, weekly gate still runs because sop/capability-wakeup have no legacy tasks.
     const activeLegacyTasks = [{ id: 'memory-recall-digest', templateId: 'memory-recall-digest', enabled: true }];
-    const spec = createEvalDomainDailySpec({
+    const spec = createEvalDomainWeeklySpec({
       harnessFeedbackRoot: repoHarnessFeedbackRoot,
       listDynamicTasks: () => activeLegacyTasks,
     });
 
     const result = await spec.admission.gate();
 
-    assert.equal(result.run, true, 'gate still runs because eval:a2a has no legacy tasks');
-    const a2a = result.workItems.find((w) => w.subjectKey === 'eval:a2a');
-    assert.ok(a2a, 'eval:a2a is included (legacyScheduledTaskIds=[])');
-    const taskOutcome = result.workItems.find((w) => w.subjectKey === 'eval:task-outcome');
-    assert.ok(taskOutcome, 'eval:task-outcome is included (legacyScheduledTaskIds=[])');
+    assert.equal(result.run, true, 'gate still runs because eval:sop / eval:capability-wakeup have no legacy tasks');
+    const sop = result.workItems.find((w) => w.subjectKey === 'eval:sop');
+    assert.ok(sop, 'eval:sop is included (legacyScheduledTaskIds=[])');
+    const capabilityWakeup = result.workItems.find((w) => w.subjectKey === 'eval:capability-wakeup');
+    assert.ok(capabilityWakeup, 'eval:capability-wakeup is included (legacyScheduledTaskIds=[])');
   });
 
   it('gate returns run=false when no eval domains exist', async () => {
@@ -230,7 +225,7 @@ describe('eval-domain-daily task spec', () => {
     // If we get here without throwing, test passes
   });
 
-  it('daily gate excludes weekly-frequency domains (eval:sop)', async () => {
+  it('daily gate excludes weekly-frequency domains (eval:sop + eval:memory + eval:capability-wakeup)', async () => {
     const spec = createEvalDomainDailySpec({ harnessFeedbackRoot: repoHarnessFeedbackRoot });
 
     const result = await spec.admission.gate();
@@ -238,8 +233,9 @@ describe('eval-domain-daily task spec', () => {
 
     const domainIds = result.workItems.map((w) => w.subjectKey);
     assert.ok(!domainIds.includes('eval:sop'), 'eval:sop (weekly) must NOT appear in daily gate');
+    assert.ok(!domainIds.includes('eval:memory'), 'eval:memory (weekly post-hotfix 2026-06-10) must NOT appear in daily gate');
+    assert.ok(!domainIds.includes('eval:capability-wakeup'), 'eval:capability-wakeup (weekly) must NOT appear in daily gate');
     assert.ok(domainIds.includes('eval:a2a'), 'eval:a2a (daily) must appear');
-    assert.ok(domainIds.includes('eval:memory'), 'eval:memory (daily) must appear');
     assert.ok(domainIds.includes('eval:task-outcome'), 'eval:task-outcome (daily) must appear');
   });
 });
@@ -260,7 +256,7 @@ describe('eval-domain-weekly task spec (AC-E19, AC-E20)', () => {
     assert.equal(spec.display.category, 'system');
   });
 
-  it('weekly gate includes eval:sop but excludes daily domains', async () => {
+  it('weekly gate includes weekly domains (eval:sop + eval:memory + eval:capability-wakeup) and excludes daily domains', async () => {
     const spec = createEvalDomainWeeklySpec({ harnessFeedbackRoot: repoHarnessFeedbackRoot });
 
     const result = await spec.admission.gate();
@@ -268,8 +264,9 @@ describe('eval-domain-weekly task spec (AC-E19, AC-E20)', () => {
 
     const domainIds = result.workItems.map((w) => w.subjectKey);
     assert.ok(domainIds.includes('eval:sop'), 'eval:sop (weekly) must appear in weekly gate');
+    assert.ok(domainIds.includes('eval:memory'), 'eval:memory (weekly post-hotfix 2026-06-10) must appear in weekly gate');
+    assert.ok(domainIds.includes('eval:capability-wakeup'), 'eval:capability-wakeup (weekly) must appear in weekly gate');
     assert.ok(!domainIds.includes('eval:a2a'), 'eval:a2a (daily) must NOT appear in weekly gate');
-    assert.ok(!domainIds.includes('eval:memory'), 'eval:memory (daily) must NOT appear in weekly gate');
     assert.ok(!domainIds.includes('eval:task-outcome'), 'eval:task-outcome (daily) must NOT appear in weekly gate');
   });
 
