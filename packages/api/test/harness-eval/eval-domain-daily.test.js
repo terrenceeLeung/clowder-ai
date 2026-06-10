@@ -233,8 +233,14 @@ describe('eval-domain-daily task spec', () => {
 
     const domainIds = result.workItems.map((w) => w.subjectKey);
     assert.ok(!domainIds.includes('eval:sop'), 'eval:sop (weekly) must NOT appear in daily gate');
-    assert.ok(!domainIds.includes('eval:memory'), 'eval:memory (weekly post-hotfix 2026-06-10) must NOT appear in daily gate');
-    assert.ok(!domainIds.includes('eval:capability-wakeup'), 'eval:capability-wakeup (weekly) must NOT appear in daily gate');
+    assert.ok(
+      !domainIds.includes('eval:memory'),
+      'eval:memory (weekly post-hotfix 2026-06-10) must NOT appear in daily gate',
+    );
+    assert.ok(
+      !domainIds.includes('eval:capability-wakeup'),
+      'eval:capability-wakeup (weekly) must NOT appear in daily gate',
+    );
     assert.ok(domainIds.includes('eval:a2a'), 'eval:a2a (daily) must appear');
     assert.ok(domainIds.includes('eval:task-outcome'), 'eval:task-outcome (daily) must appear');
   });
@@ -264,8 +270,14 @@ describe('eval-domain-weekly task spec (AC-E19, AC-E20)', () => {
 
     const domainIds = result.workItems.map((w) => w.subjectKey);
     assert.ok(domainIds.includes('eval:sop'), 'eval:sop (weekly) must appear in weekly gate');
-    assert.ok(domainIds.includes('eval:memory'), 'eval:memory (weekly post-hotfix 2026-06-10) must appear in weekly gate');
-    assert.ok(domainIds.includes('eval:capability-wakeup'), 'eval:capability-wakeup (weekly) must appear in weekly gate');
+    assert.ok(
+      domainIds.includes('eval:memory'),
+      'eval:memory (weekly post-hotfix 2026-06-10) must appear in weekly gate',
+    );
+    assert.ok(
+      domainIds.includes('eval:capability-wakeup'),
+      'eval:capability-wakeup (weekly) must appear in weekly gate',
+    );
     assert.ok(!domainIds.includes('eval:a2a'), 'eval:a2a (daily) must NOT appear in weekly gate');
     assert.ok(!domainIds.includes('eval:task-outcome'), 'eval:task-outcome (daily) must NOT appear in weekly gate');
   });
