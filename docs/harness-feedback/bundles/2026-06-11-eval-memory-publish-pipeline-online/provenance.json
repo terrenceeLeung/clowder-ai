@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-11-eval-memory-publish-pipeline-online",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-11-eval-memory-publish-pipeline-online/recall-metrics.json",
+      "sha256": "5b43db925f4d75e4b659eea883565185ee0136b44986a96902184e36fa1ccefe"
+    },
+    {
+      "path": "generated/memory/2026-06-11-eval-memory-publish-pipeline-online/library-health.json",
+      "sha256": "8575472eb81761d0cca63b2ef04661af741ea4b41c27ed58786ad1f0632a8662"
+    }
+  ],
+  "generatedAt": "2026-06-11T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
