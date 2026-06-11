@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-06-11-task-outcome-day-4-a2-path-first-organic-capture",
+  "evalSnapshotId": "eval-F192-2026-06-11",
+  "featureId": "F192",
+  "generatedAt": "2026-06-11T03:04:55.472Z",
+  "window": {
+    "startMs": 1780848000000,
+    "endMs": 1781146800000,
+    "durationHours": 83
+  },
+  "components": [
+    {
+      "id": "Phase-G-v0",
+      "name": "task-outcome eval pipeline",
+      "confidence": "medium",
+      "activationCounts": {
+        "episodes_total": 6,
+        "completed_total": 5,
+        "in_progress_total": 1,
+        "abandoned_total": 0,
+        "escalated_cvo_total": 0,
+        "corrected_then_completed_total": 0,
+        "a1_signals_total": 5,
+        "a2_signals_total": 1,
+        "proxy_signals_total": 0
+      },
+      "frictionCounts": {
+        "permission_cancel_total": 0,
+        "proposal_reject_total": 1,
+        "magic_word_ref_total": 0
+      }
+    },
+    {
+      "id": "F227-event-memory",
+      "name": "event memory timeline",
+      "confidence": "low",
+      "activationCounts": {
+        "events_backfilled_visible": 0,
+        "confidence_high_count": 0,
+        "confidence_mid_count": 0,
+        "confidence_low_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}
