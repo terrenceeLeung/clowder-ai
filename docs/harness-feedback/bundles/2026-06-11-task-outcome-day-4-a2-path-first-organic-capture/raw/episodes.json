@@ -1,0 +1,148 @@
+{
+  "verdictId": "2026-06-11-task-outcome-day-4-a2-path-first-organic-capture",
+  "windowStartMs": 1780848000000,
+  "windowEndMs": 1781146800000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1780942679971-f5qr5p",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mq5hhsh1v7x966ic",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-06-08T18:17:59.971Z"
+    },
+    {
+      "episodeId": "ep-1780974313120-tkz6fy",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mq5hhsh1v7x966ic",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-06-09T03:05:13.120Z"
+    },
+    {
+      "episodeId": "ep-1780979150769-3xoxl4",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mq62uiv0dv2uih6s",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-06-09T04:25:50.769Z"
+    },
+    {
+      "episodeId": "ep-1780989229851-o3ramk",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mq5zq77k38q9sin3",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-06-09T07:13:49.851Z"
+    },
+    {
+      "episodeId": "ep-1781062011527-y23n46",
+      "trigger": "cat_initiated",
+      "threadId": "thread_eval_memory",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-06-10T03:26:51.527Z"
+    },
+    {
+      "episodeId": "ep-1781142751234-svlvma",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mq839xpl6qzhtfil",
+      "participants": [
+        "fable5"
+      ],
+      "artifacts": [],
+      "terminalState": "in_progress",
+      "verdict": null,
+      "createdAt": "2026-06-11T01:52:31.234Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 1,
+      "episodeId": "ep-1780942679971-f5qr5p",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#71",
+        "outcome": "success",
+        "timestamp": "2026-06-08T18:17:59.972Z"
+      },
+      "createdAt": "2026-06-08T18:17:59.972Z"
+    },
+    {
+      "id": 2,
+      "episodeId": "ep-1780974313120-tkz6fy",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#74",
+        "outcome": "success",
+        "timestamp": "2026-06-09T03:05:13.120Z"
+      },
+      "createdAt": "2026-06-09T03:05:13.120Z"
+    },
+    {
+      "id": 3,
+      "episodeId": "ep-1780979150769-3xoxl4",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#76",
+        "outcome": "success",
+        "timestamp": "2026-06-09T04:25:50.770Z"
+      },
+      "createdAt": "2026-06-09T04:25:50.770Z"
+    },
+    {
+      "id": 4,
+      "episodeId": "ep-1780989229851-o3ramk",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#80",
+        "outcome": "success",
+        "timestamp": "2026-06-09T07:13:49.854Z"
+      },
+      "createdAt": "2026-06-09T07:13:49.854Z"
+    },
+    {
+      "id": 5,
+      "episodeId": "ep-1781062011527-y23n46",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#41",
+        "outcome": "success",
+        "timestamp": "2026-06-10T03:26:51.531Z"
+      },
+      "createdAt": "2026-06-10T03:26:51.531Z"
+    },
+    {
+      "id": 6,
+      "episodeId": "ep-1781142751234-svlvma",
+      "category": "a2",
+      "record": {
+        "type": "proposal_reject",
+        "proposalId": "proposal_mq89lkhpqqzupg23",
+        "proposalType": "session_handoff",
+        "catId": "fable5",
+        "threadId": "thread_mq839xpl6qzhtfil",
+        "timestamp": "2026-06-11T01:52:31.234Z"
+      },
+      "createdAt": "2026-06-11T01:52:31.234Z"
+    }
+  ],
+  "eventRows": []
+}

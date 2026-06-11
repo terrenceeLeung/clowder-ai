@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-06-11-task-outcome-day-4-a2-path-first-organic-capture",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-06-11-task-outcome-day-4-a2-path-first-organic-capture/raw/episodes.json",
+      "sha256": "8816d3c3d57d88306f1b3b358855862f93c4bbbb36e9d9198d661b63754985a5"
+    }
+  ],
+  "generatedAt": "2026-06-11T03:04:55.472Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
