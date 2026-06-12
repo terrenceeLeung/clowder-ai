@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-06-12-task-outcome-day-5-routing-bug-self-correction",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-06-12-task-outcome-day-5-routing-bug-self-correction/raw/episodes.json",
+      "sha256": "d77a99a2029e8eed259bd0c50b71557fde5c551caba7543971561e50807d545b"
+    }
+  ],
+  "generatedAt": "2026-06-12T03:03:45.049Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}

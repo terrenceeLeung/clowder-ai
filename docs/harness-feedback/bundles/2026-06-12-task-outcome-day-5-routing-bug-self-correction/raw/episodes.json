@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-06-12-task-outcome-day-5-routing-bug-self-correction",
+  "windowStartMs": 1781146800000,
+  "windowEndMs": 1781233200000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}
