@@ -1,0 +1,41 @@
+{
+  "verdictId": "2026-06-12-eval-memory-reeval-pass-stable",
+  "featureId": "F192",
+  "windowDays": 7,
+  "filters": {
+    "catId": "opus-47"
+  },
+  "generatedAt": "2026-06-12T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1780628511065,
+      "toMs": 1781233311065,
+      "days": 7
+    },
+    "filters": {
+      "catId": "opus-47"
+    },
+    "totalEvents": 5,
+    "core": {
+      "consumedAt3": 0,
+      "consumedMRR": 0,
+      "reformulationRate": 0.6,
+      "searchAbandonRate": 0.4
+    },
+    "extended": {
+      "readthroughAt3": 0,
+      "firstConsumedRankMedian": 0,
+      "reformulationsBeforeConsumption": 0,
+      "reformulateAfterExposure": 0,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": null,
+      "liveOnShadowSubsetMRR": null
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}

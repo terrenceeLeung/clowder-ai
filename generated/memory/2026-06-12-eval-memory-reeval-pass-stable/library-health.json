@@ -1,0 +1,38 @@
+{
+  "verdictId": "2026-06-12-eval-memory-reeval-pass-stable",
+  "featureId": "F192",
+  "windowDays": 7,
+  "filters": {
+    "catId": "opus-47"
+  },
+  "generatedAt": "2026-06-12T03:01:00.000Z",
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 11
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "zeroHitCount": 0,
+      "lowHitCount": 82,
+      "recentMisses": []
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 19,
+      "avgSimilarity": 0.895
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}

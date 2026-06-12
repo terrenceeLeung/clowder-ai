@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-12-eval-memory-reeval-pass-stable",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-12",
+  "generatedAt": "2026-06-12T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Second eval:memory verdict via F192 Phase I publish_verdict pipeline. PR #43 (yesterday's first publish) merged at 2026-06-12T03:00:42Z. 7-day recall window stable at 37 events (same as 06-11); 24h adds 4 new events; library / recall metrics within stable bands; no new actionable degradation. Reeval pass confirms publish pipeline operational across daily cron cycles. Outstanding issue: PR tracking intent='merge' auto-wake did NOT fire for PR #43 after CI completed at 06-11T03:15:22Z (24h+ gap before today's cron-triggered self-merge) — separate harness gap.",
+    "evidence": "recall_events_7d_count=37, recall_events_30d_count=120, recall_events_24h_count=4, baseline_06_11=37"
+  }
+}
