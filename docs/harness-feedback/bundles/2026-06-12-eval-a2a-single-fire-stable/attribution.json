@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-12-eval-a2a-single-fire-stable",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-06-12",
+  "generatedAt": "2026-06-12T02:59:59.844Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "No actionable A2A scheduler finding: eval:a2a remains single-fire and legacy digest overlap remains disabled.",
+    "evidence": "task_run_ledger id 198371 shows eval:a2a RUN_DELIVERED once on 2026-06-12; 2026-05-30 through 2026-06-12 are single-fire after the 2026-05-29 duplicate; dynamic_task_defs has no harness-fit-digest entry."
+  }
+}
