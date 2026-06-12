@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-12-eval-memory-reeval-pass-stable",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-12-eval-memory-reeval-pass-stable/recall-metrics.json",
+      "sha256": "447862cdce8e55e721db620ddccf32a36733fcf4b386649cede004bb78052541"
+    },
+    {
+      "path": "generated/memory/2026-06-12-eval-memory-reeval-pass-stable/library-health.json",
+      "sha256": "e718a5b09539a418312adbf78349148dbcf190798047057aee12628284901620"
+    }
+  ],
+  "generatedAt": "2026-06-12T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
