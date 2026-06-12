@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-12-task-outcome-day-5-routing-bug-self-correction",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-06-12",
+  "generatedAt": "2026-06-12T03:03:45.049Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
