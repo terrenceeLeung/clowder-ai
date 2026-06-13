@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-13-eval-memory-third-pass-frequency-change-unlocked",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-13-eval-memory-third-pass-frequency-change-unlocked/recall-metrics.json",
+      "sha256": "447441bbd215d8180d3ee1d78dfcf5d9dbd052b94369a542dd6b0501d29fa8c2"
+    },
+    {
+      "path": "generated/memory/2026-06-13-eval-memory-third-pass-frequency-change-unlocked/library-health.json",
+      "sha256": "0502561970c6a77275716ccccd68ee27e7170fecff6f379577536bb21582b87d"
+    }
+  ],
+  "generatedAt": "2026-06-13T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
