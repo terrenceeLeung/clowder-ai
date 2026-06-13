@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-13-eval-memory-third-pass-frequency-change-unlocked",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-13",
+  "generatedAt": "2026-06-13T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Third consecutive eval:memory keep_observe via F192 Phase I publish_verdict pipeline. 7-day rolling window decayed naturally from 37 (06-12) to 32 (06-13) as older high-volume days fell off; 30-day count unchanged at 120; 24-hour activity zero (consistent with sparse Cat Cafe dev cadence). No actionable degradation or sunset signal. Three consecutive stable passes (06-11, 06-12, 06-13) satisfy the closureCondition from PR #46 (06-12 verdict) for opening frequency reconsideration via upstream cat-cafe path.",
+    "evidence": "recall_events_7d_count=32, recall_events_30d_count=120, recall_events_24h_count=0, baseline_06_12=37, baseline_06_11=37"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "verdictId": "2026-06-13-eval-memory-third-pass-frequency-change-unlocked",
+  "evalSnapshotId": "eval-F192-memory-2026-06-13",
+  "featureId": "F192",
+  "generatedAt": "2026-06-13T03:01:00.000Z",
+  "window": {
+    "durationHours": 168
+  },
+  "components": [
+    {
+      "id": "memory-recall",
+      "name": "Memory Recall & Library Health",
+      "confidence": "low",
+      "activationCounts": {
+        "total_recall_events": 5
+      },
+      "frictionCounts": {
+        "search_abandon_count": 2,
+        "grep_fallback_count": 0,
+        "stale_anchor_count": 0,
+        "orphan_edge_count": 11
+      }
+    }
+  ],
+  "recallMetrics": {
+    "period": {
+      "fromMs": 1780714883155,
+      "toMs": 1781319683155,
+      "days": 7
+    },
+    "filters": {
+      "catId": "opus-47"
+    },
+    "totalEvents": 5,
+    "core": {
+      "consumedAt3": 0,
+      "consumedMRR": 0,
+      "reformulationRate": 0.6,
+      "searchAbandonRate": 0.4
+    },
+    "extended": {
+      "readthroughAt3": 0,
+      "firstConsumedRankMedian": 0,
+      "reformulationsBeforeConsumption": 0,
+      "reformulateAfterExposure": 0,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": null,
+      "liveOnShadowSubsetMRR": null
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  },
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 11
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "zeroHitCount": 0,
+      "lowHitCount": 82,
+      "recentMisses": []
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 19,
+      "avgSimilarity": 0.895
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}
