@@ -315,9 +315,11 @@ describe('eval-domain-weekly task spec (AC-E19, AC-E20)', () => {
   });
 
   it('weekly execute delivers message with "Weekly eval" trigger reason', async () => {
-    // Post-sunset (2026-06-06): eval:sop is no longer the test subject for
-    // weekly cron execute because it's `enabled: false`. eval:capability-wakeup
-    // is the remaining enabled weekly domain — switch to it.
+    // Weekly domains (post 2026-06-14): eval:sop (re-enabled 2026-06-10 by
+    // feat/f192-sop-wiring), eval:capability-wakeup, eval:memory (2026-06-14
+    // chore), eval:task-outcome (2026-06-12 12d5916c). Use eval:capability-wakeup
+    // as the test subject for weekly execute — historically chosen and stable
+    // across the migrations.
     const spec = createEvalDomainWeeklySpec({ harnessFeedbackRoot: repoHarnessFeedbackRoot });
 
     const gateResult = await spec.admission.gate();
