@@ -205,6 +205,132 @@ describe('cat_cafe_publish_verdict MCP schema (砚砚 R1 Q3: discriminated union
     assert.ok(!result.success, 'newline in catId should fail Zod refine');
   });
 
+  // F192 sop-wiring — sop-trace-eval kind (eval:sop publish pipeline)
+  it('accepts sop-trace-eval sourceRefs (eval:sop wire-up)', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:sop',
+      packet: { ...validPacket, domainId: 'eval:sop' },
+      sourceRefs: {
+        kind: 'sop-trace-eval',
+        sopDefinitionId: 'development',
+        trace: {
+          sessionId: 'sess-test-001',
+          sopDefinitionId: 'development',
+          observedStage: 'worktree',
+          commands: [{ command: 'git worktree add ../wt feat/x', exitCode: 0 }],
+          envSnapshot: { REDIS_URL: 'redis://localhost:6398' },
+          gitState: { branch: 'feat/x', ahead: 0, behind: 0, clean: true },
+          handles: { author: 'opus', reviewer: 'codex' },
+          shaContext: {},
+        },
+      },
+    });
+    assert.ok(result.success, `expected accept, got: ${JSON.stringify(result)}`);
+  });
+
+  it('accepts sop-trace-eval with optional worktreeRoot + cwd fields', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:sop',
+      packet: { ...validPacket, domainId: 'eval:sop' },
+      sourceRefs: {
+        kind: 'sop-trace-eval',
+        sopDefinitionId: 'development',
+        trace: {
+          sessionId: 'sess-test-002',
+          sopDefinitionId: 'development',
+          observedStage: 'review',
+          commands: [
+            { command: 'pnpm check', cwd: '/tmp/wt', exitCode: 0 },
+            { command: 'pnpm test', cwd: '/tmp/wt', exitCode: 1 },
+          ],
+          envSnapshot: {},
+          gitState: { branch: 'fix/sop', ahead: 2, behind: 0, clean: false, worktreeRoot: '/tmp/wt' },
+          handles: { author: 'opus-47', reviewer: 'codex', guardian: 'opus' },
+          shaContext: { headSha: 'abc123' },
+        },
+      },
+    });
+    assert.ok(result.success, `expected accept, got: ${JSON.stringify(result)}`);
+  });
+
+  it('rejects sop-trace-eval with empty sopDefinitionId', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:sop',
+      packet: { ...validPacket, domainId: 'eval:sop' },
+      sourceRefs: {
+        kind: 'sop-trace-eval',
+        sopDefinitionId: '',
+        trace: {
+          sessionId: 'sess-test',
+          sopDefinitionId: '',
+          observedStage: 'worktree',
+          commands: [],
+          envSnapshot: {},
+          gitState: { branch: 'main', ahead: 0, behind: 0, clean: true },
+          handles: {},
+          shaContext: {},
+        },
+      },
+    });
+    assert.ok(!result.success, 'empty sopDefinitionId should fail min(1)');
+  });
+
+  it('rejects sop-trace-eval with newline in sopDefinitionId (markdown injection guard)', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:sop',
+      packet: { ...validPacket, domainId: 'eval:sop' },
+      sourceRefs: {
+        kind: 'sop-trace-eval',
+        sopDefinitionId: 'development\n- forged: injection',
+        trace: {
+          sessionId: 'sess-test',
+          sopDefinitionId: 'development',
+          observedStage: 'worktree',
+          commands: [],
+          envSnapshot: {},
+          gitState: { branch: 'main', ahead: 0, behind: 0, clean: true },
+          handles: {},
+          shaContext: {},
+        },
+      },
+    });
+    assert.ok(!result.success, 'newline in sopDefinitionId should fail refine');
+  });
+
+  it('rejects sop-trace-eval with missing trace field', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:sop',
+      packet: { ...validPacket, domainId: 'eval:sop' },
+      sourceRefs: {
+        kind: 'sop-trace-eval',
+        sopDefinitionId: 'development',
+      },
+    });
+    assert.ok(!result.success, 'trace is required');
+  });
+
+  it('rejects sop-trace-eval with empty sessionId in trace', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:sop',
+      packet: { ...validPacket, domainId: 'eval:sop' },
+      sourceRefs: {
+        kind: 'sop-trace-eval',
+        sopDefinitionId: 'development',
+        trace: {
+          sessionId: '',
+          sopDefinitionId: 'development',
+          observedStage: 'worktree',
+          commands: [],
+          envSnapshot: {},
+          gitState: { branch: 'main', ahead: 0, behind: 0, clean: true },
+          handles: {},
+          shaContext: {},
+        },
+      },
+    });
+    assert.ok(!result.success, 'empty sessionId should fail min(1)');
+  });
+
   it('rejects cw selector with windowStartMs as non-number', () => {
     const result = schema.safeParse({
       domainId: 'eval:capability-wakeup',
