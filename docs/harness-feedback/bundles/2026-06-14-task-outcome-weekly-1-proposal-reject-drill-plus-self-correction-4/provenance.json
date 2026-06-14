@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-06-14-task-outcome-weekly-1-proposal-reject-drill-plus-self-correction-4",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-06-14-task-outcome-weekly-1-proposal-reject-drill-plus-self-correction-4/raw/episodes.json",
+      "sha256": "55e01d2b83bd14ced419573bc2169d5287b8621767dfe4aeb2002ee7d6416951"
+    }
+  ],
+  "generatedAt": "2026-06-14T03:05:34.233Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
