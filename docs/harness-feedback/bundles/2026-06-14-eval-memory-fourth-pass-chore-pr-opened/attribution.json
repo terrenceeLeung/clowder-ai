@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-14-eval-memory-fourth-pass-chore-pr-opened",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-14",
+  "generatedAt": "2026-06-14T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Fourth consecutive eval:memory keep_observe via F192 Phase I publish_verdict pipeline. 7-day rolling window decayed further from 32 (06-13) to 27 (06-14) as expected. 30-day count steady at 120; 24-hour activity zero. Action this cycle: opened chore PR #52 changing eval-memory.yaml frequency from daily to weekly following 12d5916c precedent for task-outcome. PR also fixes pre-existing test debt from 12d5916c (5 fail → 15/15 pass on eval-domain-daily.test.js). If PR #52 merges before next cron, this is the last daily cycle and next eval is 2026-06-21 Sunday weekly slot.",
+    "evidence": "recall_events_7d_count=27, recall_events_30d_count=120, recall_events_24h_count=0, baseline_06_13=32, baseline_06_12=37"
+  }
+}

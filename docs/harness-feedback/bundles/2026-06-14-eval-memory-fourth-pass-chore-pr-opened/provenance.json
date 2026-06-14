@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-14-eval-memory-fourth-pass-chore-pr-opened",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-14-eval-memory-fourth-pass-chore-pr-opened/recall-metrics.json",
+      "sha256": "ba5c188216f09b61c9d8fde38822af365678a45f632d5561f793f74edb19fb72"
+    },
+    {
+      "path": "generated/memory/2026-06-14-eval-memory-fourth-pass-chore-pr-opened/library-health.json",
+      "sha256": "d854395468eeebc9ff8fc547a43dbe6d012feba531365faf0f3c0e8aa8ee946c"
+    }
+  ],
+  "generatedAt": "2026-06-14T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
