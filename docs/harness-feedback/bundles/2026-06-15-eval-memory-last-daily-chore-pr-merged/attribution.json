@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-15-eval-memory-last-daily-chore-pr-merged",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-15",
+  "generatedAt": "2026-06-15T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Fifth and likely final daily eval:memory keep_observe. Chore PR #52 (frequency daily → weekly + test debt fix) merged 2026-06-15T03:00:40Z — just 40s after today's cron fired at 02:59 UTC, so this cron used the old daily yaml. Next eval:memory cron should fire 2026-06-21 Sunday weekly slot. 7d=29 (continued natural rolling decay 37 → 32 → 27 → 29 — slight uptick on new low-volume floor); 30d=126; 24h=6 (active dev cycle yesterday); no actionable degradation. Two observations beyond the verdict scope: (1) PR tracking auto-wake bug reproduced — PR #52 sat OPEN 24h+ after CI completed, only merged when today's cron triggered me; data point #2 (PR #43 was #1). (2) Pre-existing F194 Test (Public) failure (deps.invocationRecordStore.get is not a function in routes/messages.ts) flared on PR #52 CI run; unrelated to my changes, admin-merged despite the fail — process gap.",
+    "evidence": "recall_events_7d_count=29, recall_events_30d_count=126, recall_events_24h_count=6, baseline_06_14=27, baseline_06_13=32"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-15-eval-memory-last-daily-chore-pr-merged",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-15-eval-memory-last-daily-chore-pr-merged/recall-metrics.json",
+      "sha256": "146534aeeefe07048cfd916a2e8c8854233a815b3b24d78171f7aebae4917b3a"
+    },
+    {
+      "path": "generated/memory/2026-06-15-eval-memory-last-daily-chore-pr-merged/library-health.json",
+      "sha256": "6ad61c68ff8e40459d35834fc8a9cb21fde7164b021e8ddf1c387db575dc797d"
+    }
+  ],
+  "generatedAt": "2026-06-15T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
