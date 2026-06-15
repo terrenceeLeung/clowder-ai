@@ -59,9 +59,7 @@
       "episodeId": "ep-1781142751234-svlvma",
       "trigger": "cat_initiated",
       "threadId": "thread_mq839xpl6qzhtfil",
-      "participants": [
-        "fable5"
-      ],
+      "participants": ["fable5"],
       "artifacts": [],
       "terminalState": "in_progress",
       "verdict": null,
