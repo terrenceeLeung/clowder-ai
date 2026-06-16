@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-16-eval-memory-runtime-sync-lag-detected",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-16-eval-memory-runtime-sync-lag-detected/recall-metrics.json",
+      "sha256": "e38b61a14b561183691ce528c36491313145e30c151157f039b09e651535dec3"
+    },
+    {
+      "path": "generated/memory/2026-06-16-eval-memory-runtime-sync-lag-detected/library-health.json",
+      "sha256": "86c8fda4d0055dc83319f2c5545a6f4d0d94fff1d93d4e4a2551f05c5682da09"
+    }
+  ],
+  "generatedAt": "2026-06-16T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
