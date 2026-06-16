@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-06-16-eval-memory-runtime-sync-lag-detected",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-16",
+  "generatedAt": "2026-06-16T03:01:00.000Z",
+  "findings": [
+    {
+      "id": "MEM-2026-06-16-eval-memory-runtime-sync-lag-detected",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "F192 runtime/main-sync branch lacks automated/timely sync from main. PR #52 was the test: yaml changed on main, but daemon's reading-source (runtime/main-sync filesystem) still has old daily yaml — so cron fires daily regardless of main truth. Until this sync lag is closed, yaml chores on main are effectively no-ops for runtime behavior.",
+        "severity": "medium",
+        "confidence": 0.7,
+        "detectedAt": "2026-06-16T03:01:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "memory-recall",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "memory-recall/search_abandon_count",
+            "excerpt": "recall_events_7d_count=35"
+          },
+          {
+            "type": "counter",
+            "anchor": "memory-recall/grep_fallback_count",
+            "excerpt": "recall_events_24h_count=17"
+          },
+          {
+            "type": "counter",
+            "anchor": "memory-recall/stale_anchor_count",
+            "excerpt": "main_HEAD=6eba5b09"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "Investigate F192 runtime/main-sync sync mechanism. Either (a) confirm it's expected to auto-sync from main, then fix the lag (currently 2 commits behind); OR (b) confirm it's intentionally manual / boundary-isolated, then document the protocol so yaml chores like PR #52 know they need an additional deployment step. This blocks the eval:memory weekly cadence migration AND every future yaml chore. Discovery context: my PR #52 (yaml daily → weekly) merged 2026-06-15, but today (06-16) daily cron still fired — daemon yaml source is runtime/main-sync HEAD `e9c57dfc` (2 commits behind). LL on hotfix-via-clowder-ai-mirror anti-pattern was almost filed yesterday for the upstream direction; this discovery upgrades it to a two-level gap (upstream sync overrides + downstream runtime lag)."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

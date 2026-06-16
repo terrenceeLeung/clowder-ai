@@ -1,0 +1,38 @@
+{
+  "verdictId": "2026-06-16-eval-memory-runtime-sync-lag-detected",
+  "featureId": "F192",
+  "windowDays": 7,
+  "filters": {
+    "catId": "opus-47"
+  },
+  "generatedAt": "2026-06-16T03:01:00.000Z",
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 11
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "zeroHitCount": 0,
+      "lowHitCount": 150,
+      "recentMisses": []
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 20,
+      "avgSimilarity": 0.8
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}
