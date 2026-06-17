@@ -1,0 +1,41 @@
+{
+  "verdictId": "2026-06-17-eval-memory-no-new-finding-runtime-lag-open",
+  "featureId": "F192",
+  "windowDays": 7,
+  "filters": {
+    "catId": "opus-47"
+  },
+  "generatedAt": "2026-06-17T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1781060484592,
+      "toMs": 1781665284592,
+      "days": 7
+    },
+    "filters": {
+      "catId": "opus-47"
+    },
+    "totalEvents": 3,
+    "core": {
+      "consumedAt3": 0,
+      "consumedMRR": 0,
+      "reformulationRate": 0,
+      "searchAbandonRate": 1
+    },
+    "extended": {
+      "readthroughAt3": 0,
+      "firstConsumedRankMedian": 0,
+      "reformulationsBeforeConsumption": 0,
+      "reformulateAfterExposure": 0,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": null,
+      "liveOnShadowSubsetMRR": null
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}

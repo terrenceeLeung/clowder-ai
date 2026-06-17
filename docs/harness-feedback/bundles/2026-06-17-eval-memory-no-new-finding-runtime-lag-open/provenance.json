@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-17-eval-memory-no-new-finding-runtime-lag-open",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-17-eval-memory-no-new-finding-runtime-lag-open/recall-metrics.json",
+      "sha256": "1a0a00097ac1509adc13a0966cd9a1ee1dfb6b0bfd594c90c236b4d2eb11e91c"
+    },
+    {
+      "path": "generated/memory/2026-06-17-eval-memory-no-new-finding-runtime-lag-open/library-health.json",
+      "sha256": "bda7368aae2d91bf9c1314aa930917c47b6aca34ed01f2635ae179d78d256216"
+    }
+  ],
+  "generatedAt": "2026-06-17T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}

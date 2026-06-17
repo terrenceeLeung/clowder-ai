@@ -1,0 +1,49 @@
+{
+  "verdictId": "2026-06-17-eval-memory-no-new-finding-runtime-lag-open",
+  "featureId": "F192",
+  "windowDays": 7,
+  "filters": {
+    "catId": "opus-47"
+  },
+  "generatedAt": "2026-06-17T03:01:00.000Z",
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 11
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "zeroHitCount": 2,
+      "lowHitCount": 140,
+      "recentMisses": [
+        {
+          "query": "会话链 长上下文 换环 封存 交接 compaction Phase F",
+          "resultCount": 0,
+          "searchedAt": "2026-06-16T03:14:16.380Z"
+        },
+        {
+          "query": "F016 Phase F session chain 架构公理 触发函数 contextHealth 交接工具",
+          "resultCount": 0,
+          "searchedAt": "2026-06-16T03:14:13.258Z"
+        }
+      ]
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 20,
+      "avgSimilarity": 0.8
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}
