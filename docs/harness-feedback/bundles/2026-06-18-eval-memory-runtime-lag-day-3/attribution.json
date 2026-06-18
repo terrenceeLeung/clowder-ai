@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-18-eval-memory-runtime-lag-day-3",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-18",
+  "generatedAt": "2026-06-18T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Day 3 of runtime/main-sync lag. Daily cron fired again 02:59 UTC; same root cause as verdicts #58 + #60. 7d=41 (steady); 24h=2. Action this cycle: file LL-071 on hotfix-via-clowder-ai-mirror anti-pattern (deferred 4 days, doing now to break 'deferring follow-ups' pattern).",
+    "evidence": "recall_events_7d_count=41, recall_events_24h_count=2, days_since_pr_52_merged=3, open_verdicts_referenced=2"
+  }
+}
