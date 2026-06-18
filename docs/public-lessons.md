@@ -1465,3 +1465,20 @@ created: 2026-02-26
 - 药方三：**RN 必须有"Compatibility & Upgrade Notes"章节**：所有引入新鉴权 / 改变 endpoint 行为的 hotfix，RN 必须有 "Existing Users Action Required" 子段，写明：(a) 哪些场景默认 OK、(b) 哪些场景需要新配置（含 env var 名 + 示例）、(c) 哪些是不可迁移要 workaround。
 - 药方四：**Opensource-ops skill 加 reflex**：hotfix lane 输出 commit message 前必须自检"开源用户三件套"在 body 里出现；缺一项 = LL-070 block。
 - 关联：clowder-ai#835 | PR #2077 (cat-cafe) | PR #853 (clowder-ai) | LL-035 / LL-045（source→opensource 漂移历史） | feedback_archetype_over_font_size（reviewer 与愿景冲突时 push back）
+
+### LL-071: Hotfix 必须走 source-of-truth 仓，不是 clowder-ai mirror
+- 状态：confirmed
+- 更新时间：2026-06-18
+- 现象：eval:memory 06-08 cron triggered series 期间，47 在 clowder-ai 公开仓 open 了两个 hotfix PR 改 `docs/harness-feedback/eval-domains/eval-memory.yaml`：
+  - **PR #41** (`frequency: daily → weekly` + suppression marker)：merge 2026-06-10T03:26:26Z；几小时后被 cat-cafe upstream sync `9e92eab3` 覆盖回 daily（"sync: cat-cafe 0952b3770566 to clowder-ai"）
+  - **PR #52** (相同改动 + test sync per 12d5916c precedent)：merge 2026-06-15T03:00:40Z；这次未被 sync 覆盖（yaml on main = weekly ✅），但 daemon 仍按 daily 触发 cron，因为 runtime/main-sync branch 落后 origin/main 5 commits，runtime-worktree.sh 设计为 manual `ff-only` activation
+  
+  两个 case 暴露同一根因：clowder-ai 是 mirror，不是 source-of-truth。改它**有两条 fail mode**：(a) 上游 cat-cafe sync 覆盖、(b) 下游 runtime/main-sync 滞后忽略。
+- 根因：**作者把 "yaml chore 改 main = runtime 行为改" 当默认假设**，没核查 source-of-truth 链路。实际链路是 `cat-cafe (private upstream) → clowder-ai (public mirror) → runtime/main-sync (daemon read source)`。改中间环节 mirror，**上下游任一未同步都让改动失效**。
+- 与 LL-070 的关系：LL-070 是 "hotfix 须写 opensource user 影响"（downstream user impact 维度）；LL-071 是 "hotfix 改哪个仓"（upstream/downstream sync 维度）。两者互补，都是 source/mirror 边界问题。LL-035/LL-045 是 source → opensource 单向漂移；LL-071 是双向（upstream 覆盖 + downstream 滞后）。
+- 元层：cat-cafe ⇄ clowder-ai 同步是 source-owned outbound（cat-cafe → clowder-ai），不是 bidirectional。改 clowder-ai = 改下游 mirror，上游 next sync 覆盖。runtime/main-sync 又是再下一层"下游"，需要 owner-approved activation（`pnpm runtime:sync` ff-only + 可能 restart）。三段链路任一断 = 改动无效。
+- 药方一：**Hotfix 之前必须问：source-of-truth 在哪？** 对于 `docs/harness-feedback/eval-domains/*.yaml`、scheduler config、daemon runtime config 类文件，source-of-truth 是 cat-cafe upstream，不是 clowder-ai。如无法在 cat-cafe 直接操作，hotfix 必须 (a) 同时联系 upstream owner 或 (b) 推迟到 upstream-first 流程。
+- 药方二：**Merge-gate 加 source-of-truth check**：识别 PR 触碰的 path 类型，若属于"runtime-coupled config"（eval-domains yaml / scheduler / sop-definitions 等），merge-gate 增加 "source-of-truth verification" 步骤：upstream 是 clowder-ai 自身吗？runtime/main-sync 会自动跟随吗？两者答案都 yes 才能 merge。否则附加 "post-merge activation steps" 到 PR body（含 `runtime:status` + `runtime:sync` + restart 顺序）。
+- 药方三：**runtime activation guard**：F192 task `0001781579294832-001201-cda64458`（codex passive backlog）应实现 — eval domain yaml 变更后 Eval Hub 检测 runtime/main-sync 与 origin/main 的 yaml drift，标 "merged but not active"，避免作者误以为改动已生效。
+- 药方四：**Cat reflex - mirror 警觉**：作者准备 hotfix PR 时工作目录是 mirror 仓（clowder-ai）→ 触发反射："我在 mirror，source-of-truth 在 cat-cafe；这个 hotfix 路径会被 upstream sync 还是 runtime sync 影响？" 反射结果可能是：放弃 PR / 改成 cat-cafe PR / 加 post-merge activation 注释。
+- 关联：F200 eval:memory 06-08 cron series（thread_eval_memory）| PR #41 (reverted by 9e92eab3 upstream sync) | PR #52 (merged but runtime lag) | verdict PR #58 (fix verdict on F192 runtime sync) | verdict PR #60/#62 (day 2/3 runtime lag) | F192 task `0001781579294832-001201-cda64458` (codex passive backlog) | LL-035 / LL-045 / LL-070（source ↔ opensource 历史变体）
