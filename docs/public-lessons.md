@@ -1470,8 +1470,8 @@ created: 2026-02-26
 - 状态：confirmed
 - 更新时间：2026-06-18
 - 现象：eval:memory 06-08 cron triggered series 期间，47 在 clowder-ai 公开仓 open 了两个 hotfix PR 改 `docs/harness-feedback/eval-domains/eval-memory.yaml`：
-  - **PR #41** (`frequency: daily → weekly` + suppression marker)：merge 2026-06-10T03:26:26Z；几小时后被 cat-cafe upstream sync `9e92eab3` 覆盖回 daily（"sync: cat-cafe 0952b3770566 to clowder-ai"）
-  - **PR #52** (相同改动 + test sync per 12d5916c precedent)：merge 2026-06-15T03:00:40Z；这次未被 sync 覆盖（yaml on main = weekly ✅），但 daemon 仍按 daily 触发 cron，因为 runtime/main-sync branch 落后 origin/main 5 commits，runtime-worktree.sh 设计为 manual `ff-only` activation
+  - **PR #41** (`frequency: daily → weekly` + suppression marker)：merge commit `87f7a6a` 2026-06-10T03:26:26Z 把 yaml 设为 weekly；后续 cat-cafe sync 路径使该 merge commit 不再出现在当前 main ancestry（`9e92eab3` 及其 parent 均为 daily，`87f7a6a` / `816221e2` 都不是 `9e92eab3` 或 main 的祖先），最终效果等价于 hotfix 被 upstream sync/history replacement 丢失。`9e92eab3`（"sync: cat-cafe 0952b3770566 to clowder-ai"）是证明 sync baseline 已是 daily 的 provenance 点，不是 diff-level revert commit
+  - **PR #52** (相同改动 + test sync per 12d5916c precedent)：merge 2026-06-15T03:00:40Z；这次未被 sync 覆盖（yaml on main = weekly ✅），但 daemon 仍按 daily 触发 cron，因为 runtime/main-sync branch 落后 origin/main 5 commits（at PR #58 time，runtime 现状会持续滞后直至 owner activation），runtime-worktree.sh 设计为 manual `ff-only` activation
   
   两个 case 暴露同一根因：clowder-ai 是 mirror，不是 source-of-truth。改它**有两条 fail mode**：(a) 上游 cat-cafe sync 覆盖、(b) 下游 runtime/main-sync 滞后忽略。
 - 根因：**作者把 "yaml chore 改 main = runtime 行为改" 当默认假设**，没核查 source-of-truth 链路。实际链路是 `cat-cafe (private upstream) → clowder-ai (public mirror) → runtime/main-sync (daemon read source)`。改中间环节 mirror，**上下游任一未同步都让改动失效**。
@@ -1481,4 +1481,4 @@ created: 2026-02-26
 - 药方二：**Merge-gate 加 source-of-truth check**：识别 PR 触碰的 path 类型，若属于"runtime-coupled config"（eval-domains yaml / scheduler / sop-definitions 等），merge-gate 增加 "source-of-truth verification" 步骤：upstream 是 clowder-ai 自身吗？runtime/main-sync 会自动跟随吗？两者答案都 yes 才能 merge。否则附加 "post-merge activation steps" 到 PR body（含 `runtime:status` + `runtime:sync` + restart 顺序）。
 - 药方三：**runtime activation guard**：F192 task `0001781579294832-001201-cda64458`（codex passive backlog）应实现 — eval domain yaml 变更后 Eval Hub 检测 runtime/main-sync 与 origin/main 的 yaml drift，标 "merged but not active"，避免作者误以为改动已生效。
 - 药方四：**Cat reflex - mirror 警觉**：作者准备 hotfix PR 时工作目录是 mirror 仓（clowder-ai）→ 触发反射："我在 mirror，source-of-truth 在 cat-cafe；这个 hotfix 路径会被 upstream sync 还是 runtime sync 影响？" 反射结果可能是：放弃 PR / 改成 cat-cafe PR / 加 post-merge activation 注释。
-- 关联：F200 eval:memory 06-08 cron series（thread_eval_memory）| PR #41 (reverted by 9e92eab3 upstream sync) | PR #52 (merged but runtime lag) | verdict PR #58 (fix verdict on F192 runtime sync) | verdict PR #60/#62 (day 2/3 runtime lag) | F192 task `0001781579294832-001201-cda64458` (codex passive backlog) | LL-035 / LL-045 / LL-070（source ↔ opensource 历史变体）
+- 关联：F200 eval:memory 06-08 cron series（thread_eval_memory）| PR #41 (merge `87f7a6a` lost via sync/history replacement; `9e92eab3` is provenance not diff-revert) | PR #52 (merged but runtime lag) | verdict PR #58 (fix verdict on F192 runtime sync) | verdict PR #60/#62 (day 2/3 runtime lag) | F192 task `0001781579294832-001201-cda64458` (codex passive backlog) | LL-035 / LL-045 / LL-070（source ↔ opensource 历史变体）
