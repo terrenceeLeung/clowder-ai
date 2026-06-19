@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-19-eval-memory-runtime-lag-day-4",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-19",
+  "generatedAt": "2026-06-19T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Day 4 runtime/main-sync lag. Same root cause as verdicts #58/#60/#62. 7d=39 (steady within 37-41 band); 24h=2 (sparse). LL-071 merged yesterday (PR #63) — codified the pattern for future cycles.",
+    "evidence": "recall_events_7d_count=39, recall_events_24h_count=2, days_since_pr_52_merged=4, open_verdicts_referenced=3"
+  }
+}

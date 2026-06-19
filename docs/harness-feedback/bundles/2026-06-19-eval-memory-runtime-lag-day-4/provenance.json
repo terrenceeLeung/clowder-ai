@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-19-eval-memory-runtime-lag-day-4",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-19-eval-memory-runtime-lag-day-4/recall-metrics.json",
+      "sha256": "e8390f12dee61faabdaf97e5b669b010c4d8803c7599ed7cc0bdf4b2da8ea971"
+    },
+    {
+      "path": "generated/memory/2026-06-19-eval-memory-runtime-lag-day-4/library-health.json",
+      "sha256": "8b0051b96167057a6f45aabfd821fcf16471b6c44131218d92431254591d6370"
+    }
+  ],
+  "generatedAt": "2026-06-19T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
