@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-20-eval-memory-runtime-lag-day-5",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-20",
+  "generatedAt": "2026-06-20T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Day 5 runtime/main-sync lag. Same root cause as #58/#60/#62/#64. 7d=44 (slight uptick, still in 37-44 band); 24h=4. Tomorrow (Sunday 06-21) is the diagnostic day: if runtime synced, only weekly cron fires (single thread message); if still stale, daily cron continues. 06-22 escalation trigger unchanged.",
+    "evidence": "recall_events_7d_count=44, recall_events_24h_count=4, days_since_pr_52_merged=5"
+  }
+}
