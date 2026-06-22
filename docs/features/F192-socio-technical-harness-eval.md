@@ -8,7 +8,7 @@ created: 2026-05-07
 
 # F192: Socio-Technical Harness Eval — harness 共创评估体系
 
-> **Status**: in-progress (Phase F re-eval closure + Phase G `eval:task-outcome` closure) | **Owner**: Ragdoll | **Truth sync**: 2026-06-10
+> **Status**: in-progress (Phase F re-eval closure + Phase G `eval:task-outcome` closure; Phase I runtime activation guard shipped) | **Owner**: Ragdoll | **Truth sync**: 2026-06-22
 
 ## Architecture Ownership
 
@@ -450,7 +450,7 @@ Phase E 将 F192 从单域试点提升为横切的 Harness Eval Control Plane：
 - AC-H6 real e2e (real git+gh round-trip)：当前 alpha 验已覆盖 happy path 表征，deferred 留待真正端到端测试需求出现时再补
 - **rollup mechanism**（PR-3 占位 futureMode `rollup_deferred`）：daily/weekly batch PR 聚合 N 个 no-action verdict，或 runtime evidence store + 周期 flush archive PR — 等 PR-3 体感数据后再 design
 
-### Phase I（Runtime Activation Protocol + Drift Guard）✅
+### Phase I（Runtime Activation Protocol + Drift Guard）✅ merged 2026-06-22 (PR #71, squash `99a46529`)
 
 来源：LL-071 + eval:memory PR #58/#69。PR #52 将 `eval:memory` 从 daily 改为 weekly 并合入
 `origin/main`，但 daemon 继续 daily 触发，因为 `runtime/main-sync` 没有 activation 到最新 main。
