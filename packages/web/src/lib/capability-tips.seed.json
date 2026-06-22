@@ -357,13 +357,45 @@
   {
     "id": "workflow-merge-gate",
     "kind": "workflow",
-    "sourceRef": { "path": "docs/SOP.md", "anchor": "merge-gate" },
-    "structureSource": { "path": "docs/SOP.md", "anchor": "门禁 → PR → 云端 review" },
-    "bodySource": { "path": "cat-cafe-skills/merge-gate/SKILL.md", "anchor": "merge-gate" },
+    "sourceRef": { "path": "cat-cafe-skills/merge-gate/SKILL.md", "anchor": "Runtime-Coupled Config Gate" },
+    "structureSource": { "path": "cat-cafe-skills/merge-gate/SKILL.md", "anchor": "Runtime-Coupled Config Gate" },
+    "bodySource": { "path": "cat-cafe-skills/merge-gate/SKILL.md", "anchor": "Runtime-Coupled Config Gate" },
     "contexts": ["merge_gate", "review"],
     "audience": ["developer", "maintainer"],
-    "body": "准备合入时走 merge-gate：本地门禁、PR、云端 review、squash merge。",
-    "action": { "type": "open_concierge_draft", "label": "了解更多" },
+    "body": "准备合入 runtime-coupled config？merge-gate 会要求 source-of-truth、activation 和 drift guard 证据。",
+    "action": {
+      "type": "open_source",
+      "label": "查看门禁",
+      "sourceRef": { "path": "cat-cafe-skills/merge-gate/SKILL.md", "anchor": "Runtime-Coupled Config Gate" }
+    },
+    "owner": "codex"
+  },
+  {
+    "id": "workflow-runtime-activation-drift-guard",
+    "kind": "workflow",
+    "sourceRef": {
+      "path": "docs/features/F192-socio-technical-harness-eval.md",
+      "anchor": "Runtime Activation Boundary"
+    },
+    "structureSource": {
+      "path": "docs/features/F192-socio-technical-harness-eval.md",
+      "anchor": "Runtime Activation Boundary"
+    },
+    "bodySource": {
+      "path": "docs/features/F192-socio-technical-harness-eval.md",
+      "anchor": "Runtime Activation Boundary"
+    },
+    "contexts": ["merge_gate", "review"],
+    "audience": ["developer", "maintainer"],
+    "body": "改 eval-domain/scheduler 这类 runtime-coupled config 前，先查 source-of-truth 和 runtime drift，别把 merge 当激活。",
+    "action": {
+      "type": "open_source",
+      "label": "查看协议",
+      "sourceRef": {
+        "path": "docs/features/F192-socio-technical-harness-eval.md",
+        "anchor": "Runtime Activation Boundary"
+      }
+    },
     "owner": "codex"
   },
   {
