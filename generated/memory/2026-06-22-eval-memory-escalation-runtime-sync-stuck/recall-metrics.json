@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-06-22-eval-memory-escalation-runtime-sync-stuck",
+  "featureId": "F192",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-06-22T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1779505308936,
+      "toMs": 1782097308936,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 132,
+    "core": {
+      "consumedAt3": 0.10606060606060606,
+      "consumedMRR": 0.0818903318903319,
+      "reformulationRate": 0.26515151515151514,
+      "searchAbandonRate": 0.6515151515151515
+    },
+    "extended": {
+      "readthroughAt3": 0.14666666666666667,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0.15384615384615385,
+      "reformulateAfterExposure": 0.05303030303030303,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.6722222222222223,
+      "liveOnShadowSubsetMRR": 0.7206349206349206
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}
