@@ -119,6 +119,39 @@ fi
 - Step 0.5 拦“已经进分支历史但放错位置”的文件  
 - Step 8 拦“还在工作树里没处理的脏改动”
 
+### Runtime-Coupled Config Gate（Step 0.6，LL-071）
+
+触发条件：PR diff 触碰 runtime-coupled config，例如：
+- `docs/harness-feedback/eval-domains/*.yaml`
+- scheduler config / scheduled-task registry
+- `sop-definitions/**`
+- runtime start/sync scripts
+
+这些文件合入 `origin/main` 不等于 daemon 已使用新配置。Cat Cafe daemon 读
+`runtime/main-sync`，该 worktree 只通过 owner-approved activation 前进；运行中的 API 会跳过
+pre-start sync，避免 in-place hot swap。
+
+进入 PR 前必须在 PR body 写清：
+- `sourceOfTruth`: 改动应该先落哪个仓 / 哪个 branch
+- `runtimeActivation`: merge 后是否需要 `pnpm runtime:sync` / restart；谁批准；如何验证
+- `driftGuard`: 若涉及 eval-domain yaml，贴 `pnpm runtime:eval-domain-drift` 结果或说明为何不适用
+
+对 eval-domain yaml，推荐命令：
+
+```bash
+pnpm runtime:eval-domain-drift
+# Read-only: compares ../cat-cafe-runtime HEAD with origin/main under
+# docs/harness-feedback/eval-domains/*.yaml. It does not fetch, sync, merge, or restart.
+```
+
+判定：
+- exit 0 → runtime eval-domain yaml matches source ref
+- exit 1 → merged-but-not-active drift；不能把“main 已改”当成 runtime 生效证据
+- exit 2 → guard 自身无法执行；排查后再继续
+
+如果 drift 存在，普通猫不能自行 `git pull` / `pnpm runtime:start` 解决。runtime activation 是
+runtime owner / CVO 动作；PR 作者只负责把 activation plan 和 guard 结果写进 PR / handoff。
+
 ### 合入方式（唯一正确做法）
 
 ```bash

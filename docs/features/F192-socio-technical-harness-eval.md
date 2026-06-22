@@ -64,6 +64,26 @@ F192 现在已经不是“某个 feature 结束后写一篇 feedback”的文档
    - 明确 operator accept / suppress
    - 或 domain-specific sunset / delete 语义
 
+### Runtime Activation Boundary (LL-071)
+
+Registry/config changes are not active just because they merged to `origin/main`.
+The daemon reads the controlled runtime worktree (`runtime/main-sync`), and that
+worktree only advances through an owner-approved activation step. This is
+intentional: `runtime-worktree.sh` uses ff-only sync and skips pre-start sync
+while the API is active to avoid an in-place hot swap.
+
+For runtime-coupled config, especially `docs/harness-feedback/eval-domains/*.yaml`:
+
+1. Merge to main is a source update, not runtime activation.
+2. The author must state the source-of-truth path and post-merge activation plan.
+3. Runtime owner/CVO decides when to run `pnpm runtime:sync` / restart.
+4. The guard command `pnpm runtime:eval-domain-drift` reports "merged but not active"
+   when `runtime/main-sync` eval-domain YAML differs from `origin/main`.
+
+This boundary is deliberately separate from the eval domain publish pipeline:
+verdict PRs may be self-merged as evidence, but runtime activation remains a
+runtime-owner action.
+
 ### One Eval Cycle
 
 把一次完整闭环压成一句话：
@@ -429,6 +449,17 @@ Phase E 将 F192 从单域试点提升为横切的 Harness Eval Control Plane：
 - task-outcome publish path 已在 PR #2162 (2026-06-09, squash `c9aa0e16d`) 接通；PR-D 补 episode verdict writeback（packet verdict 仍是 4-class，per-episode verdict 通过显式 7-class `episodeVerdicts` 写回）；独立 backlog 剩 **rollup mechanism**
 - AC-H6 real e2e (real git+gh round-trip)：当前 alpha 验已覆盖 happy path 表征，deferred 留待真正端到端测试需求出现时再补
 - **rollup mechanism**（PR-3 占位 futureMode `rollup_deferred`）：daily/weekly batch PR 聚合 N 个 no-action verdict，或 runtime evidence store + 周期 flush archive PR — 等 PR-3 体感数据后再 design
+
+### Phase I（Runtime Activation Protocol + Drift Guard）✅
+
+来源：LL-071 + eval:memory PR #58/#69。PR #52 将 `eval:memory` 从 daily 改为 weekly 并合入
+`origin/main`，但 daemon 继续 daily 触发，因为 `runtime/main-sync` 没有 activation 到最新 main。
+这是 F192 控制面边界缺口：registry 是 source truth，daemon 是 runtime truth，两者不能混为一谈。
+
+- [x] AC-I1: F192 spec 明确 runtime activation boundary：main merge != daemon active；runtime sync/restart 是 owner-approved runtime action。
+- [x] AC-I2: Drift guard CLI：`scripts/check-runtime-eval-domain-drift.mjs` 对比 runtime worktree 与 source ref 下的 `docs/harness-feedback/eval-domains/*.yaml`，只读检测，不 fetch / sync / merge / restart。
+- [x] AC-I3: package entry：`pnpm runtime:eval-domain-drift` 对默认 runtime worktree (`../cat-cafe-runtime`) 检测 `origin/main` drift；`pnpm check:runtime-eval-domain-drift` 跑 guard 单测。
+- [x] AC-I4: merge-gate skill 加 source-of-truth/activation gate：触碰 runtime-coupled config 的 PR 必须写 source-of-truth + post-merge activation plan，不能默认认为 merge 即生效。
 
 ## How To Add A New Eval Domain
 
