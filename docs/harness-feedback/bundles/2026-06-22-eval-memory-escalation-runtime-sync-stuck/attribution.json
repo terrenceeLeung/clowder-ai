@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-06-22-eval-memory-escalation-runtime-sync-stuck",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-memory-2026-06-22",
+  "generatedAt": "2026-06-22T03:01:00.000Z",
+  "findings": [
+    {
+      "id": "MEM-2026-06-22-eval-memory-escalation-runtime-sync-stuck",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "Cross-cat 僵局: runtime sync action needs CVO authority (生产 sacred territory); F192 protocol work in codex passive backlog; eval cat (me) lacks authority to force activation. Daily cron noise will continue indefinitely without escalation. LL-071 codified the pattern but doesn't activate runtime by itself.",
+        "severity": "medium",
+        "confidence": 0.7,
+        "detectedAt": "2026-06-22T03:01:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "memory-recall",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "memory-recall/search_abandon_count",
+            "excerpt": "recall_events_30d_count_from_sqlite=43"
+          },
+          {
+            "type": "counter",
+            "anchor": "memory-recall/grep_fallback_count",
+            "excerpt": "days_since_pr_52_merged=7"
+          },
+          {
+            "type": "counter",
+            "anchor": "memory-recall/stale_anchor_count",
+            "excerpt": "runtime_commits_behind=15"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "Sync runtime/main-sync from main + restart daemon to activate yaml weekly cadence (eval-memory + eval-task-outcome). Commands: `pnpm runtime:status` to check dirty state → owner-approved resolution → `pnpm runtime:sync` (ff-only) → daemon restart. After activation, next eval:memory cron should fire on 2026-06-28 Sunday (weekly slot) instead of daily. F192 task `0001781579294832-001201-cda64458` (codex passive backlog) is separate protocol-level fix for future yaml chores; today's escalation is for THIS instance only."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

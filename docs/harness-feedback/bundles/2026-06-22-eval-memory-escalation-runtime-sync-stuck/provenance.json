@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-22-eval-memory-escalation-runtime-sync-stuck",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-22-eval-memory-escalation-runtime-sync-stuck/recall-metrics.json",
+      "sha256": "fb328e6fa6104aab9d928e851b33941a5b2546a2aaa65584a7986abd36d2a41b"
+    },
+    {
+      "path": "generated/memory/2026-06-22-eval-memory-escalation-runtime-sync-stuck/library-health.json",
+      "sha256": "7f5743591e83298f4af4bf4344d089db4b23080db0a92c602f36285e679f74bb"
+    }
+  ],
+  "generatedAt": "2026-06-22T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
