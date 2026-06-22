@@ -500,7 +500,7 @@ describe('GeminiAgentService (antigravity-cli adapter)', () => {
     assert.ok(args.includes('--add-dir'));
     assert.equal(args[args.indexOf('--add-dir') + 1], workDir);
     assert.equal(args[args.indexOf('--print') + 1], 'System identity\n\nSay hi');
-    assert.equal(args.includes('--model'), false, 'agy 1.0.1 has no verified --model flag');
+    assert.equal(args.includes('--model'), false, 'default antigravity-cli must not pass --model without config');
   });
 
   test('F212: AGY empty plain-text completion yields user-visible silent_completion diagnostics', async () => {
@@ -1337,6 +1337,27 @@ describe('GeminiAgentService (antigravity-cli adapter)', () => {
     assert.ok(args.includes('/tmp/extra-agy-dir'), 'unrelated user --add-dir should remain');
   });
 
+  test('allows catalog AGY model selection through cliConfigArgs', async () => {
+    const proc = createMockProcess();
+    const spawnFn = createMockSpawnFn(proc);
+    const service = new GeminiAgentService({
+      spawnFn,
+      adapter: 'antigravity-cli',
+      model: 'gemini-3.5-flash',
+    });
+
+    const promise = collect(
+      service.invoke('Say hi', {
+        cliConfigArgs: ['--model gemini-3.5-flash'],
+      }),
+    );
+    emitPlainText(proc, 'AGY_MODEL_ARG_OK\n');
+    await promise;
+
+    const args = spawnFn.mock.calls[0].arguments[1];
+    assert.equal(args[args.indexOf('--model') + 1], 'gemini-3.5-flash');
+  });
+
   test('uses isolated AGY profile HOME and gates yolo on sandbox proof', async () => {
     const proc = createMockProcess();
     const profileRoot = mkdtempSync(join(tmpdir(), 'agy-service-profile-root-'));
@@ -1750,7 +1771,7 @@ describe('GeminiAgentService (antigravity-cli adapter)', () => {
   test('reports per-call model override as unsupported without passing --model to agy', async () => {
     const proc = createMockProcess();
     const spawnFn = createMockSpawnFn(proc);
-    const service = new GeminiAgentService({ spawnFn, adapter: 'antigravity-cli' });
+    const service = new GeminiAgentService({ spawnFn, adapter: 'antigravity-cli', model: 'gemini-3.5-flash' });
 
     const promise = collect(
       service.invoke('model override check', {
@@ -1767,7 +1788,8 @@ describe('GeminiAgentService (antigravity-cli adapter)', () => {
     assert.ok(info, 'unsupported model override should be explicit system_info');
     const payload = JSON.parse(info.content);
     assert.equal(payload.requestedModel, 'gemini-override-should-not-be-used');
-    assert.match(payload.reason, /account-side selected model/);
+    assert.match(payload.reason, /CAT_CAFE_GEMINI_MODEL_OVERRIDE/);
+    assert.match(payload.reason, /cliConfigArgs/);
 
     const done = msgs.find((m) => m.type === 'done');
     assert.equal(done?.metadata?.modelVerified, false);

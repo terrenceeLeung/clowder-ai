@@ -1,6 +1,6 @@
 import './helpers/setup-cat-registry.js';
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { describe, it } from 'node:test';
@@ -21,6 +21,9 @@ const {
   getCatFamily,
   _resetCachedConfig,
 } = await import('../dist/config/cat-config-loader.js');
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_TEMPLATE_PATH = resolve(__dirname, '..', '..', '..', 'cat-template.json');
 
 /** Create a temp JSON file with given content, return path */
 function writeTempConfig(data) {
@@ -68,6 +71,38 @@ describe('cat-config-loader', () => {
       assert.equal(config.version, 1);
       assert.equal(config.breeds.length, 1);
       assert.equal(config.breeds[0].id, 'ragdoll');
+    });
+
+    it('keeps gemini25 template off the retired Gemini ACP carrier', () => {
+      const config = loadCatConfig(REPO_TEMPLATE_PATH);
+      const rawConfig = JSON.parse(readFileSync(REPO_TEMPLATE_PATH, 'utf-8'));
+      const breed = config.breeds.find((b) => b.id === 'siamese');
+      assert.ok(breed, 'siamese breed should exist in repo template');
+      const variant = breed.variants.find((v) => v.catId === 'gemini25');
+      assert.ok(variant, 'gemini25 variant should exist in repo template');
+      const rawBreed = rawConfig.breeds.find((b) => b.id === 'siamese');
+      const rawVariant = rawBreed.variants.find((v) => v.catId === 'gemini25');
+
+      assert.equal(variant.defaultModel, 'gemini-3.5-flash');
+      assert.deepEqual(rawVariant.acp, null);
+      assert.deepEqual(variant.cliConfigArgs, ['--model gemini-3.5-flash']);
+    });
+
+    it('keeps gemini31 template off the retired Gemini ACP carrier', () => {
+      const config = loadCatConfig(REPO_TEMPLATE_PATH);
+      const rawConfig = JSON.parse(readFileSync(REPO_TEMPLATE_PATH, 'utf-8'));
+      const breed = config.breeds.find((b) => b.id === 'siamese');
+      assert.ok(breed, 'siamese breed should exist in repo template');
+      const variant = breed.variants.find((v) => v.id === breed.defaultVariantId);
+      assert.ok(variant, 'default gemini31 variant should exist in repo template');
+      const rawBreed = rawConfig.breeds.find((b) => b.id === 'siamese');
+      const rawVariant = rawBreed.variants.find((v) => v.id === rawBreed.defaultVariantId);
+
+      assert.equal(variant.defaultModel, 'gemini-3.1-pro');
+      assert.deepEqual(rawVariant.acp, null);
+      assert.deepEqual(variant.cliConfigArgs, ['--model gemini-3.1-pro']);
+      assert.ok(rawConfig.clientDefaults.gemini.models.includes('gemini-3.1-pro'));
+      assert.equal(rawConfig.clientDefaults.gemini.models.includes('gemini-3.1-pro-preview'), false);
     });
 
     it('loads default project config when no path/env provided', () => {

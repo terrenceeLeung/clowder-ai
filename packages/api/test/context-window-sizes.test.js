@@ -24,6 +24,7 @@ describe('getContextWindowFallback', () => {
     assert.equal(getContextWindowFallback('minimax-m3'), 1_000_000);
     assert.equal(getContextWindowFallback('gemini-2.5-pro'), 1_000_000);
     assert.equal(getContextWindowFallback('gemini-3-pro'), 1_000_000);
+    assert.equal(getContextWindowFallback('gemini-3.1-pro'), 1_000_000);
     assert.equal(getContextWindowFallback('gemini-3.1-pro-preview'), 1_000_000);
   });
 
@@ -52,6 +53,7 @@ describe('getContextWindowFallback', () => {
     assert.equal(getContextWindowFallback('minimax/MiniMax-M3'), 1_000_000);
     assert.equal(getContextWindowFallback('minimax/minimax-m3'), 1_000_000);
     assert.equal(getContextWindowFallback('google/gemini-2.5-pro'), 1_000_000);
+    assert.equal(getContextWindowFallback('google/gemini-3.1-pro'), 1_000_000);
     // Prefix match after strip (versioned model behind provider prefix)
     assert.equal(getContextWindowFallback('anthropic/claude-opus-4-6-20260101'), 200_000);
     assert.equal(getContextWindowFallback('openai-compat/gpt-5.3-turbo'), 128_000);

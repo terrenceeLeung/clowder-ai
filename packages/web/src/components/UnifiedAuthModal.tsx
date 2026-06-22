@@ -21,7 +21,7 @@ const MODEL_SUGGESTIONS: Partial<Record<BuiltinAccountClient, string[]>> = {
     'claude-opus-4-5-20251101',
   ],
   openai: ['gpt-5.4', 'gpt-5.3-codex', 'gpt-5.3-codex-spark'],
-  google: ['gemini-2.5-pro', 'gemini-3-flash-preview', 'gemini-3.1-pro-preview'],
+  google: ['gemini-2.5-pro', 'gemini-3-flash-preview', 'gemini-3.1-pro'],
   dare: ['claude-sonnet-4-6'],
   opencode: ['claude-sonnet-4-6', 'claude-opus-4-6'],
 };

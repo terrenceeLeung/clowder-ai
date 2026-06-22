@@ -814,8 +814,8 @@ export class GeminiAgentService implements AgentService {
           type: 'antigravity_cli_model_override_unsupported',
           requestedModel: requestedModelOverride,
           reason: agyProfile
-            ? 'AGY CLI profile model selection is configured through isolated settings; no verified per-call --model/env override exists.'
-            : 'AGY CLI uses the account-side selected model; no verified per-call --model/env override exists.',
+            ? 'AGY CLI profile model selection is configured through isolated settings; CAT_CAFE_GEMINI_MODEL_OVERRIDE is ignored. Use the profile model setting instead.'
+            : 'AGY CLI does not accept CAT_CAFE_GEMINI_MODEL_OVERRIDE; use catalog cliConfigArgs such as --model <model>, or the account-side selected model.',
         }),
         metadata,
         timestamp: Date.now(),

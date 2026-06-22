@@ -2111,7 +2111,7 @@ describe('HubCatEditor', () => {
                 authType: 'oauth',
                 protocol: 'google',
                 mode: 'subscription',
-                models: ['gemini-2.5-pro', 'gemini-3.1-pro-preview'],
+                models: ['gemini-2.5-pro', 'gemini-3.1-pro'],
                 hasApiKey: false,
                 createdAt: '2026-03-18T00:00:00.000Z',
                 updatedAt: '2026-03-18T00:00:00.000Z',
