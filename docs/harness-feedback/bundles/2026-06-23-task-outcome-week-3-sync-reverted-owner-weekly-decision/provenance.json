@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-06-23-task-outcome-week-3-sync-reverted-owner-weekly-decision",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-06-23-task-outcome-week-3-sync-reverted-owner-weekly-decision/raw/episodes.json",
+      "sha256": "8a4661b4c069181693247730f2e2282ed2b8e8e2ede58be005db8a6bd85d0eb2"
+    }
+  ],
+  "generatedAt": "2026-06-23T03:03:27.535Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
