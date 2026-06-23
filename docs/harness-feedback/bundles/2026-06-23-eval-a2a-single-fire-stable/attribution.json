@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-23-eval-a2a-single-fire-stable",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-06-23",
+  "generatedAt": "2026-06-23T02:59:59.920Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "No actionable A2A scheduler finding: eval:a2a remains single-fire and legacy digest overlap remains disabled. Counter-window and grounding Phase O data are unavailable in the accessible evidence for this run, so counter-derived rates were not computed and grounding remains a telemetry gap.",
+    "evidence": "task_run_ledger id 202559 shows eval:a2a RUN_DELIVERED once on 2026-06-23; 2026-05-30 through 2026-06-23 are single-fire after the 2026-05-29 duplicate; dynamic_task_defs.id='harness-fit-digest' count=0 and no legacy digest ledger runs exist. No 2026-06-23 raw counter_window block existed before this evaluation, and local telemetry endpoints require session authentication; grounding-phase-o is recorded as no-data rather than inferred as healthy."
+  }
+}
