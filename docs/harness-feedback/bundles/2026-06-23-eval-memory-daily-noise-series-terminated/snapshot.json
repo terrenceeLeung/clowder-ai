@@ -1,0 +1,96 @@
+{
+  "verdictId": "2026-06-23-eval-memory-daily-noise-series-terminated",
+  "evalSnapshotId": "eval-F200-memory-2026-06-23",
+  "featureId": "F200",
+  "generatedAt": "2026-06-23T03:01:00.000Z",
+  "window": {
+    "durationHours": 720
+  },
+  "components": [
+    {
+      "id": "memory-recall",
+      "name": "Memory Recall & Library Health",
+      "confidence": "medium",
+      "activationCounts": {
+        "total_recall_events": 152
+      },
+      "frictionCounts": {
+        "search_abandon_count": 98,
+        "grep_fallback_count": 0,
+        "stale_anchor_count": 0,
+        "orphan_edge_count": 21
+      }
+    }
+  ],
+  "recallMetrics": {
+    "period": {
+      "fromMs": 1779591688049,
+      "toMs": 1782183688049,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 152,
+    "core": {
+      "consumedAt3": 0.1118421052631579,
+      "consumedMRR": 0.09085213032581455,
+      "reformulationRate": 0.2631578947368421,
+      "searchAbandonRate": 0.6447368421052632
+    },
+    "extended": {
+      "readthroughAt3": 0.13756613756613756,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0.125,
+      "reformulateAfterExposure": 0.05921052631578947,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.6620370370370371,
+      "liveOnShadowSubsetMRR": 0.7671957671957672
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  },
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 21
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "observedSearches": 200,
+      "zeroHitCount": 2,
+      "lowHitCount": 38,
+      "recentMisses": [
+        {
+          "query": "会话链 长上下文 换环 封存 交接 compaction Phase F",
+          "resultCount": 0,
+          "searchedAt": "2026-06-16T03:14:16.380Z"
+        },
+        {
+          "query": "F016 Phase F session chain 架构公理 触发函数 contextHealth 交接工具",
+          "resultCount": 0,
+          "searchedAt": "2026-06-16T03:14:13.258Z"
+        }
+      ]
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 18,
+      "avgSimilarity": 0.889
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}

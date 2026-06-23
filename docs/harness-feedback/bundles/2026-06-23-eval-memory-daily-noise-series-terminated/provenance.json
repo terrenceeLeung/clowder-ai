@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-23-eval-memory-daily-noise-series-terminated",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-23-eval-memory-daily-noise-series-terminated/recall-metrics.json",
+      "sha256": "16fe0426fd9cea728d59bc7681d273bcf37c0845c014ec30e707e446f1acafbc"
+    },
+    {
+      "path": "generated/memory/2026-06-23-eval-memory-daily-noise-series-terminated/library-health.json",
+      "sha256": "a4ab15d6f651c739afd54691d962e03d611792db4c7f9646e020188998983711"
+    }
+  ],
+  "generatedAt": "2026-06-23T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
