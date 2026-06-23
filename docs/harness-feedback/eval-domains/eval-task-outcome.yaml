@@ -6,7 +6,7 @@ evalCat:
   catId: opus-47
   handle: "@opus47"
   model: claude-opus-4-7
-frequency: daily
+frequency: weekly  # owner decision 2026-06-12; sync-clobbered 2026-06-22 (#994), re-applied 2026-06-23
 sourceAdapter: task-outcome-eval
 sourceRefsKind: task-outcome-snapshot
 threadPolicy:
