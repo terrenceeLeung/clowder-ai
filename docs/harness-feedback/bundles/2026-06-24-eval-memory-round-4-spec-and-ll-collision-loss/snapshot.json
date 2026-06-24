@@ -1,0 +1,91 @@
+{
+  "verdictId": "2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss",
+  "evalSnapshotId": "eval-F200-memory-2026-06-24",
+  "featureId": "F200",
+  "generatedAt": "2026-06-24T03:01:00.000Z",
+  "window": {
+    "durationHours": 720
+  },
+  "components": [
+    {
+      "id": "memory-recall",
+      "name": "Memory Recall & Library Health",
+      "confidence": "medium",
+      "activationCounts": {
+        "total_recall_events": 161
+      },
+      "frictionCounts": {
+        "search_abandon_count": 103,
+        "grep_fallback_count": 0,
+        "stale_anchor_count": 0,
+        "orphan_edge_count": 21
+      }
+    }
+  ],
+  "recallMetrics": {
+    "period": {
+      "fromMs": 1779678147228,
+      "toMs": 1782270147228,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 161,
+    "core": {
+      "consumedAt3": 0.11801242236024845,
+      "consumedMRR": 0.0981958000591541,
+      "reformulationRate": 0.2732919254658385,
+      "searchAbandonRate": 0.639751552795031
+    },
+    "extended": {
+      "readthroughAt3": 0.1435897435897436,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0.1111111111111111,
+      "reformulateAfterExposure": 0.055900621118012424,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.6958333333333334,
+      "liveOnShadowSubsetMRR": 0.7904761904761906
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  },
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 21
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "observedSearches": 200,
+      "zeroHitCount": 1,
+      "lowHitCount": 10,
+      "recentMisses": [
+        {
+          "query": "F012 C2 catch-up digest Invocation Context Assembly design",
+          "resultCount": 0,
+          "searchedAt": "2026-06-23T13:51:29.731Z"
+        }
+      ]
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 16,
+      "avgSimilarity": 0.875
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}

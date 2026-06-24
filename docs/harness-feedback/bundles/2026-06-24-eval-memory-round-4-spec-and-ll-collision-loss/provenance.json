@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss/recall-metrics.json",
+      "sha256": "9f750a0b6ec7fcb4dacdbb103d29c9ce00a31f9ce078461b1bf22d02ffba1664"
+    },
+    {
+      "path": "generated/memory/2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss/library-health.json",
+      "sha256": "ec321e306133982e127b8ee1a98463484c33efe0531acb2592a1d758a2cf0f3d"
+    }
+  ],
+  "generatedAt": "2026-06-24T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
