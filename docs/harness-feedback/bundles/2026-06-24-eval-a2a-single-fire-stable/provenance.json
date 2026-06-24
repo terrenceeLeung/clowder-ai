@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-24-eval-a2a-single-fire-stable",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-06-24-f167-a2a-snapshot.yaml",
+      "sha256": "4bb0bd1c8168a7cf1842f164efe89e85b159be7feed4b80dfda5ca59555564dd"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-06-24-f167-a2a-attribution.yaml",
+      "sha256": "4131d78babcc58851c4f802f9e0599e8f112bb5aba836c9b0ea7ee02d7089d27"
+    }
+  ],
+  "generatedAt": "2026-06-24T02:59:59.843Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
