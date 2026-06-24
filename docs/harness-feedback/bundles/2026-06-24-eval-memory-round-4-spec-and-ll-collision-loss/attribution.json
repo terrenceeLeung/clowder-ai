@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss",
+  "featureId": "F200",
+  "evalSnapshotId": "eval-F200-memory-2026-06-24",
+  "generatedAt": "2026-06-24T03:01:00.000Z",
+  "findings": [
+    {
+      "id": "MEM-2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss",
+      "relatedFeature": "F200",
+      "frictionSignal": {
+        "type": "cat-cafe → clowder-ai sync is selectively bidirectional or curated, NOT pure outbound. Codex work landed in cat-cafe upstream (probably via Maine Coon's parallel access) so it survives sync round-trips; Ragdoll PRs that only touched clowder-ai mirror get progressively overwritten. The number-collision sub-pattern (my LL-071 vs upstream's LL-071 same number) suggests the LL numbering registry is also mirror-not-source-of-truth and cats coordinating outside the mirror own the canonical numbers.",
+        "severity": "medium",
+        "confidence": 0.7,
+        "detectedAt": "2026-06-24T03:01:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "memory-recall",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "memory-recall/search_abandon_count",
+            "excerpt": "recall_events_7d_count=43"
+          },
+          {
+            "type": "counter",
+            "anchor": "memory-recall/grep_fallback_count",
+            "excerpt": "recall_events_24h_count=9"
+          },
+          {
+            "type": "counter",
+            "anchor": "memory-recall/stale_anchor_count",
+            "excerpt": "f200_spec_phase_f_section_count=0_should_be_1"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F200",
+          "rationale": "Two restoration/coordination actions needed: (1) Restore F200 Phase F spec section (PR #40 content) to current main, ideally via cat-cafe upstream so it doesn't get re-overwritten. Without spec, F200 Phase F impl is blocked. (2) Resolve LL-071 number collision: either renumber my content to LL-NEW (e.g. LL-072+) or merge both perspectives into one LL. The 'hotfix-via-clowder-ai-mirror' pattern is now self-evidently real (Round 4!) and the LL needs to survive. Suggest CVO clarify clowder-ai vs cat-cafe sync direction protocol so Ragdoll-family work has a viable path to persistence."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
