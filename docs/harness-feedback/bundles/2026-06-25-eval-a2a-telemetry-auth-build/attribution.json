@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-06-25-eval-a2a-telemetry-auth-build",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-06-25",
+  "generatedAt": "2026-06-25T02:59:59.831Z",
+  "findings": [
+    {
+      "id": "AR-2026-06-25-001",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "telemetry.counter_window_and_grounding_unavailable",
+        "severity": "medium",
+        "confidence": 0.85
+      },
+      "attribution": {
+        "primaryLayer": "tool_gap",
+        "pipelineOrHuman": "pipeline",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 214852 shows eval:a2a RUN_DELIVERED once on 2026-06-25; 2026-05-30 through 2026-06-25 are single-fire after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "counter-window/telemetry.counter_window_missing",
+            "excerpt": "No 2026-06-25 raw counter_window block existed before this evaluation; without process-info, counter-derived rates cannot use the correct OTel accumulation denominator."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/telemetry.grounding_phase_o_no_data",
+            "excerpt": "Local telemetry endpoints for process-info and grounding samples were unavailable on 2026-06-25, so grounding-phase-o remains no-data and cannot be interpreted as healthy distribution."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "build-telemetry-access",
+          "target": "F192 eval cat runtime telemetry read path",
+          "rationale": "Provide eval invocations an authenticated or otherwise server-trusted way to read process-info and grounding samples, or write those fields into raw eval evidence before the eval cat runs."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-25-eval-a2a-telemetry-auth-build",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-06-25-f167-a2a-snapshot.yaml",
+      "sha256": "fbce7abb6bb27db0e252a4e3e84deb4eb78aa9f41f7d42e2ea0e4c0dbfb665a7"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-06-25-f167-a2a-attribution.yaml",
+      "sha256": "102654d18bbbec0660168123e369aff89144455eee65405ac133ff54af9d88f8"
+    }
+  ],
+  "generatedAt": "2026-06-25T02:59:59.831Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
