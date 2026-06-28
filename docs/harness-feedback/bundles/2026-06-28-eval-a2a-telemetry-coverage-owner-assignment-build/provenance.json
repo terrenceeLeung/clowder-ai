@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-28-eval-a2a-telemetry-coverage-owner-assignment-build",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-06-28-f167-a2a-snapshot.yaml",
+      "sha256": "de2c86fa2132482b97323a0042410810f8ac841d35dc60903a471db01f718b33"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-06-28-f167-a2a-attribution.yaml",
+      "sha256": "1f9853c9814a66ec6773b5155466de7b48ca9c132bbb36e795a60212b7b5d788"
+    }
+  ],
+  "generatedAt": "2026-06-28T03:00:00.032Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
