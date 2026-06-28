@@ -1,0 +1,168 @@
+{
+  "verdictId": "2026-06-28-eval-friction-no-finding",
+  "selector": {
+    "kind": "friction-rollup-snapshot",
+    "windowStartMs": 1782010800000,
+    "windowEndMs": 1782615600000,
+    "topN": 10,
+    "tokenCap": 4000
+  },
+  "window": {
+    "sinceMs": 1782010800000,
+    "untilMs": 1782615600000
+  },
+  "signalCount": 11,
+  "clusterCount": 5,
+  "degraded": true,
+  "droppedChannels": [],
+  "report": {
+    "window": {
+      "sinceMs": 1782010800000,
+      "untilMs": 1782615600000
+    },
+    "generatedAt": "2026-06-28T03:06:18.283Z",
+    "topClusters": [
+      {
+        "clusterId": "328d554241c5",
+        "representative": "telemetry.counter_window_missing=1",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 3,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-06-25-eval-a2a-telemetry-auth-build#counter-window#telemetry.counter_window_missing",
+            "rawRef": "2026-06-25-eval-a2a-telemetry-auth-build#counter-window#telemetry.counter_window_missing",
+            "channel": "eval-domain"
+          },
+          {
+            "signalId": "eval-domain:2026-06-26-eval-a2a-single-fire-stable-open-telemetry-build#counter-window#telemetry.counter_window_missing",
+            "rawRef": "2026-06-26-eval-a2a-single-fire-stable-open-telemetry-build#counter-window#telemetry.counter_window_missing",
+            "channel": "eval-domain"
+          },
+          {
+            "signalId": "eval-domain:2026-06-27-eval-a2a-single-fire-stable-open-telemetry-build#counter-window#telemetry.counter_window_missing",
+            "rawRef": "2026-06-27-eval-a2a-single-fire-stable-open-telemetry-build#counter-window#telemetry.counter_window_missing",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      },
+      {
+        "clusterId": "f660b57bd7a0",
+        "representative": "telemetry.grounding_phase_o_no_data=1",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 3,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-06-25-eval-a2a-telemetry-auth-build#grounding-phase-o#telemetry.grounding_phase_o_no_data",
+            "rawRef": "2026-06-25-eval-a2a-telemetry-auth-build#grounding-phase-o#telemetry.grounding_phase_o_no_data",
+            "channel": "eval-domain"
+          },
+          {
+            "signalId": "eval-domain:2026-06-26-eval-a2a-single-fire-stable-open-telemetry-build#grounding-phase-o#telemetry.grounding_phase_o_no_data",
+            "rawRef": "2026-06-26-eval-a2a-single-fire-stable-open-telemetry-build#grounding-phase-o#telemetry.grounding_phase_o_no_data",
+            "channel": "eval-domain"
+          },
+          {
+            "signalId": "eval-domain:2026-06-27-eval-a2a-single-fire-stable-open-telemetry-build#grounding-phase-o#telemetry.grounding_phase_o_no_data",
+            "rawRef": "2026-06-27-eval-a2a-single-fire-stable-open-telemetry-build#grounding-phase-o#telemetry.grounding_phase_o_no_data",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      },
+      {
+        "clusterId": "25c7eb711f87",
+        "representative": "orphan_edge_count=21",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 2,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-06-23-eval-memory-daily-noise-series-terminated#memory-recall#orphan_edge_count",
+            "rawRef": "2026-06-23-eval-memory-daily-noise-series-terminated#memory-recall#orphan_edge_count",
+            "channel": "eval-domain"
+          },
+          {
+            "signalId": "eval-domain:2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss#memory-recall#orphan_edge_count",
+            "rawRef": "2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss#memory-recall#orphan_edge_count",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      },
+      {
+        "clusterId": "4aa1a426c459",
+        "representative": "search_abandon_count=103",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 2,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-06-23-eval-memory-daily-noise-series-terminated#memory-recall#search_abandon_count",
+            "rawRef": "2026-06-23-eval-memory-daily-noise-series-terminated#memory-recall#search_abandon_count",
+            "channel": "eval-domain"
+          },
+          {
+            "signalId": "eval-domain:2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss#memory-recall#search_abandon_count",
+            "rawRef": "2026-06-24-eval-memory-round-4-spec-and-ll-collision-loss#memory-recall#search_abandon_count",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      },
+      {
+        "clusterId": "5d0585509e91",
+        "representative": "magic_word_ref_total=1",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 1,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-06-23-task-outcome-week-3-sync-reverted-owner-weekly-decision#Phase-G-v0#magic_word_ref_total",
+            "rawRef": "2026-06-23-task-outcome-week-3-sync-reverted-owner-weekly-decision#Phase-G-v0#magic_word_ref_total",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      }
+    ],
+    "tailSummary": {
+      "clusterCount": 0,
+      "signalCount": 0,
+      "byChannel": {}
+    },
+    "degraded": true,
+    "droppedChannels": [],
+    "tokenBudget": {
+      "cap": 4000,
+      "estimated": 1019
+    }
+  }
+}
