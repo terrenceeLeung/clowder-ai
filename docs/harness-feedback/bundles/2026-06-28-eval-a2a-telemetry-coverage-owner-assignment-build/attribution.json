@@ -1,0 +1,51 @@
+{
+  "verdictId": "2026-06-28-eval-a2a-telemetry-coverage-owner-assignment-build",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-06-28",
+  "generatedAt": "2026-06-28T03:00:00.032Z",
+  "findings": [
+    {
+      "id": "AR-2026-06-28-001",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "telemetry.coverage_build_unresolved_at_closure_checkpoint",
+        "severity": "high",
+        "confidence": 0.9
+      },
+      "attribution": {
+        "primaryLayer": "tool_gap",
+        "pipelineOrHuman": "pipeline",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 232259 shows eval:a2a RUN_DELIVERED once on 2026-06-28; 2026-05-30 through 2026-06-28 are single-fire after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "counter-window/telemetry.counter_window_missing",
+            "excerpt": "No trusted 2026-06-28 counter_window block is available at the closure checkpoint; /api/telemetry/process-info could not connect to 127.0.0.1:3004."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/telemetry.grounding_phase_o_no_data",
+            "excerpt": "No trusted 2026-06-28 grounding-phase-o distribution is available at the closure checkpoint; /api/telemetry/grounding-samples could not connect to 127.0.0.1:3004."
+          },
+          {
+            "type": "governance-gap",
+            "anchor": "ownerAsk/2026-06-25-build-verdict-pr-77",
+            "excerpt": "The 2026-06-25 build verdict requested trusted telemetry evidence or a trusted no-data reason by 2026-06-28; thread evidence shows no co-creator sign-off or implementation landed before this closure check."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "assign-telemetry-coverage-owner",
+          "target": "F192 eval-completeness telemetry coverage",
+          "rationale": "Move the unresolved telemetry coverage build from passive sign-off wait to explicit owner/scope assignment: decide the scheduler-prewrite or server-trusted telemetry path, assign an implementing owner, and set a concrete re-eval date."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
