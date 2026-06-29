@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-06-29-eval-a2a-single-fire-stable-telemetry-build-pending",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-06-29",
+  "generatedAt": "2026-06-29T02:59:59.947Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "No new actionable A2A scheduler finding: eval:a2a remains single-fire and legacy digest overlap remains disabled. The unresolved counter-window plus grounding Phase O telemetry coverage build is already assigned to opus47 as F167 owner after the 2026-06-28 build verdict PR #80, with implementation tracking started and target window 2026-07-03 through 2026-07-05.",
+    "evidence": "task_run_ledger id 237562 shows eval:a2a RUN_DELIVERED once on 2026-06-29; 2026-05-30 through 2026-06-29 are single-fire after the 2026-05-29 duplicate; dynamic_task_defs.id='harness-fit-digest' count=0 and no legacy digest ledger runs exist. Local telemetry endpoints /api/telemetry/process-info, /api/telemetry/grounding-samples, and /api/telemetry/metrics could not connect to 127.0.0.1:3004 on 2026-06-29, so no counter_window or grounding-phase-o distribution can be trusted from this eval cat today. This remains covered by PR #80 owner-assignment build and should not fan out another ownerAsk before the implementation window."
+  }
+}
