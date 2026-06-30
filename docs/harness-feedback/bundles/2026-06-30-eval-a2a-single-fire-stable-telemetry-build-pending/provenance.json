@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-06-30-eval-a2a-single-fire-stable-telemetry-build-pending",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-06-30-f167-a2a-snapshot.yaml",
+      "sha256": "61d3514a739bcc6974081343cc31d9492f6b3b4e6a19f6581a3fc0d58b9afcb4"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-06-30-f167-a2a-attribution.yaml",
+      "sha256": "baf14c35f1296a5248a642dd296c8cc737db3582b3b06296f5a635407d76f427"
+    }
+  ],
+  "generatedAt": "2026-06-30T02:59:59.917Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
