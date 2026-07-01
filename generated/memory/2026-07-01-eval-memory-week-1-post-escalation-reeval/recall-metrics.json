@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-07-01-eval-memory-week-1-post-escalation-reeval",
+  "featureId": "F200",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-07-01T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1780282948604,
+      "toMs": 1782874948604,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 187,
+    "core": {
+      "consumedAt3": 0.20320855614973263,
+      "consumedMRR": 0.1558441558441558,
+      "reformulationRate": 0.24598930481283424,
+      "searchAbandonRate": 0.5935828877005348
+    },
+    "extended": {
+      "readthroughAt3": 0.20325203252032525,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0.05714285714285714,
+      "reformulateAfterExposure": 0.0427807486631016,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.6540903540903541,
+      "liveOnShadowSubsetMRR": 0.7472527472527472
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "verdictId": "2026-07-01-eval-memory-week-1-post-escalation-reeval",
+  "featureId": "F200",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-07-01T03:01:00.000Z",
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 21
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "observedSearches": 200,
+      "zeroHitCount": 1,
+      "lowHitCount": 37,
+      "recentMisses": [
+        {
+          "query": "F021 SSE WebSocket Socket.IO 选型 多tab 多订阅",
+          "resultCount": 0,
+          "searchedAt": "2026-06-27T22:20:16.752Z"
+        }
+      ]
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 19,
+      "avgSimilarity": 0.947
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}

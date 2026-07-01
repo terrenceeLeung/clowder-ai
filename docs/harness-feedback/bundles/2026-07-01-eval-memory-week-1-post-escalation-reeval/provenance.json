@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-01-eval-memory-week-1-post-escalation-reeval",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-07-01-eval-memory-week-1-post-escalation-reeval/recall-metrics.json",
+      "sha256": "70d04da8c0c0d815358ecd7c68afdcd61eef61271545329394fe6711a04a7054"
+    },
+    {
+      "path": "generated/memory/2026-07-01-eval-memory-week-1-post-escalation-reeval/library-health.json",
+      "sha256": "dea5b2abc52779695d92912da2fdd46dd09b6c332445ac0d0d7c4bdfb0cca25d"
+    }
+  ],
+  "generatedAt": "2026-07-01T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
