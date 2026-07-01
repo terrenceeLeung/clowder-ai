@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-01-eval-a2a-single-fire-stable-implementation-started",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-01-f167-a2a-snapshot.yaml",
+      "sha256": "ed469a7e2062b662f49f9e55280c884225ecbb69ef599055605d475ad2356d8a"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-01-f167-a2a-attribution.yaml",
+      "sha256": "d9b1b0817c09669767e676899084ce8dade96c8489a613800ff7e4ffc6e0f8fe"
+    }
+  ],
+  "generatedAt": "2026-07-01T02:59:59.788Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
