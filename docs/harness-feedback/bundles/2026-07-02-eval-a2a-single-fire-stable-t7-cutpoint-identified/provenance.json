@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-02-eval-a2a-single-fire-stable-t7-cutpoint-identified",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-02-f167-a2a-snapshot.yaml",
+      "sha256": "47cce77e7b3e4158ee59c685d48603d6cc11c4bb7a20af9a5daf707706cd416f"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-02-f167-a2a-attribution.yaml",
+      "sha256": "a4337b1569dd1a5082fbefb6405af9f05b81cf3ca9c0fb8b183d06f93c24b569"
+    }
+  ],
+  "generatedAt": "2026-07-02T02:59:59.771Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
