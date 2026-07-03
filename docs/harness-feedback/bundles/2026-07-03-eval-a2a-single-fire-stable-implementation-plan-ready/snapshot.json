@@ -1,0 +1,59 @@
+{
+  "verdictId": "2026-07-03-eval-a2a-single-fire-stable-implementation-plan-ready",
+  "evalSnapshotId": "eval-F167-2026-07-03",
+  "featureId": "F167",
+  "generatedAt": "2026-07-03T02:59:59.970Z",
+  "window": {
+    "durationHours": 24
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1
+      },
+      "frictionCounts": {
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0
+      }
+    },
+    {
+      "id": "counter-window",
+      "name": "counter-domain denominator availability",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.counter_window_missing": 1
+      }
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.grounding_phase_o_no_data": 1
+      }
+    },
+    {
+      "id": "implementation-progress",
+      "name": "F167 path B owner-assigned implementation visibility",
+      "confidence": "medium",
+      "activationCounts": {
+        "implementation.local_worktree_found": 1,
+        "implementation.design_phase_completed": 1,
+        "implementation.t7_cutpoint_identified": 1,
+        "implementation.t7_design_finalized": 1,
+        "implementation.rebased_to_origin_main": 1,
+        "implementation.subcommit_plan_defined": 1
+      },
+      "frictionCounts": {
+        "implementation.open_pr_count": 0,
+        "implementation.implementation_commit_count": 0,
+        "implementation.branch_behind_origin_main": 0
+      }
+    }
+  ]
+}
