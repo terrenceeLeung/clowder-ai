@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-04-eval-a2a-single-fire-stable-c1-committed",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-04",
+  "generatedAt": "2026-07-04T03:00:00.104Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "No new actionable A2A scheduler finding: eval:a2a remains single-fire and legacy digest overlap remains disabled. The unresolved counter-window plus grounding Phase O telemetry coverage build remains assigned to opus47 as F167 owner after the 2026-06-28 build verdict PR #80. Implementation remains inside the agreed 2026-07-03 to 2026-07-05 window and now has a real pushed C1 code commit, but it is not closure because no implementation PR is open and the prewrite path is not merged.",
+    "evidence": "task_run_ledger id 268116 shows eval:a2a RUN_DELIVERED once on 2026-07-04; 2026-05-30 through 2026-07-04 are single-fire after the 2026-05-29 duplicate, making a 36-day streak. dynamic_task_defs id/template_id='harness-fit-digest' count=0 and no harness-fit-digest ledger runs exist. Local telemetry endpoints /api/telemetry/process-info, /api/telemetry/grounding-samples, and /api/telemetry/metrics could not connect to 127.0.0.1:3004 on 2026-07-04, so no counter_window or grounding-phase-o distribution can be trusted from this eval cat today. The implementation worktree /Users/tianyiliang/projects/cat-cafe-f167-phase-o-telemetry-prewrite exists on branch fix/f167-phase-o-telemetry-prewrite at ee3df32c, and origin/fix/f167-phase-o-telemetry-prewrite also points to ee3df32cc8a6c0f59e8debaf89aa8209d0db9bc5. Commit ee3df32c adds CronTelemetrySource plus InProcessCronTelemetrySource; local verification passed pnpm exec node --test test/harness-eval/cron-telemetry-source.test.js with 5/5 tests and pnpm run build exit 0. GitHub has no open implementation PR yet."
+  }
+}
