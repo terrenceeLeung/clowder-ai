@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "rawInputs": [
+    {
+      "path": "generated/sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix/trace.json",
+      "sha256": "d840acaaad417775c8e5fbe8add48435b0a7b220d56687cb213d73709b2e342c"
+    },
+    {
+      "path": "generated/sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix/eval-results.json",
+      "sha256": "86e5c8e550924906e39d5916d2f88b88f3477d9ad8ee52efb85bcd4294c23162"
+    }
+  ],
+  "generatedAt": "2026-07-04T03:00:00.000Z",
+  "generator": {
+    "name": "eval-sop-live-verdict",
+    "version": "2"
+  },
+  "sanitizeRulesVersion": "f192-sop-trace-v1"
+}

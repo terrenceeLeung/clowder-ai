@@ -1,0 +1,43 @@
+{
+  "verdictId": "2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "featureId": "F192",
+  "generatedAt": "2026-07-04T03:00:00.000Z",
+  "trace": {
+    "sessionId": "pr-54-f192-sop-mcp-schema-fix",
+    "sopDefinitionId": "development",
+    "observedStage": "merge",
+    "commands": [
+      {
+        "command": "git checkout -b fix/f192-sop-sourceRefs-schema",
+        "exitCode": 0
+      },
+      {
+        "command": "git commit -m \"fix(mcp-server): add sop-trace-eval to publish-verdict sourceRefs union\"",
+        "exitCode": 0
+      },
+      {
+        "command": "gh pr create --title \"fix(mcp-server): add sop-trace-eval to publish-verdict sourceRefs union\" --base main",
+        "exitCode": 0
+      },
+      {
+        "command": "gh pr merge 54 --squash --delete-branch",
+        "exitCode": 0
+      }
+    ],
+    "envSnapshot": {},
+    "gitState": {
+      "branch": "main",
+      "ahead": 0,
+      "behind": 0,
+      "clean": true
+    },
+    "handles": {
+      "author": "opus",
+      "reviewer": "codex"
+    },
+    "shaContext": {
+      "feature_commit": "13b3b10b6a5a8aace6a4fab3583cdbebae3aff0a",
+      "merge_commit": "e9c57dfc7a01f86065568da281c88c0ad7185067"
+    }
+  }
+}

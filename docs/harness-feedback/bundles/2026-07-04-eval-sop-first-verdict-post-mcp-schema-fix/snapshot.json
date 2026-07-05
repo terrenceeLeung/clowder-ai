@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "evalSnapshotId": "sop-2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "featureId": "F192",
+  "generatedAt": "2026-07-04T03:00:00.000Z",
+  "window": {
+    "durationHours": 336
+  },
+  "components": [
+    {
+      "id": "sop-compliance",
+      "name": "SOP development / merge",
+      "confidence": "medium",
+      "activationCounts": {
+        "rules_passed": 7,
+        "rules_evaluated": 19
+      },
+      "frictionCounts": {
+        "violations_blocker": 4,
+        "violations_warn": 0,
+        "rules_skipped": 8
+      }
+    }
+  ],
+  "sopDefinitionId": "development",
+  "observedStage": "merge",
+  "sessionId": "pr-54-f192-sop-mcp-schema-fix"
+}

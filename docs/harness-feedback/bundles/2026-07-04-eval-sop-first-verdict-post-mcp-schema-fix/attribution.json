@@ -1,0 +1,120 @@
+{
+  "verdictId": "2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "featureId": "F192",
+  "evalSnapshotId": "sop-2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "generatedAt": "2026-07-04T03:00:00.000Z",
+  "findings": [
+    {
+      "id": "SOP-2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix-0",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "env_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-04T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "impl-redis-6398-only: env REDIS_URL=\"<unset>\" must include \":6398\""
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "env REDIS_URL=\"<unset>\" must include \":6398\""
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix-1",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_pattern",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-04T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "quality-gate-full-test-evidence: required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found in session commands"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found in session commands"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix-2",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_sequence",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-04T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "completion-pr-merged-feature-check: required command \"gh pr view\" missing from sequence"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "required command \"gh pr view\" missing from sequence"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix-3",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "handle_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-04T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "completion-missing-guardian-handoff: guardian handoff not present"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "guardian handoff not present"
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

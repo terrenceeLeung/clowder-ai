@@ -1,0 +1,143 @@
+{
+  "verdictId": "2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+  "featureId": "F192",
+  "generatedAt": "2026-07-04T03:00:00.000Z",
+  "evalResults": [
+    {
+      "ruleId": "kickoff-ac-checklist",
+      "status": "skipped",
+      "reason": "Feature spec completeness is reviewed from docs and operator context; no stable machine artifact yet."
+    },
+    {
+      "ruleId": "kickoff-no-unconfirmed-implementation",
+      "status": "skipped",
+      "reason": "operator confirmation is conversational intent, not yet represented as a structured event."
+    },
+    {
+      "ruleId": "impl-main-sync-before-worktree",
+      "status": "pass"
+    },
+    {
+      "ruleId": "impl-redis-6398-only",
+      "status": "violation",
+      "violation": {
+        "ruleId": "impl-redis-6398-only",
+        "stageId": "impl",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "env_check",
+        "message": "env REDIS_URL=\"<unset>\" must include \":6398\"",
+        "traceAnchor": "env:REDIS_URL=<unset>",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "writing-plans"
+        }
+      }
+    },
+    {
+      "ruleId": "impl-design-gate-before-code",
+      "status": "skipped",
+      "reason": "Design Gate evidence is feature-specific and not yet represented by a structured artifact."
+    },
+    {
+      "ruleId": "impl-post-compact-recall-loss",
+      "status": "skipped",
+      "reason": "Current runtime has no stable post-compact recall-failure telemetry."
+    },
+    {
+      "ruleId": "impl-convention-graph-before-convention-edit",
+      "status": "skipped",
+      "reason": "Convention graph CLI usage is not yet emitted as structured telemetry."
+    },
+    {
+      "ruleId": "quality-gate-vision-coverage",
+      "status": "skipped",
+      "reason": "Vision coverage has no machine-checkable report artifact yet; upgrade when quality-gate emits structured evidence."
+    },
+    {
+      "ruleId": "quality-gate-full-test-evidence",
+      "status": "violation",
+      "violation": {
+        "ruleId": "quality-gate-full-test-evidence",
+        "stageId": "quality_gate",
+        "kind": "pitfall",
+        "severity": "blocker",
+        "predicateType": "command_pattern",
+        "message": "required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found in session commands",
+        "traceAnchor": "commands:[git checkout -b fix/f192-sop-sourceRefs-schema,git commit -m \"fix(mcp-server): add sop-trace-eval to publish-verdict sourceRefs union\",gh pr create --title \"fix(mcp-server): add sop-trace-eval to publish-verdict sourceRefs union\" --base main,gh pr merge 54 --squash --delete-branch]",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "quality-gate"
+        }
+      }
+    },
+    {
+      "ruleId": "review-no-self-review",
+      "status": "pass"
+    },
+    {
+      "ruleId": "review-original-requirements",
+      "status": "skipped",
+      "reason": "Review packet content is free-form markdown; no structured requirement-excerpt field yet."
+    },
+    {
+      "ruleId": "review-retrigger-after-p1",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-github-squash-only",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-cloud-review-sha-dedup",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-local-squash-close",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-runtime-update-after-merge",
+      "status": "pass"
+    },
+    {
+      "ruleId": "completion-vision-guardian",
+      "status": "skipped",
+      "reason": "Guardian identity and signoff are still conversational/thread-state artifacts."
+    },
+    {
+      "ruleId": "completion-pr-merged-feature-check",
+      "status": "violation",
+      "violation": {
+        "ruleId": "completion-pr-merged-feature-check",
+        "stageId": "completion",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "command_sequence",
+        "message": "required command \"gh pr view\" missing from sequence",
+        "traceAnchor": "commands:[git checkout -b fix/f192-sop-sourceRefs-schema,git commit -m \"fix(mcp-server): add sop-trace-eval to publish-verdict sourceRefs union\",gh pr create --title \"fix(mcp-server): add sop-trace-eval to publish-verdict sourceRefs union\" --base main,gh pr merge 54 --squash --delete-branch]",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "feat-lifecycle"
+        }
+      }
+    },
+    {
+      "ruleId": "completion-missing-guardian-handoff",
+      "status": "violation",
+      "violation": {
+        "ruleId": "completion-missing-guardian-handoff",
+        "stageId": "completion",
+        "kind": "pitfall",
+        "severity": "blocker",
+        "predicateType": "handle_check",
+        "message": "guardian handoff not present",
+        "traceAnchor": "handles:guardian=<unset>",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "feat-lifecycle"
+        }
+      }
+    }
+  ]
+}
