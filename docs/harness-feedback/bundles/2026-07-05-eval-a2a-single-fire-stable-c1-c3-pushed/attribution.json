@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-05-eval-a2a-single-fire-stable-c1-c3-pushed",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-05",
+  "generatedAt": "2026-07-05T03:00:00.152Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "No new actionable A2A scheduler finding: eval:a2a remains single-fire and legacy digest overlap remains disabled. The unresolved counter-window plus grounding Phase O telemetry coverage build remains assigned to opus47 as F167 owner after the 2026-06-28 build verdict PR #80. At the 2026-07-05 checkpoint owner viability is retained because the branch has three pushed implementation commits plus green tests/build, but this is not closure because there is still no implementation PR and C4/C5 remain.",
+    "evidence": "task_run_ledger id 274269 shows eval:a2a RUN_DELIVERED once on 2026-07-05; 2026-05-30 through 2026-07-05 are single-fire after the 2026-05-29 duplicate, making a 37-day streak. dynamic_task_defs id/template_id='harness-fit-digest' count=0 and no harness-fit-digest ledger runs exist. Local telemetry endpoints /api/telemetry/process-info, /api/telemetry/grounding-samples, and /api/telemetry/metrics could not connect to 127.0.0.1:3004 on 2026-07-05, so no counter_window or grounding-phase-o distribution can be trusted from this eval cat today. The implementation worktree /Users/tianyiliang/projects/cat-cafe-f167-phase-o-telemetry-prewrite exists on branch fix/f167-phase-o-telemetry-prewrite at 93aa892e, and origin/fix/f167-phase-o-telemetry-prewrite also points to 93aa892e95289152e4977c3a48d3c806da4ce9f6. Commits ee3df32c, 697d93f6, and 93aa892e cover C1 CronTelemetrySource, C2 snapshot writer, and C3 sourceRefs passthrough. Local verification passed pnpm exec node --test test/harness-eval/cron-telemetry-source.test.js test/harness-eval/snapshot-writer.test.js test/harness-eval/eval-cat-invocation-source-refs.test.js test/harness-eval/eval-cat-invocation.test.js with 26/26 tests and pnpm run build exit 0. GitHub has no open implementation PR yet."
+  }
+}
