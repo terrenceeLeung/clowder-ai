@@ -15,7 +15,9 @@ import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import type { IThreadStore } from '../../../domains/cats/services/stores/ports/ThreadStore.js';
 import type { TaskSpec_P1 } from '../../scheduler/types.js';
-import { buildEvalCatInvocation } from '../eval-cat-invocation.js';
+import type { CronTelemetrySource } from '../cron-telemetry-source.js';
+import { predefineF167SnapshotForCron } from '../cron-predefine.js';
+import { buildEvalCatInvocation, type EvalCatInvocationSourceRefs } from '../eval-cat-invocation.js';
 import { ensureEvalDomainThreads } from '../hub/eval-hub-thread-ensure.js';
 import { inventoryLegacyTasks, type LegacyScheduledTaskLike } from '../legacy-task-cleanup.js';
 import { getEvalCatOverride } from './eval-domain-override.js';
@@ -59,6 +61,22 @@ export interface EvalDomainScheduleOpts {
    * checks for a known-post-fix symbol (e.g. `isA2aSourceRefs` for `eval:a2a`).
    */
   publishPrereqProbe?: (domainId: EvalDomainRegistryEntry['domainId']) => boolean | Promise<boolean>;
+  /**
+   * F167 Phase O path B (2026-07-05 C4): optional in-process telemetry source
+   * for cron predefine. When provided AND the domain has a supported slug
+   * (currently only `eval:a2a`), the cron reads in-process telemetry, calls
+   * generateF167Snapshot, writes raw YAML via snapshot-writer, and passes
+   * sourceRefs to buildEvalCatInvocation. The eval cat then publishes the
+   * verdict without HTTP-fetching telemetry (which currently returns 401 /
+   * connect-failed for eval-cat invocations that lack a session cookie).
+   *
+   * Fail-soft: any failure in the pipeline (see cron-predefine.ts) logs and
+   * falls back to legacy behavior (no sourceRefs; eval cat writes evidence
+   * itself). Omit → same legacy behavior.
+   *
+   * See thread_eval_a2a T7 design + verdict PRs #77 / #80 (build).
+   */
+  telemetrySource?: CronTelemetrySource;
 }
 
 /** @deprecated Use EvalDomainScheduleOpts — kept for backward compat. */
@@ -233,12 +251,27 @@ function createEvalDomainSpec(config: EvalDomainSpecConfig): TaskSpec_P1<EvalDom
           }
         }
 
+        // F167 Phase O path B (C4 2026-07-05): pre-write raw evidence when a
+        // telemetry source is wired. Fail-soft: on any error, `sourceRefs` stays
+        // undefined and the eval cat falls back to fetching evidence itself
+        // (backward-compat). Currently gated to eval:a2a — extending to other
+        // domains needs a domain-specific F167EvalInput adapter.
+        let sourceRefs: EvalCatInvocationSourceRefs | undefined;
+        if (config.telemetrySource && domain.domainId === 'eval:a2a') {
+          sourceRefs = await predefineF167SnapshotForCron({
+            telemetrySource: config.telemetrySource,
+            harnessFeedbackRoot: config.harnessFeedbackRoot,
+            domainSlug: 'a2a',
+          });
+        }
+
         const invocation = buildEvalCatInvocation(
           {
             domain: effectiveDomain,
             trendRefs: [],
             verdictRefs: [],
             legacyCleanup: { status: legacyStatus },
+            ...(sourceRefs !== undefined ? { sourceRefs } : {}),
           },
           // cloud R6 P2 (PR-2): gate scheduled invocation's publish instructions on
           // actual runtime support so weekly cw scheduled eval doesn't tell cat to
