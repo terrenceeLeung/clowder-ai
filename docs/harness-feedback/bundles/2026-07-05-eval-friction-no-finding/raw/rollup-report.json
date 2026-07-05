@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-07-05-eval-friction-no-finding",
+  "selector": {
+    "kind": "friction-rollup-snapshot",
+    "windowStartMs": 1782615600000,
+    "windowEndMs": 1783220400000,
+    "topN": 10,
+    "tokenCap": 4000
+  },
+  "window": {
+    "sinceMs": 1782615600000,
+    "untilMs": 1783220400000
+  },
+  "signalCount": 0,
+  "clusterCount": 0,
+  "degraded": true,
+  "droppedChannels": [],
+  "report": {
+    "window": {
+      "sinceMs": 1782615600000,
+      "untilMs": 1783220400000
+    },
+    "generatedAt": "2026-07-05T03:01:44.033Z",
+    "topClusters": [],
+    "tailSummary": {
+      "clusterCount": 0,
+      "signalCount": 0,
+      "byChannel": {}
+    },
+    "degraded": true,
+    "droppedChannels": [],
+    "tokenBudget": {
+      "cap": 4000,
+      "estimated": 67
+    }
+  }
+}

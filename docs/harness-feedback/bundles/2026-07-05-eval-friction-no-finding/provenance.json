@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-05-eval-friction-no-finding",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-05-eval-friction-no-finding/raw/rollup-report.json",
+      "sha256": "2a51d8886b7e10889fa23caf88c4c37ff4586e9a8f8e85449f2288de26e12dfc"
+    }
+  ],
+  "generatedAt": "2026-07-05T03:01:44.033Z",
+  "generator": {
+    "name": "eval-friction-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f245-friction-rollup-v1"
+}

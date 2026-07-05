@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-05-eval-friction-no-finding",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-07-05",
+  "generatedAt": "2026-07-05T03:01:44.033Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no friction cluster surfaced in the selected window",
+    "evidence": "friction-rollup/cluster_count"
+  }
+}
