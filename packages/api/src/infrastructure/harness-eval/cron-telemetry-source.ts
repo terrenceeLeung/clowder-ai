@@ -26,8 +26,8 @@ import type {
   EvalMetricsSnapshot,
   EvalProcessInfo,
   EvalTraceSpan,
-  EvalTracesResponse,
   EvalTraceStoreStats,
+  EvalTracesResponse,
 } from './telemetry-adapter.js';
 
 /**

@@ -42,9 +42,7 @@ function makeMinimalDomain(overrides = {}) {
 
 describe('buildEvalCatInvocation — sourceRefs passthrough (F167 Phase O path B C3)', () => {
   it('backward-compat: input without sourceRefs → packet.context has no sourceRefs key', async () => {
-    const { buildEvalCatInvocation } = await import(
-      '../../dist/infrastructure/harness-eval/eval-cat-invocation.js'
-    );
+    const { buildEvalCatInvocation } = await import('../../dist/infrastructure/harness-eval/eval-cat-invocation.js');
     const packet = buildEvalCatInvocation({
       domain: makeMinimalDomain(),
       trendRefs: [],
@@ -59,9 +57,7 @@ describe('buildEvalCatInvocation — sourceRefs passthrough (F167 Phase O path B
   });
 
   it('input with sourceRefs.snapshotName → packet.context.sourceRefs echoed', async () => {
-    const { buildEvalCatInvocation } = await import(
-      '../../dist/infrastructure/harness-eval/eval-cat-invocation.js'
-    );
+    const { buildEvalCatInvocation } = await import('../../dist/infrastructure/harness-eval/eval-cat-invocation.js');
     const packet = buildEvalCatInvocation({
       domain: makeMinimalDomain(),
       trendRefs: [],
@@ -75,9 +71,7 @@ describe('buildEvalCatInvocation — sourceRefs passthrough (F167 Phase O path B
   });
 
   it('input with both snapshotName + attributionName → both echoed', async () => {
-    const { buildEvalCatInvocation } = await import(
-      '../../dist/infrastructure/harness-eval/eval-cat-invocation.js'
-    );
+    const { buildEvalCatInvocation } = await import('../../dist/infrastructure/harness-eval/eval-cat-invocation.js');
     const packet = buildEvalCatInvocation({
       domain: makeMinimalDomain(),
       trendRefs: [],
@@ -93,9 +87,7 @@ describe('buildEvalCatInvocation — sourceRefs passthrough (F167 Phase O path B
   });
 
   it('input with only attributionName → snapshotName omitted', async () => {
-    const { buildEvalCatInvocation } = await import(
-      '../../dist/infrastructure/harness-eval/eval-cat-invocation.js'
-    );
+    const { buildEvalCatInvocation } = await import('../../dist/infrastructure/harness-eval/eval-cat-invocation.js');
     const packet = buildEvalCatInvocation({
       domain: makeMinimalDomain(),
       trendRefs: [],
@@ -108,9 +100,7 @@ describe('buildEvalCatInvocation — sourceRefs passthrough (F167 Phase O path B
   });
 
   it('sourceRefs does not disturb other context fields (legacyCleanup, sla, etc)', async () => {
-    const { buildEvalCatInvocation } = await import(
-      '../../dist/infrastructure/harness-eval/eval-cat-invocation.js'
-    );
+    const { buildEvalCatInvocation } = await import('../../dist/infrastructure/harness-eval/eval-cat-invocation.js');
     const packet = buildEvalCatInvocation({
       domain: makeMinimalDomain(),
       trendRefs: ['t1'],

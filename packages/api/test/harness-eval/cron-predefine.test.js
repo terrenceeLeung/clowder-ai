@@ -32,9 +32,7 @@ function makeFakeSource(overrides = {}) {
 
 describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
   it('happy path: writes raw YAML + returns sourceRefs.snapshotName', async () => {
-    const { predefineF167SnapshotForCron } = await import(
-      '../../dist/infrastructure/harness-eval/cron-predefine.js'
-    );
+    const { predefineF167SnapshotForCron } = await import('../../dist/infrastructure/harness-eval/cron-predefine.js');
     const tmpRoot = mkdtempSync(join(tmpdir(), 'f167-predefine-happy-'));
     try {
       const result = await predefineF167SnapshotForCron({
@@ -58,9 +56,7 @@ describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
   });
 
   it('fail-soft: telemetry read throws → returns undefined + onError called (no rethrow)', async () => {
-    const { predefineF167SnapshotForCron } = await import(
-      '../../dist/infrastructure/harness-eval/cron-predefine.js'
-    );
+    const { predefineF167SnapshotForCron } = await import('../../dist/infrastructure/harness-eval/cron-predefine.js');
     const tmpRoot = mkdtempSync(join(tmpdir(), 'f167-predefine-fail-'));
     const errors = [];
     try {
@@ -87,9 +83,7 @@ describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
   });
 
   it('fail-soft: async getGroundingSamples rejects → returns undefined + onError called', async () => {
-    const { predefineF167SnapshotForCron } = await import(
-      '../../dist/infrastructure/harness-eval/cron-predefine.js'
-    );
+    const { predefineF167SnapshotForCron } = await import('../../dist/infrastructure/harness-eval/cron-predefine.js');
     const tmpRoot = mkdtempSync(join(tmpdir(), 'f167-predefine-async-fail-'));
     const errors = [];
     try {
@@ -113,9 +107,7 @@ describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
   });
 
   it('domainSlug flows into filename (e.g. memory slug produces memory basename)', async () => {
-    const { predefineF167SnapshotForCron } = await import(
-      '../../dist/infrastructure/harness-eval/cron-predefine.js'
-    );
+    const { predefineF167SnapshotForCron } = await import('../../dist/infrastructure/harness-eval/cron-predefine.js');
     const tmpRoot = mkdtempSync(join(tmpdir(), 'f167-predefine-slug-'));
     try {
       const result = await predefineF167SnapshotForCron({
@@ -131,9 +123,7 @@ describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
   });
 
   it('injected clock produces deterministic dateStr regardless of wall time', async () => {
-    const { predefineF167SnapshotForCron } = await import(
-      '../../dist/infrastructure/harness-eval/cron-predefine.js'
-    );
+    const { predefineF167SnapshotForCron } = await import('../../dist/infrastructure/harness-eval/cron-predefine.js');
     const tmpRoot = mkdtempSync(join(tmpdir(), 'f167-predefine-clock-'));
     try {
       const result = await predefineF167SnapshotForCron({

@@ -17,9 +17,9 @@
  * without booting the full scheduler machinery.
  */
 
-import type { EvalCatInvocationSourceRefs } from './eval-cat-invocation.js';
 import type { CronTelemetrySource } from './cron-telemetry-source.js';
-import { generateF167Snapshot, type F167EvalInput } from './f167-eval.js';
+import type { EvalCatInvocationSourceRefs } from './eval-cat-invocation.js';
+import { type F167EvalInput, generateF167Snapshot } from './f167-eval.js';
 import { writeF167SnapshotYaml } from './snapshot-writer.js';
 
 export interface PredefineF167Opts {
