@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-06-eval-friction-empty-every-3d-window",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-07-06",
+  "generatedAt": "2026-07-06T03:04:29.871Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no friction cluster surfaced in the selected window",
+    "evidence": "friction-rollup/cluster_count"
+  }
+}
