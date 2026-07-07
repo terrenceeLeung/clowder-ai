@@ -856,6 +856,13 @@ export async function* invokeSingleCat(deps: InvocationDeps, params: InvocationP
     ),
   };
 
+  // #1092 / #1099 review P1: the MCP credential refresh file is written by the ACP
+  // layer (acp-credential-file.ts), scoped per ACP session — NOT here. A deterministic
+  // per-(thread,cat) path written at invoke time lets a superseded-but-alive process
+  // read the newest invocation's credentials and defeat registry.isLatest().
+  // Non-ACP providers spawn fresh MCP subprocesses per invocation, so their env
+  // credentials are never stale and no file is needed.
+
   // F254 AC-C2: Persist carrier tier at invocation start (fire-and-forget, fail-open).
   // Callback routes read this via FreshnessInvocationStateStore.get() to derive
   // RuntimeCapabilityDescriptor — closing the producer/consumer chain.
