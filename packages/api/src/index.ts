@@ -4410,9 +4410,7 @@ async function main(): Promise<void> {
     // produces a valid RuntimeEvalSnapshot). Follow-up commit can wire real
     // LocalTraceStore + Prometheus registry snapshots for full coverage.
     telemetrySource: await (async () => {
-      const { InProcessCronTelemetrySource } = await import(
-        './infrastructure/harness-eval/cron-telemetry-source.js'
-      );
+      const { InProcessCronTelemetrySource } = await import('./infrastructure/harness-eval/cron-telemetry-source.js');
       return new InProcessCronTelemetrySource({
         traceStore: {
           query: () => [],
