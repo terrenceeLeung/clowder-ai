@@ -1,0 +1,64 @@
+{
+  "verdictId": "2026-07-08-eval-a2a-single-fire-stable-pr92-green-unmerged",
+  "evalSnapshotId": "eval-F167-2026-07-08",
+  "featureId": "F167",
+  "generatedAt": "2026-07-08T03:00:00.136Z",
+  "window": {
+    "durationHours": 24
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1
+      },
+      "frictionCounts": {
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0
+      }
+    },
+    {
+      "id": "counter-window",
+      "name": "counter-domain denominator availability",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.counter_window_missing": 1
+      }
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.grounding_phase_o_no_data": 1
+      }
+    },
+    {
+      "id": "implementation-progress",
+      "name": "F167 path B owner-assigned implementation visibility",
+      "confidence": "high",
+      "activationCounts": {
+        "implementation.open_pr_count": 1,
+        "implementation.commits_after_pr_base": 7,
+        "implementation.changed_files_total": 10,
+        "implementation.c5_bootstrap_committed": 1,
+        "implementation.github_checks_passed": 5,
+        "implementation.github_checks_failed": 0,
+        "implementation.merge_state_clean": 1,
+        "implementation.ci_green": 1,
+        "implementation.owner_viability_retained": 1
+      },
+      "frictionCounts": {
+        "implementation.merged_implementation": 0,
+        "implementation.review_decision_present": 0,
+        "implementation.review_count": 0,
+        "implementation.raw_2026_07_08_source_refs_found": 0,
+        "implementation.c5_active_in_runtime_main": 0
+      }
+    }
+  ]
+}

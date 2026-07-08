@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-08-eval-a2a-single-fire-stable-pr92-green-unmerged",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-08-f167-a2a-snapshot.yaml",
+      "sha256": "37869cd3f103105cc68838df9e1dc25ccd05d408d13f2e52ae6bde3c9e032fe2"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-08-f167-a2a-attribution.yaml",
+      "sha256": "da501c7cd317f5bb3ac0fd85a3b7ed5166dbee215208fc3ce4c63e23442ac53d"
+    }
+  ],
+  "generatedAt": "2026-07-08T03:00:00.136Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
