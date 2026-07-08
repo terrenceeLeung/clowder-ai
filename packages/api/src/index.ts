@@ -4397,6 +4397,41 @@ async function main(): Promise<void> {
     redis: redisClient ?? undefined,
     wiredPublishDomains,
     publishPrereqProbe,
+    // F167 Phase O path B (C5): wire in-process telemetry source so daily cron
+    // predefines raw evidence YAML directly from in-process singletons instead
+    // of HTTP-fetching /api/telemetry/* which returns 401 (eval-cat invocations
+    // lack session cookies) or connect-failed. See thread_eval_a2a T7 design +
+    // verdicts #77 / #80 (build).
+    //
+    // Partial wiring: getGroundingSampleStore + process.uptime() provide real
+    // counterWindow + grounding data. Traces and metrics are stubbed to empty
+    // for graceful degradation (generateF167Snapshot handles empty inputs; the
+    // affected component confidence drops to no-data but predefine still
+    // produces a valid RuntimeEvalSnapshot). Follow-up commit can wire real
+    // LocalTraceStore + Prometheus registry snapshots for full coverage.
+    telemetrySource: await (async () => {
+      const { InProcessCronTelemetrySource } = await import('./infrastructure/harness-eval/cron-telemetry-source.js');
+      return new InProcessCronTelemetrySource({
+        traceStore: {
+          query: () => [],
+          stats: () => ({
+            spanCount: 0,
+            maxSpans: 10_000,
+            maxAgeMs: 24 * 60 * 60 * 1000,
+            oldestStoredAt: null,
+            newestStoredAt: null,
+          }),
+          add: () => {},
+          hydrate: () => {},
+          clear: () => {},
+        } as unknown as import('./infrastructure/telemetry/local-trace-store.js').LocalTraceStore,
+        readMetrics: () => ({}),
+        readMetricsHistory: () => [],
+        readGroundingSamples: async () => (await getGroundingSampleStore().getSamples()) ?? [],
+        now: () => Date.now(),
+        processUptimeSec: () => process.uptime(),
+      });
+    })(),
   };
   taskRunnerV2.register(createEvalDomainDailySpec(evalScheduleOpts));
   taskRunnerV2.register(createEvalDomainWeeklySpec(evalScheduleOpts));
