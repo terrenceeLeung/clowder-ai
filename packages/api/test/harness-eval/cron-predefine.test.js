@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
-import { parse as parseYaml } from 'yaml';
 
 // F167 Phase O path B (2026-07-05 T7 sub-commit C4): cron-side predefine
 // helper integration test. Verifies:
@@ -31,8 +30,11 @@ function makeFakeSource(overrides = {}) {
 }
 
 describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
-  it('happy path: writes raw YAML + returns sourceRefs.snapshotName', async () => {
+  it('happy path: writes raw YAML + returns sourceRefs.snapshotName + parseSnapshot round-trip', async () => {
     const { predefineF167SnapshotForCron } = await import('../../dist/infrastructure/harness-eval/cron-predefine.js');
+    // Use the REAL parser to verify writer output is consumable by the
+    // production publish-verdict path (2026-07-08 review fix).
+    const { parseSnapshot } = await import('../../dist/infrastructure/harness-eval/a2a/eval-a2a-artifact-parsers.js');
     const tmpRoot = mkdtempSync(join(tmpdir(), 'f167-predefine-happy-'));
     try {
       const result = await predefineF167SnapshotForCron({
@@ -45,11 +47,12 @@ describe('predefineF167SnapshotForCron (F167 Phase O path B C4)', () => {
       assert.equal(result.snapshotName, '2026-07-05-f167-a2a-snapshot.yaml');
       const filePath = join(tmpRoot, 'snapshots', '2026-07-05-f167-a2a-snapshot.yaml');
       assert.equal(existsSync(filePath), true, 'raw YAML must exist on disk');
-      const parsed = parseYaml(readFileSync(filePath, 'utf8'));
-      // Snake_case applied (see C2)
-      assert.equal(parsed.feature_id, 'F167');
-      // counter_window built from processInfo
-      assert.equal(parsed.counter_window.duration_hours, 1, 'uptimeSec=3600 → durationHours=1');
+      // If writer output shape is wrong, parseSnapshot throws
+      // `missing YAML frontmatter` — the exact failure PR #92 review reported.
+      const parsed = parseSnapshot(filePath);
+      assert.equal(parsed.featureId, 'F167');
+      // counterWindow built from processInfo (uptimeSec=3600 → 1 hour)
+      assert.equal(parsed.counterWindow?.durationHours, 1, 'uptimeSec=3600 → durationHours=1');
     } finally {
       rmSync(tmpRoot, { recursive: true, force: true });
     }

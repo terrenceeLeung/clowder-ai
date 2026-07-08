@@ -78,9 +78,23 @@ export function snakeCaseKeys<T>(input: T): T {
 /**
  * Serialize a RuntimeEvalSnapshot to raw YAML at
  *   `<harnessFeedbackRoot>/snapshots/<dateStr>-f167-<domainSlug>-snapshot.yaml`
- * Creates the snapshots/ subdirectory if absent. Returns the basename +
- * absolute path so callers can (a) put basename into sourceRefs.snapshotName,
- * (b) log the absolute path for debugging.
+ *
+ * Output format: `--- <frontmatter> ---\n\n<body>` — matches
+ * `eval-a2a-artifact-parsers.ts:parseMarkdownYaml` which hard-requires
+ * `--- ... ---` frontmatter. Round-tripping through `parseSnapshot()` MUST
+ * succeed for the sourceRefs contract to work end-to-end (2026-07-08 review
+ * fix per thread_eval_a2a — pure YAML output failed parser round-trip).
+ *
+ * Field split:
+ *   Frontmatter — identity/metadata read by `parsed.frontmatter.*`:
+ *     doc_kind, feedback_type, feature_id, eval_snapshot_id, generated_at.
+ *   Body — data read by `parsed.body.*`: window, counter_window, components,
+ *     data_source, generated_by, trace_store_stats, overall_confidence,
+ *     summary, grounding_sample_evidence.
+ *
+ * Creates snapshots/ subdirectory if absent. Returns the basename +
+ * absolute path so callers can put basename into `sourceRefs.snapshotName`
+ * and log the absolute path for debugging.
  *
  * Throws on I/O errors. Cron callers should wrap in try/catch and fall back to
  * NOT sending sourceRefs (eval cat will see standard invocation without
@@ -90,8 +104,71 @@ export function writeF167SnapshotYaml(opts: WriteF167SnapshotOpts): WriteF167Sna
   const snapshotName = `${opts.dateStr}-f167-${opts.domainSlug}-snapshot.yaml`;
   const snapshotPath = join(opts.harnessFeedbackRoot, 'snapshots', snapshotName);
   const doSnakeCase = opts.snakeCase ?? true;
-  const serializable = doSnakeCase ? snakeCaseKeys(opts.snapshot) : opts.snapshot;
+
+  // Split the flat RuntimeEvalSnapshot into frontmatter + body groups matching
+  // the parser contract. featureId → both feature_id (frontmatter) and the
+  // derived eval_snapshot_id; generatedAt → generated_at (frontmatter).
+  const {
+    featureId,
+    generatedAt,
+    window,
+    counterWindow,
+    dataSource,
+    generatedBy,
+    traceStoreStats,
+    components,
+    overallConfidence,
+    summary,
+    groundingSampleEvidence,
+  } = opts.snapshot;
+
+  const dateMatch = generatedAt.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? opts.dateStr;
+
+  const frontmatterObj: Record<string, unknown> = {
+    doc_kind: 'harness-feedback',
+    feedback_type: 'eval-snapshot',
+    feature_id: featureId,
+    eval_snapshot_id: `eval-${featureId}-${dateMatch}`,
+    generated_at: generatedAt,
+  };
+
+  // Transform ComponentHealth[] from generateF167Snapshot's internal shape
+  // (componentId / componentName / extended telemetry fields) to the shape
+  // parseSnapshot expects (id / name / activationCounts / frictionCounts /
+  // confidence). Extra fields (frictionSamples, telemetryGaps, etc.) survive
+  // through the passthrough spread so downstream code can still inspect them.
+  const transformedComponents = (components as unknown as Array<Record<string, unknown>>).map((c) => {
+    const rest: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(c)) {
+      if (k !== 'componentId' && k !== 'componentName') rest[k] = v;
+    }
+    return {
+      id: c.componentId ?? c.id ?? '',
+      name: c.componentName ?? c.name ?? '',
+      ...rest,
+    };
+  });
+
+  const bodyObj: Record<string, unknown> = {
+    window,
+    ...(counterWindow !== undefined ? { counterWindow } : {}),
+    dataSource,
+    generatedBy,
+    traceStoreStats,
+    components: transformedComponents,
+    overallConfidence,
+    summary,
+    ...(groundingSampleEvidence !== undefined ? { groundingSampleEvidence } : {}),
+  };
+
+  const finalFrontmatter = doSnakeCase ? snakeCaseKeys(frontmatterObj) : frontmatterObj;
+  const finalBody = doSnakeCase ? snakeCaseKeys(bodyObj) : bodyObj;
+
+  const yamlContent = ['---', stringifyYaml(finalFrontmatter).trimEnd(), '---', '', stringifyYaml(finalBody)].join(
+    '\n',
+  );
+
   mkdirSync(dirname(snapshotPath), { recursive: true });
-  writeFileSync(snapshotPath, stringifyYaml(serializable), 'utf8');
+  writeFileSync(snapshotPath, yamlContent, 'utf8');
   return { snapshotName, snapshotPath };
 }
