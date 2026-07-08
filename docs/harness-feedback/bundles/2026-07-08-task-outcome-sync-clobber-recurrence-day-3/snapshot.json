@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-07-08-task-outcome-sync-clobber-recurrence-day-3",
+  "evalSnapshotId": "eval-F192-2026-07-08",
+  "featureId": "F192",
+  "generatedAt": "2026-07-08T03:01:43.097Z",
+  "window": {
+    "startMs": 1782183600000,
+    "endMs": 1783479600000,
+    "durationHours": 360
+  },
+  "components": [
+    {
+      "id": "Phase-G-v0",
+      "name": "task-outcome eval pipeline",
+      "confidence": "medium",
+      "activationCounts": {
+        "episodes_total": 38,
+        "completed_total": 37,
+        "in_progress_total": 1,
+        "abandoned_total": 0,
+        "escalated_cvo_total": 0,
+        "corrected_then_completed_total": 0,
+        "a1_signals_total": 37,
+        "a2_signals_total": 8,
+        "proxy_signals_total": 0
+      },
+      "frictionCounts": {
+        "permission_cancel_total": 0,
+        "proposal_reject_total": 1,
+        "magic_word_ref_total": 7
+      }
+    },
+    {
+      "id": "F227-event-memory",
+      "name": "event memory timeline",
+      "confidence": "medium",
+      "activationCounts": {
+        "events_backfilled_visible": 4,
+        "confidence_high_count": 4,
+        "confidence_mid_count": 0,
+        "confidence_low_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}
