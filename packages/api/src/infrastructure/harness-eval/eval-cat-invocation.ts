@@ -5,11 +5,35 @@ export interface LegacyCleanupStatus {
   reportRef?: string;
 }
 
+/**
+ * F167 Phase O path B (2026-07-04 C3): pre-computed sourceRefs the cron can
+ * pass to the eval cat when it has already written raw evidence to disk
+ * (via `snapshot-writer.ts`). The cat then passes these basenames to
+ * `cat_cafe_publish_verdict` without re-fetching telemetry over HTTP.
+ *
+ * Both fields optional so partial predefine (snapshot only, attribution only,
+ * neither) is representable. Basenames only — MCP validation rejects path
+ * separators and `..`.
+ */
+export interface EvalCatInvocationSourceRefs {
+  /** Basename inside `<harnessFeedbackRoot>/snapshots/`. */
+  snapshotName?: string;
+  /** Basename inside `<harnessFeedbackRoot>/attributions/`. */
+  attributionName?: string;
+}
+
 export interface EvalCatInvocationInput {
   domain: EvalDomainRegistryEntry;
   trendRefs: string[];
   verdictRefs: string[];
   legacyCleanup: LegacyCleanupStatus;
+  /**
+   * F167 Phase O path B: sourceRefs the cron pre-wrote for this eval fire.
+   * When provided, echoed into `packet.context.sourceRefs` so the eval cat
+   * sees them alongside legacyCleanup etc. Omit for backward-compat behavior
+   * (cat writes evidence itself as before).
+   */
+  sourceRefs?: EvalCatInvocationSourceRefs;
 }
 
 export interface EvalCatInvocationPacket {
@@ -25,6 +49,8 @@ export interface EvalCatInvocationPacket {
     fixtures: EvalDomainRegistryEntry['fixtures'];
     legacyCleanup: LegacyCleanupStatus;
     sla: EvalDomainRegistryEntry['sla'];
+    /** F167 Phase O path B: mirrors input.sourceRefs when the cron pre-wrote evidence. */
+    sourceRefs?: EvalCatInvocationSourceRefs;
   };
 }
 
@@ -358,6 +384,11 @@ export function buildEvalCatInvocation(
       fixtures: domain.fixtures,
       legacyCleanup: input.legacyCleanup,
       sla: domain.sla,
+      // F167 Phase O path B (C3): only include sourceRefs when the cron pre-wrote
+      // evidence for this fire; absent → eval cat behaves as before (fetches +
+      // writes its own evidence). Spread guard keeps the packet's JSON payload
+      // minimal for legacy callers.
+      ...(input.sourceRefs !== undefined ? { sourceRefs: input.sourceRefs } : {}),
     },
   };
 }
