@@ -1,0 +1,53 @@
+{
+  "verdictId": "2026-07-09-eval-a2a-pr92-merge-clobbered-no-source-refs",
+  "evalSnapshotId": "eval-F167-2026-07-09",
+  "featureId": "F167",
+  "generatedAt": "2026-07-09T03:03:38Z",
+  "window": {
+    "durationHours": 24
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1,
+        "eval_domain_daily.single_fire_streak_days": 41
+      },
+      "frictionCounts": {
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "counter-window",
+      "name": "counter-domain denominator availability",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.counter_window_missing": 1,
+        "telemetry.prewritten_source_refs_missing": 1
+      }
+    },
+    {
+      "id": "implementation-progress",
+      "name": "F167 path B implementation lineage",
+      "confidence": "high",
+      "activationCounts": {
+        "implementation.pr92_state_merged": 1,
+        "implementation.pr92_merge_commit_exists": 1,
+        "implementation.pr92_pre_merge_ci_green": 1
+      },
+      "frictionCounts": {
+        "implementation.pr92_merge_commit_not_in_current_origin_main": 1,
+        "implementation.origin_main_missing_cron_predefine_file": 1,
+        "implementation.origin_main_missing_cron_telemetry_source_file": 1,
+        "implementation.origin_main_missing_snapshot_writer_file": 1,
+        "implementation.local_runtime_missing_c5_wiring": 1,
+        "implementation.raw_2026_07_09_source_refs_found": 0
+      }
+    }
+  ]
+}
