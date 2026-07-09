@@ -1,0 +1,61 @@
+{
+  "verdictId": "2026-07-09-eval-a2a-pr92-merge-clobbered-no-source-refs",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-09",
+  "generatedAt": "2026-07-09T03:03:38Z",
+  "findings": [
+    {
+      "id": "f167-pr92-merge-clobbered-from-current-main",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "implementation_lineage_gap",
+        "severity": "high",
+        "confidence": 0.92
+      },
+      "attribution": {
+        "primaryLayer": "merge-release-control-plane",
+        "pipelineOrHuman": "main-lineage-sync",
+        "evidence": [
+          {
+            "type": "git",
+            "anchor": "implementation-progress/implementation.pr92_merge_commit_not_in_current_origin_main",
+            "excerpt": "PR #92 is MERGED with merge commit a4abd0f14cd7 at 2026-07-08T03:38:09Z, but current origin/main is ab006afb991d and gh compare reports a4abd0f...ab006afb as diverged; git branch -r --contains a4abd0f returns no current main branch."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-progress/implementation.origin_main_missing_cron_predefine_file",
+            "excerpt": "The PR #92 merge commit adds cron-predefine.ts, cron-telemetry-source.ts, and snapshot-writer.ts, while current origin/main lacks all three files and has no InProcessCronTelemetrySource or predefineF167SnapshotForCron symbols."
+          },
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 298383 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-09T03:00:00.044Z; 2026-05-30 through 2026-07-09 are single-fire, making a 41-day streak."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-07-09 scheduled invocation did not include sourceRefs, no docs/harness-feedback/snapshots/2026-07-09-f167-a2a-snapshot.yaml existed before this eval-cat evidence write, and Node fetch to 127.0.0.1:3004 telemetry endpoints failed with TypeError: fetch failed."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "restore_main_lineage",
+          "target": "origin/main / PR #92 F167 Phase O path B implementation",
+          "rationale": "Re-land the PR #92 implementation changes onto the current origin/main tip, or otherwise restore a main lineage that contains a4abd0f14cd7, then restart/pull the runtime so the next eval:a2a cron fire can produce prewritten sourceRefs with counter_window and grounding-phase-o data."
+        },
+        {
+          "action": "add_sync_guard_or_incident_followup",
+          "target": "main sync / verdict auto-PR merge flow",
+          "rationale": "The F167 implementation merge was not retained in current main after later verdict PR merges, matching the sync-clobber failure mode already under eval:task-outcome; add or route a guard so implementation commits cannot be silently removed from main lineage."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

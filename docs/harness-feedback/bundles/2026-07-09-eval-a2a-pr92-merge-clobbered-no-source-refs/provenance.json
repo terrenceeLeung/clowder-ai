@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-09-eval-a2a-pr92-merge-clobbered-no-source-refs",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-09-f167-a2a-snapshot.yaml",
+      "sha256": "374468c7e35b0fc77c31972f39d8e7112cc30b508f5001b4d713fd450286ae7a"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-09-f167-a2a-attribution.yaml",
+      "sha256": "a851e294c9fe962f185acfe2bb8b109becd7562bfb944ea51f31432b7fb6cde0"
+    }
+  ],
+  "generatedAt": "2026-07-09T03:03:38Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
