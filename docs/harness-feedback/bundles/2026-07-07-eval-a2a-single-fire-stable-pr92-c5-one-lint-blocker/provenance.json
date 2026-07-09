@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-07-eval-a2a-single-fire-stable-pr92-c5-one-lint-blocker",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-07-f167-a2a-snapshot.yaml",
+      "sha256": "8dcec22c66cd80d99c6eed883ed8ac3051056a23eacc6360e2bd69dc0d725c55"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-07-f167-a2a-attribution.yaml",
+      "sha256": "570f8843a6cc2a21afba735a8dfd1af2ebbb62d22ff50969d2ddf85f4c3dcc6e"
+    }
+  ],
+  "generatedAt": "2026-07-07T03:00:00.120Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
