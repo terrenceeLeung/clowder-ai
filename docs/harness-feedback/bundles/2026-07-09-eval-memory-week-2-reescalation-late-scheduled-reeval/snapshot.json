@@ -1,0 +1,85 @@
+{
+  "verdictId": "2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval",
+  "evalSnapshotId": "eval-F200-memory-2026-07-09",
+  "featureId": "F200",
+  "generatedAt": "2026-07-09T03:01:00.000Z",
+  "window": {
+    "durationHours": 720
+  },
+  "components": [
+    {
+      "id": "memory-recall",
+      "name": "Memory Recall & Library Health",
+      "confidence": "medium",
+      "activationCounts": {
+        "total_recall_events": 156
+      },
+      "frictionCounts": {
+        "search_abandon_count": 91,
+        "grep_fallback_count": 0,
+        "stale_anchor_count": 0,
+        "orphan_edge_count": 22
+      }
+    }
+  ],
+  "recallMetrics": {
+    "period": {
+      "fromMs": 1780974054654,
+      "toMs": 1783566054654,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 156,
+    "core": {
+      "consumedAt3": 0.2564102564102564,
+      "consumedMRR": 0.19536019536019533,
+      "reformulationRate": 0.21794871794871795,
+      "searchAbandonRate": 0.5833333333333334
+    },
+    "extended": {
+      "readthroughAt3": 0.21544715447154478,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0.05405405405405406,
+      "reformulateAfterExposure": 0.05128205128205128,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.6587688734030197,
+      "liveOnShadowSubsetMRR": 0.7433217189314749
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  },
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 22
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "observedSearches": 200,
+      "zeroHitCount": 0,
+      "lowHitCount": 69,
+      "recentMisses": []
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 15,
+      "avgSimilarity": 0.933
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}

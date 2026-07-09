@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval/recall-metrics.json",
+      "sha256": "1112b2eef62e5aeebd427c7c790ce4026bba6cac8a20ee23fe4b3ef033dc463d"
+    },
+    {
+      "path": "generated/memory/2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval/library-health.json",
+      "sha256": "176bc155684e0c798dbeeb34d6889b84e40fb2d161fe1071002948bd4b695ca5"
+    }
+  ],
+  "generatedAt": "2026-07-09T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
