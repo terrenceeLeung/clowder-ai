@@ -1,0 +1,39 @@
+{
+  "verdictId": "2026-07-09-eval-friction-empty-every-3d-window",
+  "selector": {
+    "kind": "friction-rollup-snapshot",
+    "windowStartMs": 1783306800000,
+    "windowEndMs": 1783566000000,
+    "topN": 10,
+    "tokenCap": 4000
+  },
+  "window": {
+    "sinceMs": 1783306800000,
+    "untilMs": 1783566000000
+  },
+  "signalCount": 0,
+  "clusterCount": 0,
+  "degraded": true,
+  "droppedChannels": [],
+  "report": {
+    "window": {
+      "sinceMs": 1783306800000,
+      "untilMs": 1783566000000
+    },
+    "generatedAt": "2026-07-09T03:07:56.361Z",
+    "topClusters": [],
+    "actionableCandidates": [],
+    "referenceOnly": [],
+    "tailSummary": {
+      "clusterCount": 0,
+      "signalCount": 0,
+      "byChannel": {}
+    },
+    "degraded": true,
+    "droppedChannels": [],
+    "tokenBudget": {
+      "cap": 4000,
+      "estimated": 78
+    }
+  }
+}
