@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval",
+  "featureId": "F200",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-07-09T03:01:00.000Z",
+  "libraryHealth": {
+    "staleAnchors": {
+      "count": 0,
+      "items": []
+    },
+    "orphanEdges": {
+      "count": 22
+    },
+    "verificationDebt": {
+      "needsReviewCount": 0,
+      "escalatedCount": 0,
+      "trustedLegacyCount": 0
+    },
+    "searchQuality": {
+      "totalSearches": 200,
+      "observedSearches": 200,
+      "zeroHitCount": 0,
+      "lowHitCount": 69,
+      "recentMisses": []
+    },
+    "replayDrift": {
+      "available": true,
+      "sampleCount": 15,
+      "avgSimilarity": 0.933
+    },
+    "knowledgeFeed": {
+      "pendingCount": 148,
+      "needsReviewCount": 13
+    }
+  }
+}

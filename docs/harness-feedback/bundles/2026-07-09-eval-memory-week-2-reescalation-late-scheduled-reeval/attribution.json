@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval",
+  "featureId": "F200",
+  "evalSnapshotId": "eval-F200-memory-2026-07-09",
+  "generatedAt": "2026-07-09T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Combined verdict: (1) scheduled reeval from PR #85 nextEvalAt=2026-07-08 (published 1 day late; 07-08 cron had schema learning cost that consumed the turn); (2) 14-day silence re-escalation trigger from PR #76 (fired 2026-07-06 per PR #85 closureCondition). CVO has been silent on PR #76 escalation for 15 days. State remains blocked: yaml daily, F200 Phase F spec section absent, LL-071 collision unresolved. Recall data steady 30d=170.",
+    "evidence": "recall_events_30d_count=170, days_since_pr_76_escalation=15, days_since_pr_85_next_eval=1, phase_f_spec_section_count=0, ll_071_my_content_present=0, yaml_frequency_still_daily=1"
+  }
+}

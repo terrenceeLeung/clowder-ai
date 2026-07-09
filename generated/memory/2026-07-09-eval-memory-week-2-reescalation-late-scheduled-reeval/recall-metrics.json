@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-07-09-eval-memory-week-2-reescalation-late-scheduled-reeval",
+  "featureId": "F200",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-07-09T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1780974054654,
+      "toMs": 1783566054654,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 156,
+    "core": {
+      "consumedAt3": 0.2564102564102564,
+      "consumedMRR": 0.19536019536019533,
+      "reformulationRate": 0.21794871794871795,
+      "searchAbandonRate": 0.5833333333333334
+    },
+    "extended": {
+      "readthroughAt3": 0.21544715447154478,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0.05405405405405406,
+      "reformulateAfterExposure": 0.05128205128205128,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.6587688734030197,
+      "liveOnShadowSubsetMRR": 0.7433217189314749
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}
