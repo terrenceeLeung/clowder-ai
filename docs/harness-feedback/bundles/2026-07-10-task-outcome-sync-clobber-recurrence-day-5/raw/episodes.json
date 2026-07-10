@@ -1,0 +1,34 @@
+{
+  "verdictId": "2026-07-10-task-outcome-sync-clobber-recurrence-day-5",
+  "windowStartMs": 1783566000000,
+  "windowEndMs": 1783652400000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1783589726115-7e6d2r",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrd8z111bh7y2oqv",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-09T09:35:26.115Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 84,
+      "episodeId": "ep-1783589726115-7e6d2r",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#264",
+        "outcome": "success",
+        "timestamp": "2026-07-09T09:35:26.118Z"
+      },
+      "createdAt": "2026-07-09T09:35:26.118Z"
+    }
+  ],
+  "eventRows": []
+}

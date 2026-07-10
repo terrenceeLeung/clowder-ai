@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-10-task-outcome-sync-clobber-recurrence-day-5",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-10-task-outcome-sync-clobber-recurrence-day-5/raw/episodes.json",
+      "sha256": "5d3b170d403f00950cf659fcb5c893c898f30219c3911cccdccbc4dd04b1e859"
+    }
+  ],
+  "generatedAt": "2026-07-10T03:02:35.777Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
