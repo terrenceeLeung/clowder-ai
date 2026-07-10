@@ -1,0 +1,61 @@
+{
+  "verdictId": "2026-07-10-eval-a2a-pr102-merged-runtime-no-source-refs",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-10",
+  "generatedAt": "2026-07-10T03:02:56Z",
+  "findings": [
+    {
+      "id": "f167-pr102-merged-but-cron-source-refs-still-missing",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_prewrite_gap",
+        "severity": "high",
+        "confidence": 0.86
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 304433 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-10T03:00:00.176Z; 2026-05-30 through 2026-07-10 remain single-fire, making a 42-day streak after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-progress/implementation.pr102_merge_commit_in_origin_main",
+            "excerpt": "origin/main is 4ccd0ceeb207 (PR #102) and contains cron-predefine.ts, cron-telemetry-source.ts, snapshot-writer.ts, C5 bootstrap wiring for InProcessCronTelemetrySource, and the focused F167 regression tests."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-07-10 eval:a2a invocation did not include sourceRefs, and docs/harness-feedback had no 2026-07-10 f167-a2a snapshot/attribution raw YAML before this eval-cat evidence write."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "grounding-phase-o/telemetry.local_api_3004_unavailable",
+            "excerpt": "Local probes to http://127.0.0.1:3004/api/telemetry/process-info, /grounding-samples, /metrics, and /health all failed to connect, so no live counter_window or grounding-phase-o distribution can be sampled from this invocation."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "refresh_or_restart_eval_runtime",
+          "target": "runtime that delivers eval-domain-daily/eval:a2a",
+          "rationale": "PR #102 has restored the F167 path B code on origin/main, but the 2026-07-10 cron delivery still behaved like an old/no-prewrite runtime. Pull/restart or otherwise refresh the scheduler runtime, then verify the next eval:a2a callback carries sourceRefs and raw YAML is prewritten before eval-cat analysis."
+        },
+        {
+          "action": "add_release_acceptance_probe",
+          "target": "F167 Phase O path B acceptance",
+          "rationale": "After merge, run an isolated acceptance trigger that asserts sourceRefs.snapshotName/sourceRefs.attributionName are present and the referenced YAML parses before waiting another daily cron cycle."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
