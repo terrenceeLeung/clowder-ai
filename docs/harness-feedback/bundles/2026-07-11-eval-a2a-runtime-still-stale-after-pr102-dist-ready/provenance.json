@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-11-eval-a2a-runtime-still-stale-after-pr102-dist-ready",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-11-f167-a2a-snapshot.yaml",
+      "sha256": "cc8bb095469c1d695ef96bd483ab45cd6e03b942360dcb4796bb28478301a6fa"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-11-f167-a2a-attribution.yaml",
+      "sha256": "829be1dd4b9b72ff94f0d17f036c0d17308e3c75372adf7c354d13e922440f54"
+    }
+  ],
+  "generatedAt": "2026-07-11T03:01:26Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
