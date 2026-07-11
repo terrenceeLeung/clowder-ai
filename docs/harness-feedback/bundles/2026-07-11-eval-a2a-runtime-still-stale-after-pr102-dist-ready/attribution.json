@@ -1,0 +1,71 @@
+{
+  "verdictId": "2026-07-11-eval-a2a-runtime-still-stale-after-pr102-dist-ready",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-11",
+  "generatedAt": "2026-07-11T03:01:26Z",
+  "findings": [
+    {
+      "id": "f167-runtime-still-stale-after-pr102-dist-ready",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_restart_gap",
+        "severity": "high",
+        "confidence": 0.94
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "process-lifecycle-control",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 309837 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-11T03:00:00.090Z; 2026-05-30 through 2026-07-11 remain single-fire, making a 43-day streak after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "runtime-refresh/implementation.origin_main_contains_pr102",
+            "excerpt": "origin/main is a6028c115260 and includes PR #102 plus the 2026-07-10 eval:a2a verdict PR #104; source files contain InProcessCronTelemetrySource, predefineF167SnapshotForCron, and writeF167SnapshotYaml wiring."
+          },
+          {
+            "type": "build",
+            "anchor": "runtime-refresh/implementation.dist_contains_c5_bootstrap_wiring",
+            "excerpt": "dist/index.js and dist/infrastructure/harness-eval contain InProcessCronTelemetrySource, predefineF167SnapshotForCron, cron-predefine.js, cron-telemetry-source.js, and snapshot-writer.js."
+          },
+          {
+            "type": "process",
+            "anchor": "runtime-refresh/runtime.pid_52824_still_running",
+            "excerpt": "PID 52824 is still node dist/index.js with cwd /Users/tianyiliang/projects/cat-cafe-runtime/packages/api, started Thu Jul 9 05:59:32 2026, before PR #102 merged at 2026-07-09T03:18:46Z UTC / 2026-07-09T11:18:46+08:00."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-07-11 eval:a2a invocation did not include sourceRefs, and docs/harness-feedback had no 2026-07-11 f167-a2a snapshot/attribution raw YAML before this eval-cat evidence write."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "grounding-phase-o/telemetry.local_api_3004_unavailable",
+            "excerpt": "Local probe to http://127.0.0.1:3004/api/telemetry/process-info failed to connect and lsof found no listener on TCP 3004."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "restart_runtime_process",
+          "target": "PID 52824 / packages/api node dist/index.js runtime",
+          "rationale": "Source and dist now contain the F167 path B prewrite implementation, but the running process still predates PR #102. Restart is required before eval-domain-daily can load InProcessCronTelemetrySource and emit sourceRefs."
+        },
+        {
+          "action": "verify_acceptance_immediately_after_restart",
+          "target": "eval-domain-daily/eval:a2a acceptance",
+          "rationale": "After restart, run an acceptance trigger or inspect the next daily callback for sourceRefs.snapshotName/sourceRefs.attributionName and parseable raw YAML before declaring Phase O closure."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
