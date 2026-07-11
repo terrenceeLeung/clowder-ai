@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-07-11-task-outcome-sync-clobber-recurrence-day-6",
+  "windowStartMs": 1783652400000,
+  "windowEndMs": 1783738800000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}
