@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-11-task-outcome-sync-clobber-recurrence-day-6",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-07-11",
+  "generatedAt": "2026-07-11T03:02:22.087Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
