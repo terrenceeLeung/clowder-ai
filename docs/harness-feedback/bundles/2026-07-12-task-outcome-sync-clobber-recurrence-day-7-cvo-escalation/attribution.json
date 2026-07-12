@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-12-task-outcome-sync-clobber-recurrence-day-7-cvo-escalation",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-07-12",
+  "generatedAt": "2026-07-12T03:03:44.958Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}

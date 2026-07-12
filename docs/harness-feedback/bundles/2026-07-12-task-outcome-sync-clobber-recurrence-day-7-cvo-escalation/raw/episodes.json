@@ -1,0 +1,122 @@
+{
+  "verdictId": "2026-07-12-task-outcome-sync-clobber-recurrence-day-7-cvo-escalation",
+  "windowStartMs": 1783738800000,
+  "windowEndMs": 1783825200000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1783772634221-4hgdj8",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-11T12:23:54.222Z"
+    },
+    {
+      "episodeId": "ep-1783772994045-87jmti",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-11T12:29:54.045Z"
+    },
+    {
+      "episodeId": "ep-1783782174268-hyxlh2",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-11T15:02:54.269Z"
+    },
+    {
+      "episodeId": "ep-1783786314215-dco8jo",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrdhvpzkr6zgatqq",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-11T16:11:54.215Z"
+    },
+    {
+      "episodeId": "ep-1783823754734-ohc5kb",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-12T02:35:54.734Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 85,
+      "episodeId": "ep-1783772634221-4hgdj8",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#270",
+        "outcome": "success",
+        "timestamp": "2026-07-11T12:23:54.224Z"
+      },
+      "createdAt": "2026-07-11T12:23:54.224Z"
+    },
+    {
+      "id": 86,
+      "episodeId": "ep-1783772994045-87jmti",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#271",
+        "outcome": "success",
+        "timestamp": "2026-07-11T12:29:54.045Z"
+      },
+      "createdAt": "2026-07-11T12:29:54.045Z"
+    },
+    {
+      "id": 87,
+      "episodeId": "ep-1783782174268-hyxlh2",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#272",
+        "outcome": "success",
+        "timestamp": "2026-07-11T15:02:54.269Z"
+      },
+      "createdAt": "2026-07-11T15:02:54.269Z"
+    },
+    {
+      "id": 88,
+      "episodeId": "ep-1783786314215-dco8jo",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#1",
+        "outcome": "success",
+        "timestamp": "2026-07-11T16:11:54.216Z"
+      },
+      "createdAt": "2026-07-11T16:11:54.216Z"
+    },
+    {
+      "id": 89,
+      "episodeId": "ep-1783823754734-ohc5kb",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#274",
+        "outcome": "success",
+        "timestamp": "2026-07-12T02:35:54.735Z"
+      },
+      "createdAt": "2026-07-12T02:35:54.735Z"
+    }
+  ],
+  "eventRows": []
+}
