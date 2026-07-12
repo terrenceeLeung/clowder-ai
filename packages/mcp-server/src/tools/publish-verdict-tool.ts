@@ -369,6 +369,11 @@ type PublishVerdictToolInput = {
         kind: 'anchor-telemetry-snapshot';
         windowStartMs: number;
         windowEndMs: number;
+      }
+    | {
+        kind: 'qc-metrics-rollup';
+        windowStartMs: number;
+        windowEndMs: number;
       };
   agentKeyCatId?: string | undefined;
 };
