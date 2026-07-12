@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-12-eval-anchor-first-c1-healthy-adoption",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-12-eval-anchor-first-c1-healthy-adoption/raw/rollup.json",
+      "sha256": "25cd2ce08ea508e52ae3da376c34d4d70445e8bd3fc604d16609edc11e17a10e"
+    }
+  ],
+  "generatedAt": "2026-07-12T03:08:49.901Z",
+  "generator": {
+    "name": "eval-anchor-first-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f236-anchor-telemetry-v1"
+}

@@ -1,0 +1,79 @@
+{
+  "verdictId": "2026-07-12-eval-anchor-first-c1-healthy-adoption",
+  "featureId": "F236",
+  "evalSnapshotId": "eval-F236-2026-07-12",
+  "generatedAt": "2026-07-12T03:08:49.901Z",
+  "findings": [
+    {
+      "id": "AF-2026-07-12-thread-context",
+      "relatedFeature": "F236",
+      "sunsetSignals": {
+        "anchorTax": false,
+        "highOpenRate": false,
+        "netNegative": false
+      },
+      "frictionSignal": {
+        "type": "anchor.open_rate.thread-context",
+        "severity": "low",
+        "confidence": 0.8,
+        "detectedAt": "2026-07-12T03:08:49.901Z"
+      },
+      "attribution": {
+        "primaryLayer": "needs_investigation",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "anchor-telemetry-rollup/thread-context_drilled_unique_items",
+            "excerpt": "thread-context: 0/242 items drilled (0.0% open rate), charsSaved=323120, drillChars=0, netBenefit=323120"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep-observe",
+          "target": "anchor-telemetry-rollup/thread-context",
+          "rationale": "Open rate 0.0%: 0/242 items drilled, net benefit 323120 chars"
+        }
+      ]
+    },
+    {
+      "id": "AF-2026-07-12-list-tasks",
+      "relatedFeature": "F236",
+      "sunsetSignals": {
+        "anchorTax": false,
+        "highOpenRate": false,
+        "netNegative": false
+      },
+      "frictionSignal": {
+        "type": "anchor.open_rate.list-tasks",
+        "severity": "low",
+        "confidence": 0.8,
+        "detectedAt": "2026-07-12T03:08:49.901Z"
+      },
+      "attribution": {
+        "primaryLayer": "needs_investigation",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "anchor-telemetry-rollup/list-tasks_drilled_unique_items",
+            "excerpt": "list-tasks: 0/17 items drilled (0.0% open rate), charsSaved=0, drillChars=0, netBenefit=0"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep-observe",
+          "target": "anchor-telemetry-rollup/list-tasks",
+          "rationale": "Open rate 0.0%: 0/17 items drilled, net benefit 0 chars"
+        }
+      ]
+    }
+  ],
+  "sunsetAssessment": {
+    "toolCount": 2,
+    "toolsWithAnchorTax": 0,
+    "toolsNetNegative": 0,
+    "toolsHighOpenRate": 0,
+    "lowSampleToolCount": 0
+  }
+}
