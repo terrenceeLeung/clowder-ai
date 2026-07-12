@@ -382,4 +382,56 @@ describe('cat_cafe_publish_verdict MCP schema (砚砚 R1 Q3: discriminated union
     });
     assert.ok(!result.success, 'missing gitState.branch should fail min(1)');
   });
+
+  // F253 Phase C — qc-metrics-rollup kind (this PR)
+  it('accepts qc-metrics-rollup sourceRefs (eval:qc wire-up)', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:qc',
+      packet: { ...validPacket, domainId: 'eval:qc' },
+      sourceRefs: {
+        kind: 'qc-metrics-rollup',
+        windowStartMs: 1783209600000,
+        windowEndMs: 1783814400000,
+      },
+    });
+    assert.ok(result.success, `expected accept, got: ${JSON.stringify(result)}`);
+  });
+
+  it('rejects qc-metrics-rollup with non-finite windowStartMs', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:qc',
+      packet: { ...validPacket, domainId: 'eval:qc' },
+      sourceRefs: {
+        kind: 'qc-metrics-rollup',
+        windowStartMs: Number.POSITIVE_INFINITY,
+        windowEndMs: 1783814400000,
+      },
+    });
+    assert.ok(!result.success, 'non-finite windowStartMs should fail Zod finite()');
+  });
+
+  it('rejects qc-metrics-rollup with non-number windowEndMs', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:qc',
+      packet: { ...validPacket, domainId: 'eval:qc' },
+      sourceRefs: {
+        kind: 'qc-metrics-rollup',
+        windowStartMs: 1783209600000,
+        windowEndMs: 'not-a-number',
+      },
+    });
+    assert.ok(!result.success, 'non-number windowEndMs should fail Zod number()');
+  });
+
+  it('rejects qc-metrics-rollup with missing windowStartMs', () => {
+    const result = schema.safeParse({
+      domainId: 'eval:qc',
+      packet: { ...validPacket, domainId: 'eval:qc' },
+      sourceRefs: {
+        kind: 'qc-metrics-rollup',
+        windowEndMs: 1783814400000,
+      },
+    });
+    assert.ok(!result.success, 'missing windowStartMs should fail required');
+  });
 });
