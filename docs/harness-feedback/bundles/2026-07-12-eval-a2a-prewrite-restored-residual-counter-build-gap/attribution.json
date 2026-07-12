@@ -1,0 +1,86 @@
+{
+  "verdictId": "2026-07-12-eval-a2a-prewrite-restored-residual-counter-build-gap",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-12",
+  "generatedAt": "2026-07-12T03:02:12Z",
+  "findings": [
+    {
+      "id": "f167-prewrite-restored-residual-counter-build-gap",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "residual_telemetry_build_gap",
+        "severity": "medium",
+        "confidence": 0.9
+      },
+      "attribution": {
+        "primaryLayer": "runtime-telemetry-instrumentation",
+        "pipelineOrHuman": "f167-phase-o-path-b-followup",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 315989 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-12T03:00:00.096Z; 2026-05-30 through 2026-07-12 remain single-fire, making a 44-day streak after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "prewrite",
+            "anchor": "counter-window/counter_window.duration_hours",
+            "excerpt": "The 2026-07-12 cron callback supplied sourceRefs.snapshotName=2026-07-12-f167-a2a-snapshot.yaml, and the raw snapshot contains counter_window.duration_hours=18.021730351620278."
+          },
+          {
+            "type": "process",
+            "anchor": "counter-window/counter_window.start_ms",
+            "excerpt": "The running node dist/index.js process is PID 43487, started 2026-07-11 16:58:41 +08; the counter_window start_ms aligns with the restart, confirming rebuilt dist was loaded."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.sample_count",
+            "excerpt": "grounding_sample_evidence.total_sampled=82 with by_tool register_pr_tracking=45 and hold_ball=37; mismatch_sample_count=0 and by_verdict is insufficient=82."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.mismatch_sample_count",
+            "excerpt": "The grounding sample distribution has zero mismatches across 82 samples, so there is no fail-closed escalation signal in this window."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/grounding.check_total",
+            "excerpt": "The grounding-phase-o component still has confidence=no-data because grounding.check_total has reason=no_counter; grounding.verdict_total is also absent from activation counts."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "L1/streak_warn_count",
+            "excerpt": "L1 remains no-data for streak_warn_count and streak_break_count because the corresponding counters are absent."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "C1/hold_zombie_count",
+            "excerpt": "C1 has hold_ball_calls=0 but still lacks hold_zombie_count and hold_cancel_count counters."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "C2/verdict_without_pass_count",
+            "excerpt": "C2 still lacks an isolated verdict_without_pass_count counter, while hint_emitted remains mixed routing+verdict telemetry."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "build_remaining_f167_counters",
+          "target": "F167 runtime telemetry instrumentation",
+          "rationale": "The prewrite/sourceRefs/counter_window path is now working; the remaining build gap is missing component counters for L1/C1/C2 and grounding check/verdict totals, which keeps component confidence at no-data."
+        },
+        {
+          "action": "refine_grounding_confidence_from_samples",
+          "target": "grounding-phase-o snapshot confidence",
+          "rationale": "Grounding sample evidence is present and shows 82 insufficient / 0 mismatches, but the component still reports no-data. Either wire the check/verdict counters or adjust confidence logic to represent sample-store evidence separately from counter absence."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

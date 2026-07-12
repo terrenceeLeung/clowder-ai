@@ -1,0 +1,53 @@
+{
+  "verdictId": "2026-07-12-eval-a2a-prewrite-restored-residual-counter-build-gap",
+  "evalSnapshotId": "eval-F167-2026-07-12",
+  "featureId": "F167",
+  "generatedAt": "2026-07-12T03:00:00.113Z",
+  "window": {
+    "startMs": 1783825200113,
+    "endMs": 1783825200113,
+    "durationHours": 0
+  },
+  "counterWindow": {
+    "startMs": 1783760321883,
+    "endMs": 1783825200112,
+    "durationHours": 18.021730351620278
+  },
+  "components": [
+    {
+      "id": "L1",
+      "name": "WorklistRegistry (ping-pong breaker)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {}
+    },
+    {
+      "id": "C1",
+      "name": "hold_ball (MCP tool)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "hold_ball_calls": 0
+      },
+      "frictionCounts": {}
+    },
+    {
+      "id": "C2",
+      "name": "exit-check (forced-pass guard)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "hint_emitted (mixed routing+verdict)": null
+      },
+      "frictionCounts": {}
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "grounding.sample_count": 82,
+        "grounding.mismatch_sample_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}

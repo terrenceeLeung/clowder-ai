@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-12-eval-a2a-prewrite-restored-residual-counter-build-gap",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-12-f167-a2a-snapshot.yaml",
+      "sha256": "622377528e62b462680861e50ba39c1ac33487b5ac12800902cccecba2327cf5"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-12-f167-a2a-attribution.yaml",
+      "sha256": "eb98e5b7b52c033dd3af7ddc181c82dc6ec9c16e60a1aa27cddf0de97ed1741d"
+    }
+  ],
+  "generatedAt": "2026-07-12T03:02:12Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
