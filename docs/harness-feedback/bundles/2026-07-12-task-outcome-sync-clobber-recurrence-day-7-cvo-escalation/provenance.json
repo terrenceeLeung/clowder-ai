@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-12-task-outcome-sync-clobber-recurrence-day-7-cvo-escalation",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-12-task-outcome-sync-clobber-recurrence-day-7-cvo-escalation/raw/episodes.json",
+      "sha256": "cbd2c3eabd025dfad6856ccae4c142db7869b8aca5cebebddd609a43b12e55bd"
+    }
+  ],
+  "generatedAt": "2026-07-12T03:03:44.958Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
