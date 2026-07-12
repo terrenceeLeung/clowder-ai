@@ -1,0 +1,196 @@
+{
+  "verdictId": "2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "featureId": "F192",
+  "generatedAt": "2026-07-11T03:00:00.000Z",
+  "evalResults": [
+    {
+      "ruleId": "kickoff-ac-checklist",
+      "status": "skipped",
+      "reason": "Feature spec completeness is reviewed from docs and operator context; no stable machine artifact yet."
+    },
+    {
+      "ruleId": "kickoff-no-unconfirmed-implementation",
+      "status": "skipped",
+      "reason": "operator confirmation is conversational intent, not yet represented as a structured event."
+    },
+    {
+      "ruleId": "impl-main-sync-before-worktree",
+      "status": "pass"
+    },
+    {
+      "ruleId": "impl-redis-6398-only",
+      "status": "violation",
+      "violation": {
+        "ruleId": "impl-redis-6398-only",
+        "stageId": "impl",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "env_check",
+        "message": "env REDIS_URL=\"redis://localhost:6399\" must include \":6398\"",
+        "traceAnchor": "env:REDIS_URL=redis://localhost:6399",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "writing-plans"
+        }
+      }
+    },
+    {
+      "ruleId": "impl-design-gate-before-code",
+      "status": "skipped",
+      "reason": "Design Gate evidence and User Journey section are feature-doc fields; upgrade to feature_doc_readiness_check when checker script is available."
+    },
+    {
+      "ruleId": "impl-user-journey-missing",
+      "status": "violation",
+      "violation": {
+        "ruleId": "impl-user-journey-missing",
+        "stageId": "impl",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "command_pattern",
+        "message": "required command pattern \"pnpm check:features|node scripts/check-feature-truth\" not found (or failed) in session commands",
+        "traceAnchor": "commands:[git checkout -b verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix(exit:0),git commit -m \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\"(exit:0),git push origin verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix(exit:0),gh pr create --title \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\" --base main(exit:0)]",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "writing-plans"
+        }
+      }
+    },
+    {
+      "ruleId": "impl-post-compact-recall-loss",
+      "status": "skipped",
+      "reason": "Current runtime has no stable post-compact recall-failure telemetry."
+    },
+    {
+      "ruleId": "impl-convention-graph-before-convention-edit",
+      "status": "skipped",
+      "reason": "Convention graph CLI usage is not yet emitted as structured telemetry."
+    },
+    {
+      "ruleId": "quality-gate-vision-coverage",
+      "status": "skipped",
+      "reason": "Vision coverage has no machine-checkable report artifact yet; upgrade when quality-gate emits structured evidence."
+    },
+    {
+      "ruleId": "quality-gate-full-test-evidence",
+      "status": "violation",
+      "violation": {
+        "ruleId": "quality-gate-full-test-evidence",
+        "stageId": "quality_gate",
+        "kind": "pitfall",
+        "severity": "blocker",
+        "predicateType": "command_pattern",
+        "message": "required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found (or failed) in session commands",
+        "traceAnchor": "commands:[git checkout -b verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix(exit:0),git commit -m \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\"(exit:0),git push origin verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix(exit:0),gh pr create --title \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\" --base main(exit:0)]",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "quality-gate"
+        }
+      }
+    },
+    {
+      "ruleId": "fresh-context-not-approval",
+      "status": "skipped",
+      "reason": "Fresh-context output is free-form finding list, not a structured verdict event."
+    },
+    {
+      "ruleId": "review-no-self-review",
+      "status": "violation",
+      "violation": {
+        "ruleId": "review-no-self-review",
+        "stageId": "review",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "handle_check",
+        "message": "no reviewer assigned",
+        "traceAnchor": "handles:reviewer=<unset>",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "request-review"
+        }
+      }
+    },
+    {
+      "ruleId": "review-original-requirements",
+      "status": "skipped",
+      "reason": "Review packet content is free-form markdown; no structured requirement-excerpt field yet."
+    },
+    {
+      "ruleId": "review-retrigger-after-p1",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-github-squash-only",
+      "status": "violation",
+      "violation": {
+        "ruleId": "merge-github-squash-only",
+        "stageId": "merge",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "command_pattern",
+        "message": "required command pattern \"gh pr merge .*--squash\" not found (or failed) in session commands",
+        "traceAnchor": "commands:[git checkout -b verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix(exit:0),git commit -m \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\"(exit:0),git push origin verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix(exit:0),gh pr create --title \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\" --base main(exit:0)]",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "merge-gate"
+        }
+      }
+    },
+    {
+      "ruleId": "merge-cloud-review-sha-dedup",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-feature-doc-truth",
+      "status": "skipped",
+      "reason": "Claimed-done vs code-real reconciliation is semantic; check-feature-truth mechanically guards only obvious status/timeline drift. Detailed pre/post steps live in merge-gate SKILL Step 7.5."
+    },
+    {
+      "ruleId": "merge-local-squash-close",
+      "status": "pass"
+    },
+    {
+      "ruleId": "merge-runtime-update-after-merge",
+      "status": "pass"
+    },
+    {
+      "ruleId": "completion-vision-guardian",
+      "status": "skipped",
+      "reason": "Guardian identity and signoff are still conversational/thread-state artifacts."
+    },
+    {
+      "ruleId": "completion-pr-merged-feature-check",
+      "status": "violation",
+      "violation": {
+        "ruleId": "completion-pr-merged-feature-check",
+        "stageId": "completion",
+        "kind": "hard_rule",
+        "severity": "blocker",
+        "predicateType": "command_sequence",
+        "message": "required command \"gh pr view\" missing from sequence",
+        "traceAnchor": "commands:[git checkout -b verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix,git commit -m \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\",git push origin verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix,gh pr create --title \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\" --base main]",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "feat-lifecycle"
+        }
+      }
+    },
+    {
+      "ruleId": "completion-missing-guardian-handoff",
+      "status": "violation",
+      "violation": {
+        "ruleId": "completion-missing-guardian-handoff",
+        "stageId": "completion",
+        "kind": "pitfall",
+        "severity": "blocker",
+        "predicateType": "handle_check",
+        "message": "guardian handoff not present",
+        "traceAnchor": "handles:guardian=<unset>",
+        "owner": {
+          "type": "stage_suggested_skill",
+          "skill": "feat-lifecycle"
+        }
+      }
+    }
+  ]
+}
