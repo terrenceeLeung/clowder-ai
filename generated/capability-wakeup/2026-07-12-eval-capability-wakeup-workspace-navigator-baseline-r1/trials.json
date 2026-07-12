@@ -1,0 +1,60 @@
+{
+  "verdictId": "2026-07-12-eval-capability-wakeup-workspace-navigator-baseline-r1",
+  "capability": "workspace-navigator",
+  "trials": [
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "bea14ef0-9d94-4d5c-be4e-8c3aa0fe8832",
+      "threadId": "thread_mrd4jhtxng8hthw8",
+      "catId": "sol",
+      "window": {
+        "currentInvocationId": "39ac5ec8-739c-44a1-8910-c53155e05fe4",
+        "nextInvocationId": "9e5d2d2b-6e03-48ef-8f9d-7cdc87624b23",
+        "invocationIndex": 0
+      },
+      "eventNoSpan": {
+        "start": 0,
+        "end": 326
+      },
+      "timeSpan": {
+        "startMs": 1783647193946,
+        "endMs": 1783647687366
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": true,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "db0bcfc3-9dc7-4ba7-b4dd-64a98544651b",
+      "threadId": "thread_mrd4jhtxng8hthw8",
+      "catId": "opus",
+      "window": {
+        "currentInvocationId": "31456874-d423-461c-b560-657036bef957",
+        "nextInvocationId": "c7a02522-cea0-43f8-a961-202494ee78dc",
+        "invocationIndex": 7
+      },
+      "eventNoSpan": {
+        "start": 880,
+        "end": 1960
+      },
+      "timeSpan": {
+        "startMs": 1783598186649,
+        "endMs": 1783601504844
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    }
+  ]
+}
