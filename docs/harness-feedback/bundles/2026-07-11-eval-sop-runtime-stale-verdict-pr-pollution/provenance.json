@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "rawInputs": [
+    {
+      "path": "generated/sop/2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution/trace.json",
+      "sha256": "f93aafd6a3a89cb04d5212c39c935b3e358489adabaedff3cf3bbdac4bea82a6"
+    },
+    {
+      "path": "generated/sop/2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution/eval-results.json",
+      "sha256": "a7817238d40e0dcb98d7406014497a870633a7ec4c02c720cd83d52012ee9fd4"
+    }
+  ],
+  "generatedAt": "2026-07-11T03:00:00.000Z",
+  "generator": {
+    "name": "eval-sop-live-verdict",
+    "version": "2"
+  },
+  "sanitizeRulesVersion": "f192-sop-trace-v1"
+}

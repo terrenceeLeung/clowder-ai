@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "evalSnapshotId": "sop-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "featureId": "F192",
+  "generatedAt": "2026-07-11T03:00:00.000Z",
+  "window": {
+    "durationHours": 336
+  },
+  "components": [
+    {
+      "id": "sop-compliance",
+      "name": "SOP development / merge",
+      "confidence": "medium",
+      "activationCounts": {
+        "rules_passed": 5,
+        "rules_evaluated": 22
+      },
+      "frictionCounts": {
+        "violations_blocker": 7,
+        "violations_warn": 0,
+        "rules_skipped": 10
+      }
+    }
+  ],
+  "sopDefinitionId": "development",
+  "observedStage": "merge",
+  "sessionId": "polluted-pr-89-eval-sop-2026-07-04-runtime-stale"
+}

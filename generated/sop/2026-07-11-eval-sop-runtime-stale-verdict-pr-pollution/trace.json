@@ -1,0 +1,48 @@
+{
+  "verdictId": "2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "featureId": "F192",
+  "generatedAt": "2026-07-11T03:00:00.000Z",
+  "trace": {
+    "sessionId": "polluted-pr-89-eval-sop-2026-07-04-runtime-stale",
+    "sopDefinitionId": "development",
+    "observedStage": "merge",
+    "commands": [
+      {
+        "command": "git checkout -b verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+        "exitCode": 0
+      },
+      {
+        "command": "git commit -m \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\"",
+        "exitCode": 0
+      },
+      {
+        "command": "git push origin verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+        "exitCode": 0
+      },
+      {
+        "command": "gh pr create --title \"verdict(eval:sop): 2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix\" --base main",
+        "exitCode": 0
+      }
+    ],
+    "envSnapshot": {
+      "REDIS_URL": "redis://localhost:6399"
+    },
+    "gitState": {
+      "branch": "verdict/auto/eval-sop/2026-07-04-eval-sop-first-verdict-post-mcp-schema-fix",
+      "ahead": 21,
+      "behind": 48,
+      "clean": true,
+      "worktreeRoot": "/Users/tianyiliang/projects/clowder-ai"
+    },
+    "handles": {
+      "author": "opus-47"
+    },
+    "shaContext": {
+      "runtime_head_at_publish": "e9c57dfc7a01f86065568da281c88c0ad7185067",
+      "verdict_commit": "319b02d8e70fc29db2c1abe62abd0f19c7505586",
+      "pr_base_recorded": "7062de8439485d5628b709e9aae5119dc52b491e",
+      "merge_base_actual": "7baff109c478bd071d0b9caf1cd832be284049e2",
+      "main_head_at_eval": "453d4043"
+    }
+  }
+}

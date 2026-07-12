@@ -1,0 +1,204 @@
+{
+  "verdictId": "2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "featureId": "F192",
+  "evalSnapshotId": "sop-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution",
+  "generatedAt": "2026-07-11T03:00:00.000Z",
+  "findings": [
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-0",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "env_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "impl-redis-6398-only: env REDIS_URL=\"redis://localhost:6399\" must include \":6398\""
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "env REDIS_URL=\"redis://localhost:6399\" must include \":6398\""
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-1",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_pattern",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "impl-user-journey-missing: required command pattern \"pnpm check:features|node scripts/check-feature-truth\" not found (or failed) in session commands"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "required command pattern \"pnpm check:features|node scripts/check-feature-truth\" not found (or failed) in session commands"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-2",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_pattern",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "quality-gate-full-test-evidence: required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found (or failed) in session commands"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found (or failed) in session commands"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-3",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "handle_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "review-no-self-review: no reviewer assigned"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "no reviewer assigned"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-4",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_pattern",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "merge-github-squash-only: required command pattern \"gh pr merge .*--squash\" not found (or failed) in session commands"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "required command pattern \"gh pr merge .*--squash\" not found (or failed) in session commands"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-5",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_sequence",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "completion-pr-merged-feature-check: required command \"gh pr view\" missing from sequence"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "required command \"gh pr view\" missing from sequence"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-11-eval-sop-runtime-stale-verdict-pr-pollution-6",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "handle_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-11T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "completion-missing-guardian-handoff: guardian handoff not present"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "fix",
+          "target": "F192",
+          "rationale": "guardian handoff not present"
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
