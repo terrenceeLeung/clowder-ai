@@ -1,0 +1,59 @@
+{
+  "verdictId": "2026-07-12-eval-anchor-first-c1-healthy-adoption",
+  "selector": {
+    "kind": "anchor-telemetry-snapshot",
+    "windowStartMs": 1783738800119,
+    "windowEndMs": 1783825200119
+  },
+  "rollup": {
+    "perTool": {
+      "thread-context": {
+        "previewResponses": 12,
+        "previewedItems": 242,
+        "drills": 0,
+        "drilledUniqueItems": 0,
+        "openRateByItem": 0,
+        "returnedChars": 63089,
+        "originalChars": 386209,
+        "charsSaved": 323120,
+        "drillChars": 0,
+        "netBenefit": 323120
+      },
+      "list-tasks": {
+        "previewResponses": 3,
+        "previewedItems": 17,
+        "drills": 0,
+        "drilledUniqueItems": 0,
+        "openRateByItem": 0,
+        "returnedChars": 4747,
+        "originalChars": 4747,
+        "charsSaved": 0,
+        "drillChars": 0,
+        "netBenefit": 0
+      }
+    },
+    "orphanDrills": 0,
+    "adoption": {
+      "explicitAnchorCalls": 11,
+      "explicitFullCalls": 10,
+      "defaultAnchorCalls": 1,
+      "defaultFullCalls": 0,
+      "legacyEquivalentAnchorCalls": 3,
+      "legacyEquivalentFullCalls": 0,
+      "unknownModeCalls": 0,
+      "uniqueCatsExplicitAnchor": 1
+    },
+    "track1Snapshot": {
+      "returnedByTool": {
+        "thread-context": 15,
+        "list-tasks": 3
+      },
+      "returnedCharsByTool": {
+        "thread-context": 204550,
+        "list-tasks": 26352
+      },
+      "drillByTool": {},
+      "drillCharsByTool": {}
+    }
+  }
+}
