@@ -1,0 +1,60 @@
+{
+  "verdictId": "2026-07-13-eval-a2a-stable-prewrite-awaiting-grounding-confidence-build",
+  "evalSnapshotId": "eval-F167-2026-07-13",
+  "featureId": "F167",
+  "generatedAt": "2026-07-13T03:00:00.162Z",
+  "window": {
+    "startMs": 1783911600162,
+    "endMs": 1783911600162,
+    "durationHours": 0
+  },
+  "counterWindow": {
+    "startMs": 1783760322022,
+    "endMs": 1783911600162,
+    "durationHours": 42.021705452754716
+  },
+  "components": [
+    {
+      "id": "L1",
+      "name": "WorklistRegistry (ping-pong breaker)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {}
+    },
+    {
+      "id": "C1",
+      "name": "hold_ball (MCP tool)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "hold_ball_calls": 0
+      },
+      "frictionCounts": {}
+    },
+    {
+      "id": "C2",
+      "name": "exit-check (forced-pass guard)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "hint_emitted (mixed routing+verdict)": null
+      },
+      "frictionCounts": {}
+    },
+    {
+      "id": "route-serial",
+      "name": "route-serial (A2A handoff routing)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {}
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "grounding.sample_count": 90,
+        "grounding.mismatch_sample_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}

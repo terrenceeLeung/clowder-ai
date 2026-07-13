@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-13-eval-a2a-stable-prewrite-awaiting-grounding-confidence-build",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-13-f167-a2a-snapshot.yaml",
+      "sha256": "11af0ff8a3efd27ff78bb039ddafd59dd50c3ce7cf2915cdf13bad4329045419"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-13-f167-a2a-attribution.yaml",
+      "sha256": "d2e9fd921e53b55903a1561ae06767533bbfbc0ea32110527474a845dfd44dee"
+    }
+  ],
+  "generatedAt": "2026-07-13T03:03:20Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}

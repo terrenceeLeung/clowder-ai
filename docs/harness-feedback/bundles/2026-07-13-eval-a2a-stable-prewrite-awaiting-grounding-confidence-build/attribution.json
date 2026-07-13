@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-13-eval-a2a-stable-prewrite-awaiting-grounding-confidence-build",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-13",
+  "generatedAt": "2026-07-13T03:03:20Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "No new actionable A2A finding: the 2026-07-12 build verdict PR #108 already opened the residual F167 telemetry-confidence work with a 2026-07-15 re-eval target, and today remains inside that owner-action window. The prewrite/runtime-refresh closure signal stays healthy, while the same grounding-phase-o and L1/C1/C2 no_counter gaps remain unresolved but not newly regressed.",
+    "evidence": "task_run_ledger id 321773 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-13T03:00:00.156Z; 2026-05-30 through 2026-07-13 remain single-fire, making a 45-day streak after the 2026-05-29 duplicate. dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs. The 2026-07-13 cron callback supplied sourceRefs.snapshotName=2026-07-13-f167-a2a-snapshot.yaml, and the raw snapshot contains counter_window.duration_hours=42.021705452754716. The running node dist/index.js process is PID 43487, started 2026-07-11 16:58:41 +08, consistent with the counter_window start. grounding_sample_evidence.total_sampled increased from 82 to 90, by_tool is register_pr_tracking=39 and hold_ball=51, by_verdict is insufficient=90, and mismatch_sample_count remains 0. The residual gap from PR #108 is still present: grounding-phase-o confidence remains no-data because grounding.check_total has reason=no_counter and grounding.verdict_total is absent, while L1/C1/C2 retain their prior no_counter gaps."
+  }
+}
