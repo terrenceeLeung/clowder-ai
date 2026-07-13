@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-13-task-outcome-recurrence-day-8-cadence-downgrade",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-07-13",
+  "generatedAt": "2026-07-13T03:03:09.804Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
