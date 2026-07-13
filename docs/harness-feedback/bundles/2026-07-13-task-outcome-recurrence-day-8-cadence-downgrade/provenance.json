@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-13-task-outcome-recurrence-day-8-cadence-downgrade",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-13-task-outcome-recurrence-day-8-cadence-downgrade/raw/episodes.json",
+      "sha256": "f95910908371d717b902334cea3033d7a6b6695fe60d4b637d21adc6f7fd9f28"
+    }
+  ],
+  "generatedAt": "2026-07-13T03:03:09.804Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
