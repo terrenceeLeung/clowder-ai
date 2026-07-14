@@ -1,0 +1,86 @@
+{
+  "verdictId": "2026-07-14-eval-a2a-pr116-ci-artifact-and-runtime-restart-blocker",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-14",
+  "generatedAt": "2026-07-14T03:04:30Z",
+  "findings": [
+    {
+      "id": "f167-pr116-release-blocked-by-live-verdict-artifact-and-runtime-stale",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "release_acceptance_blocker",
+        "severity": "high",
+        "confidence": 0.94
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-ci-and-runtime",
+        "pipelineOrHuman": "f167-phase-o-confidence-followup",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 327962 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-14T03:00:00.151Z; 2026-05-30 through 2026-07-14 remain single-fire, making a 46-day streak after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "prewrite",
+            "anchor": "counter-window/counter_window.duration_hours",
+            "excerpt": "The 2026-07-14 cron callback supplied sourceRefs.snapshotName=2026-07-14-f167-a2a-snapshot.yaml, and the raw snapshot contains counter_window.duration_hours=66.02166614981472."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.sample_count",
+            "excerpt": "grounding_sample_evidence.total_sampled increased from 90 to 119, with by_tool hold_ball=76 and register_pr_tracking=43; all 119 samples are insufficient."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.mismatch_sample_count",
+            "excerpt": "grounding.mismatch_sample_count remains 0 across 119 samples, so no fail-closed escalation signal appears in this window."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/grounding.check_total",
+            "excerpt": "grounding-phase-o confidence remains no-data because the running runtime still uses the old samples-without-counters classification; PR #116 changes that to low but is not merged or loaded."
+          },
+          {
+            "type": "github",
+            "anchor": "github/pr116/test-public",
+            "excerpt": "PR #116 is open with Lint, Build, Test Windows, and Directory Size Guard green, but Test Public fails in eval-a2a-artifacts.test.js on the pre-existing 2026-07-09 live verdict metric URI; the failure is unrelated to the PR #116 code diff."
+          },
+          {
+            "type": "review",
+            "anchor": "github/pr116/review-comment-4964991109",
+            "excerpt": "The PR #116 lite review found no code issues, and the focused f167-eval test file passed 39/39 in the PR worktree; formal GitHub approval could not be recorded because the available GitHub auth is the PR author's account."
+          },
+          {
+            "type": "process",
+            "anchor": "counter-window/counter_window.start_ms",
+            "excerpt": "The active node dist/index.js process is PID 43487, started 2026-07-11 16:58:41 +08; without a post-merge rebuild/restart it will keep producing the old no-data grounding confidence at the 2026-07-15 re-eval."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "amend_2026_07_09_live_verdict_metric_uri",
+          "target": "F192/eval:a2a live verdict artifact hygiene",
+          "rationale": "Replace or remove the stale filesystem-style diagnostic metric in the 2026-07-09 live verdict so Test Public can pass on PR #116 and later PRs."
+        },
+        {
+          "action": "merge_pr116_after_ci_unblock",
+          "target": "F167 grounding-phase-o samples-only confidence fix",
+          "rationale": "PR #116 contains the targeted code change and 39/39 focused tests pass; after the unrelated artifact blocker is fixed, rerun CI and merge the PR."
+        },
+        {
+          "action": "restart_runtime_after_pr116_merge",
+          "target": "eval-domain-daily runtime process",
+          "rationale": "The daily cron currently runs PID 43487 with pre-PR #116 code in memory. A rebuild/restart after merge is required before the 2026-07-15 acceptance run can show grounding-phase-o confidence=low."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

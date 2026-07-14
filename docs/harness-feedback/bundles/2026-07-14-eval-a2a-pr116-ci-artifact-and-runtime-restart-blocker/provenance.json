@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-14-eval-a2a-pr116-ci-artifact-and-runtime-restart-blocker",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-14-f167-a2a-snapshot.yaml",
+      "sha256": "92d07e77413ea13f6e87901e58232421b04ac50e99f0780b0f651c783e6e0f44"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-14-f167-a2a-attribution.yaml",
+      "sha256": "de041117c77472a647a86279ef98f7532b6de32fe1a9a195fe582edb1700e4fa"
+    }
+  ],
+  "generatedAt": "2026-07-14T03:04:30Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
