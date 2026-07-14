@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-14-task-outcome-recurrence-day-9-stub-retract-day8-skip",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-14-task-outcome-recurrence-day-9-stub-retract-day8-skip/raw/episodes.json",
+      "sha256": "b2733113b6e6404335ec82597655d6625120ec9bfd821403f2c38d3d61e6b664"
+    }
+  ],
+  "generatedAt": "2026-07-14T03:03:00.804Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
