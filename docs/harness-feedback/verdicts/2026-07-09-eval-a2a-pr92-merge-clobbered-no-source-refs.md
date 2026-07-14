@@ -22,7 +22,7 @@ Evidence:
 - metric:sqlite://evidence.sqlite/task_run_ledger?id=298383
 - metric:sqlite://evidence.sqlite/dynamic_task_defs?harness-fit-digest=count:0
 - metric:git-grep://origin/main/InProcessCronTelemetrySource=count:0
-- metric:filesystem://docs/harness-feedback/snapshots/2026-07-09-f167-a2a-snapshot.yaml?preexisting=false
+- metric:snapshot-preexist/2026-07-09-f167-a2a-snapshot=false
 - metadata://eval-a2a/2026-07-09/no-runtime-sourceRefs
 - metadata://node-fetch/127.0.0.1:3004/telemetry-endpoints/fetch-failed
 
