@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-07-14-eval-a2a-pr116-ci-artifact-and-runtime-restart-blocker",
+  "evalSnapshotId": "eval-F167-2026-07-14",
+  "featureId": "F167",
+  "generatedAt": "2026-07-14T03:00:00.156Z",
+  "window": {
+    "startMs": 1783998000156,
+    "endMs": 1783998000156,
+    "durationHours": 0
+  },
+  "counterWindow": {
+    "startMs": 1783760322157,
+    "endMs": 1783998000155,
+    "durationHours": 66.02166614981472
+  },
+  "components": [
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "grounding.sample_count": 119,
+        "grounding.mismatch_sample_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}
