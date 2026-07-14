@@ -1084,6 +1084,87 @@ describe('F192 D — C1 hold per-fire sample evidence (verdict 2026-06-18 zombie
     assert.equal(snapshot.groundingSampleEvidence, undefined);
   });
 
+  // ── 2026-07-14 fix (per verdict PR #108 residual build ask) ─────
+  // Bug: samples > 0 but no counters was collapsed to `confidence: 'no-data'`,
+  // hiding 82+ real grounding sample events (0 mismatches, 90 total_sampled).
+  // Fix splits: hasCounters → 'medium'; !hasCounters && hasSamples → 'low';
+  // else → 'no-data'.
+
+  it('2026-07-14: samples > 0 without counters → confidence "low" (not "no-data")', () => {
+    const snapshot = generateF167Snapshot({
+      ...emptyInput,
+      metrics: {}, // no counters — the eval:a2a bundle situation
+      traceStats: {
+        spanCount: 1,
+        maxSpans: 10000,
+        maxAgeMs: 86400000,
+        oldestStoredAt: Date.now() - 3600000,
+        newestStoredAt: Date.now(),
+      },
+      groundingSamples: [
+        {
+          invocationId: 'inv-1',
+          catId: 'opus-47',
+          threadId: 'thread_eval_a2a',
+          ts: Date.now(),
+          tool: 'hold_ball',
+          claimType: 'invariant',
+          verdict: 'verified',
+          resolver: 'stub',
+          resolverSourceTier: 'unknown',
+          sourceRef: { kind: 'stub', value: 'x' },
+        },
+      ],
+    });
+    const g = snapshot.components.find((c) => c.componentId === 'grounding-phase-o');
+    assert.equal(g.confidence, 'low', 'samples > 0 without counters must be low, NOT no-data');
+    // Sample count still surfaced (existing behavior)
+    assert.equal(g.activationCounts['grounding.sample_count'], 1);
+    // Gap still recorded but message reflects sample-store availability
+    assert.equal(g.telemetryGaps[0].reason, 'no_counter');
+    assert.match(g.telemetryGaps[0].impact, /sample-store evidence available/);
+  });
+
+  it('2026-07-14: no samples AND no counters → confidence still "no-data"', () => {
+    const snapshot = generateF167Snapshot({
+      ...emptyInput,
+      metrics: {},
+      traceStats: {
+        spanCount: 1,
+        maxSpans: 10000,
+        maxAgeMs: 86400000,
+        oldestStoredAt: Date.now() - 3600000,
+        newestStoredAt: Date.now(),
+      },
+      groundingSamples: [],
+    });
+    const g = snapshot.components.find((c) => c.componentId === 'grounding-phase-o');
+    assert.equal(g.confidence, 'no-data', 'neither counters nor samples must still be no-data');
+    assert.match(g.telemetryGaps[0].impact, /hook may not be wired/);
+  });
+
+  it('2026-07-14: hasCounters → confidence "medium" (regression check, unchanged behavior)', () => {
+    const snapshot = generateF167Snapshot({
+      ...emptyInput,
+      metrics: {
+        cat_cafe_a2a_grounding_check_total: 10,
+        cat_cafe_a2a_grounding_verdict_total: 10,
+      },
+      traceStats: {
+        spanCount: 1,
+        maxSpans: 10000,
+        maxAgeMs: 86400000,
+        oldestStoredAt: Date.now() - 3600000,
+        newestStoredAt: Date.now(),
+      },
+      groundingSamples: [], // even without samples, counters give medium
+    });
+    const g = snapshot.components.find((c) => c.componentId === 'grounding-phase-o');
+    assert.equal(g.confidence, 'medium');
+    // No gap when counters present
+    assert.equal(g.telemetryGaps.length, 0);
+  });
+
   it('Cloud P2-4: budget_exhausted denominator resolves to grounding.check_total', () => {
     const snapshot = generateF167Snapshot({
       ...emptyInput,
