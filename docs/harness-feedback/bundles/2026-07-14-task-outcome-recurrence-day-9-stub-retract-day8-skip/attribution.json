@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-14-task-outcome-recurrence-day-9-stub-retract-day8-skip",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-07-14",
+  "generatedAt": "2026-07-14T03:03:00.804Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
