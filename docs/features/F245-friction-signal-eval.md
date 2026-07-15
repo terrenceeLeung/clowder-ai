@@ -255,15 +255,15 @@ F245 是 harness-eval feature，本 checkpoint 触发并展开。Feature-fit rev
 
 **盲点承认**：APPROVE 依据 5 条 operator 诉求达成 ✅，但**未校准**内部技术假设 "invocation 量级 → friction signal density"（doc L58-63）。这条假设直接驱动 KD-2 cadence 决策 + Risk#1 mitigation，approve 时被当成已成立处理，未做 assumption vs measurement 分离。
 
-**shipped-side 反证**（2026-07-09 → 07-12 联合 audit，gpt52 provider-level + opus-47 spec/acceptance 对账）：
-- `FrictionMetricsProviderImpl.resolve()` 反算 4 个 3d 窗口 4 通道 raw = 0（06-24→07-09）
-- F222 `RedisFrustrationIssueStore.listConfirmedInWindow()` 3 窗口 = 0
-- `default-user` message timeline 843 条精扫 "错了" = 0
-- 三层负证据表明 shipped 后 friction density 与 spec 期望有 3-4 个量级落差
+**shipped-side 反证**（2026-07-09 → 07-12 联合 audit，gpt52 provider-level + opus-47 spec/acceptance 对账；均为 **sampled 窗口**，非连续全区间覆盖）：
+- `FrictionMetricsProviderImpl.resolve()` sampled 4 个 3d 窗口（`06-24T03Z→27` / `06-27T03Z→30` / `07-03T03Z→06` / `07-06T03Z→09`），每窗 4 通道 raw = 0
+- F222 `RedisFrustrationIssueStore.listConfirmedInWindow()` sampled 3 个 72h 窗口（`06-24T03Z→27` / `06-27T03Z→30` / `06-30T03Z→07-03`）= 0
+- `default-user` message timeline sampled 窗口 `06-24T03Z→27` 843 条精扫 "用户消息 + 内容接近裸『错了』" = 0
+- 三层 sampled 负证据表明 sampled 断面 friction density 与 spec 期望有 3-4 个量级落差；断面之外区间未逐窗核，未穷尽全量证明
 
 **Lesson trail**：
-- **LL-090**（verdict.md narrative 段只允许 replayable / trail-refable 证据）— `docs/public-lessons.md#ll-090`
-- **LL-091**（assumption-driven 决策需 spec 层 Assumption Inventory + acceptance 层 live-calibration gate 双层校验）— `docs/public-lessons.md#ll-091`
+- **LL-090**（verdict.md narrative 段只允许 replayable / trail-refable 证据）— [`docs/public-lessons.md#ll-090`](../public-lessons.md#ll-090)
+- **LL-091**（assumption-driven 决策需 spec 层 Assumption Inventory + acceptance 层 live-calibration gate 双层校验）— [`docs/public-lessons.md#ll-091`](../public-lessons.md#ll-091)
 
 **Vision Guardian 学习**：未来 approve 时须显式区分 "用户诉求达成" 与 "内部技术假设成立"，两栏独立打勾；后者未校准即 APPROVE 视为 blind spot 记录（不 block approve，但记 lesson trail）。这条已作为 LL-091 防护#3 沉淀。
 

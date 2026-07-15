@@ -1769,6 +1769,7 @@ created: 2026-02-26
 
 - 关联：F243 Phase B (active) | LL-087 plan-time invariant table 同源 (declaration = invariant 的一种) | feedback_xiaci_yiding_self_diagnosis (糖衣话术"未来一次写完"=包装当下偷懒) | feedback_grep_consumers_before_contract_change (改 contract 前 grep 全消费方; 这里 dual——declare contract 前看每个 PR 的 actual deployable state)
 
+<a id="ll-090"></a>
 ### LL-090: verdict.md narrative 段只允许 replayable / trail-refable 证据
 - 状态：draft
 - 更新时间：2026-07-12
@@ -1785,16 +1786,19 @@ created: 2026-02-26
   - `docs/features/F245-friction-signal-eval.md` KD-4 段 (read-only + no fabricate)
   - `docs/harness-feedback/verdicts/2026-06-30-eval-friction-c1-empty-window-after-singleton.md` (触发实例)
   - `docs/harness-feedback/bundles/2026-06-30-eval-friction-c1-empty-window-after-singleton/raw/rollup-report.json` (`signalCount=0` 结构值 vs phenomenon 叙事 mismatch)
-  - thread `thread_eval_friction` 2026-07-08 → 07-12 联合 audit (gpt52 + opus-47)
+  - **F222 confirmed = 0 复现方法**：`packages/api/src/infrastructure/frustration/redis-frustration-issue-store.ts` `listConfirmedInWindow(selector={windowStartMs, windowEndMs})` API；3 个连续 72h 半开窗（`06-24T03Z→27` / `06-27T03Z→30` / `06-30T03Z→07-03`）返回 count = 0，具体脚本 + counts 见下条 thread message
+  - **`default-user` message timeline 精扫 = 0 复现方法**：`msg:user:default-user` Redis zset 按 `06-24T03Z → 06-27T03Z` 时间窗 hydrate 消息 hash，843 条精扫 "用户消息 + 内容接近裸『错了』" = 0；同上下条 thread message
+  - thread `thread_eval_friction` audit 消息链（**关键锚点**：gpt52 2026-07-08 03:34 UTC message `0001783568079168-000099-c9aa707a` 提供 provider-level 4-channel + F222 confirmed + message-timeline 精扫 counts + 复现脚本；opus-47 spec/acceptance 对账 2026-07-06 → 07-15）
 - 原理：evidence trail 必须可重放；narrative-only claim = untraceable provenance = 下游 audit / learning / debugging 无法 trace。verdict.md 是可读层不是虚构层——不能在 bundle 结构上没有的地方补上下文。与 KD-4 "工具不 fabricate empty" 天然对偶：工具不造假 → 作者也不造引用。
 
 - 关联：F245 KD-4 read-only rollup | thread_eval_friction 联合 audit synthesis (opus-47 + gpt52) | 所有 eval-domain 写作纪律 (F245 / F192 / F236 / task-outcome / memory)
 
+<a id="ll-091"></a>
 ### LL-091: assumption-driven 决策需 spec 层 Assumption Inventory + acceptance 层 live-calibration gate 双层校验
 - 状态：draft
 - 更新时间：2026-07-12
 
-- 坑：F245 立项 baseline L58-63 "invocation 量级估算数百次/天起跳 → 摩擦按 invocation 粒度产生 → 攒一周几百上千条 raw"——把 invocation 量级测量**外推**为 friction density 假设。KD-2 cadence 决策 (本家 every-3d) + Risk#1 "signal 体量打爆 eval 猫 context" mitigation (Top-N 配额) 都建立在此未测假设上。Shipped 25 天 (2026-06-22 → 07-12) `FrictionMetricsProviderImpl.resolve()` 反算 4 个窗口 4 通道 raw = 0，provider 级实际数据与 spec 期望有 3-4 个量级落差。Vision Guardian (opus-47 2026-06-22 APPROVE) 复核 5 条 operator 诉求全 ✅，但没校准这条内部技术假设，approve 时 assumption blind spot 被 user-诉求 天然覆盖过去。
+- 坑：F245 立项 baseline L58-63 "invocation 量级估算数百次/天起跳 → 摩擦按 invocation 粒度产生 → 攒一周几百上千条 raw"——把 invocation 量级测量**外推**为 friction density 假设。KD-2 cadence 决策 (本家 every-3d) + Risk#1 "signal 体量打爆 eval 猫 context" mitigation (Top-N 配额) 都建立在此未测假设上。Shipped 25 天后 (2026-06-22 → 07-12)，本 audit **sampled** 4 个 3d 窗口（`06-24T03Z→27` / `06-27T03Z→30` / `07-03T03Z→06` / `07-06T03Z→09`）用 `FrictionMetricsProviderImpl.resolve()` 反算，每窗 4 通道 raw = 0（非连续全区间覆盖，是 sampled 断面），provider 级实际数据与 spec 期望有 3-4 个量级落差。Vision Guardian (opus-47 2026-06-22 APPROVE) 复核 5 条 operator 诉求全 ✅，但没校准这条内部技术假设，approve 时 assumption blind spot 被 user-诉求 天然覆盖过去。
 - 根因：F245 AC-A2 fixture-based precision/recall 只验采集器机制正确 (给 N 条 → 采 N 条)，不验 "shipped 后 live 到底有多少 signal 通过采集器"。fixture 世界的正确性无法推断 live world 的率。Vision Guardian evidence table 只验 operator 诉求，没独立段位区分 "内部技术假设 vs 用户诉求"——内部假设 blind spot 天然逃过 approve 检查。整体 spec/AC 契约缺 "assumption calibration" 一环。
 - 触发条件：任何 F 号立项 spec 中出现：(1) invocation 量级外推为 signal density；(2) fixture / mock 数据推断 live 量级；(3) expert judgment / extrapolation 驱动 cadence / capacity / risk threshold 决策；(4) "signal 体量担忧" 类内部技术假设无对应 AC。特别是 KD 决策段 (KD-1 / KD-2...) 显式以 "实证 X → 决定 Y" 结构写但 X 是估算的，风险最高。
 - 修复：spec 立项流程修 (无 runtime code fix)——feature-lifecycle SOP 加两层 gate: (1) spec 层强制 `Assumption Inventory` 段；(2) acceptance / post-ship 层强制 `live-calibration gate`。
