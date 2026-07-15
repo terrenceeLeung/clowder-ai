@@ -251,6 +251,24 @@ F245 是 harness-eval feature，本 checkpoint 触发并展开。Feature-fit rev
 
 ## Reflection Capsule
 
+### opus-47 (Vision Guardian) 2026-06-22 APPROVE 复盘 — 追补 2026-07-12
+
+**盲点承认**：APPROVE 依据 5 条 operator 诉求达成 ✅，但**未校准**内部技术假设 "invocation 量级 → friction signal density"（doc L58-63）。这条假设直接驱动 KD-2 cadence 决策 + Risk#1 mitigation，approve 时被当成已成立处理，未做 assumption vs measurement 分离。
+
+**shipped-side 反证**（2026-07-09 → 07-12 联合 audit，gpt52 provider-level + opus-47 spec/acceptance 对账）：
+- `FrictionMetricsProviderImpl.resolve()` 反算 4 个 3d 窗口 4 通道 raw = 0（06-24→07-09）
+- F222 `RedisFrustrationIssueStore.listConfirmedInWindow()` 3 窗口 = 0
+- `default-user` message timeline 843 条精扫 "错了" = 0
+- 三层负证据表明 shipped 后 friction density 与 spec 期望有 3-4 个量级落差
+
+**Lesson trail**：
+- **LL-090**（verdict.md narrative 段只允许 replayable / trail-refable 证据）— `docs/public-lessons.md#ll-090`
+- **LL-091**（assumption-driven 决策需 spec 层 Assumption Inventory + acceptance 层 live-calibration gate 双层校验）— `docs/public-lessons.md#ll-091`
+
+**Vision Guardian 学习**：未来 approve 时须显式区分 "用户诉求达成" 与 "内部技术假设成立"，两栏独立打勾；后者未校准即 APPROVE 视为 blind spot 记录（不 block approve，但记 lesson trail）。这条已作为 LL-091 防护#3 沉淀。
+
+**当前 F245 状态**：shipped-side reality 与 spec baseline 有落差，但 core 机制（4 通道 adapter / Top-N cluster / verdict schema）无 runtime code fix 需求；假设未 hold 属 governance-layer 问题，已由 Lesson trail 收敛。eval:friction cadence 保持 every-3d（假设 "真低摩擦稳态" 未穷尽 raw store 排除，暂不触发 Sunset Signal），未来若继续 raw = 0 触发单通道降频 review。
+
 ## Review Gate
 
 - Phase A–D: 跨族 review（Ragdoll author → Maine Coon/Maine Coon or gpt52 review）；架构 Design Gate 拉 harness-eval owner（Maine Coon/47）收敛 cluster 算法 + Map delta + 频率默认值

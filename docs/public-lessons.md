@@ -1768,3 +1768,47 @@ created: 2026-02-26
 - 原理：Spec 是 "deployable state declaration", 不是 "future intent declaration"。预先 batch 写 future PR 的 normative 字段, 等于 declare 不存在的 dist——sanity check 会真炸。边界混淆的代价是 implementer 在 PR 内反复踩 self-inflict 雷。同源于 R1 .mjs-only over-correction (把 scope decision 提前 batch 拍板) 也同源于 LL-087 plan-time invariant 思路 (declaration 也是 invariant 的一种, 必须 trace 真实 state)。
 
 - 关联：F243 Phase B (active) | LL-087 plan-time invariant table 同源 (declaration = invariant 的一种) | feedback_xiaci_yiding_self_diagnosis (糖衣话术"未来一次写完"=包装当下偷懒) | feedback_grep_consumers_before_contract_change (改 contract 前 grep 全消费方; 这里 dual——declare contract 前看每个 PR 的 actual deployable state)
+
+### LL-090: verdict.md narrative 段只允许 replayable / trail-refable 证据
+- 状态：draft
+- 更新时间：2026-07-12
+
+- 坑：`2026-06-30-eval-friction-c1-empty-window-after-singleton` verdict phenomenon 段引用 "immediately preceding 72h window" 出现 medium-severity user-feedback singleton `text_frustration: 错了`，但该 singleton 在 3 层 canonical raw source 均无支撑——harness-feedback trail 全 grep 只命中 verdict.md 自身 / F222 `RedisFrustrationIssueStore.listConfirmedInWindow()` `[06-24T03Z, 06-27T03Z)` = 0 / `default-user` message timeline 843 条精扫 = 0。verdict 命名 "after-singleton" 直接建立在 narrative-only claim 上，create 了 untraceable provenance。
+- 根因：eval-domain verdict.md 的 phenomenon / counterarguments 等 narrative 段是"人话可读层"，但 spec 没把它绑到"引用的证据必须 trail-refable"这条硬约束上，允许作者写入自然叙事而不做 evidence-ref 校验。KD-4 "read-only rollup + no writeback + no fabricate" 约束了工具生成，没约束作者文字。
+- 触发条件：任何 eval-domain 写 verdict.md 时 phenomenon / counterarguments 段引用 "in the preceding window we saw X" / "another cat mentioned Y" / 未 filed 到 harness-feedback trail 的观察；特别是 empty-window verdict 写"叙事上下文"补白时最容易发生。
+- 修复：文档纪律修 (无 runtime code fix)。verdict.md 所有 narrative 段只允许引用: (1) 本 verdict 自己的 bundle 内产物 (snapshot / attribution / raw)；(2) 既往 published verdict 的 bundle refs (明示 kind + selector)；(3) 已 filed 在 harness-feedback trail 或其他 canonical 存储的 replayable evidence (published selector / metric ref / canonical trace ref / issue ref)。判据：稳定标识符 + 授权读者未来能独立 retrieve + 已 filed 在 durable 存储。
+- 防护：
+  - **短期 (人工守门)**：peer review checklist 加一项——reviewer grep verdict.md 中所有引用/断言，交叉 check 目标是否有 trail-side stable identifier。
+  - **中期 (schema validator)**：publish_verdict tool 添加 verdict.md 引用 pattern 解析 + 交叉 check bundle/trail 存在性 (可行性待评估)。
+  - **Author 自检 reflex**：写 verdict.md 前先问"我引用的每句话都能找到 replayable ref 吗?"——找不到就删或改成 "observed via structured signal that yielded 0/K signals" 这种可校验句式。
+- 来源锚点：
+  - `docs/features/F245-friction-signal-eval.md` KD-4 段 (read-only + no fabricate)
+  - `docs/harness-feedback/verdicts/2026-06-30-eval-friction-c1-empty-window-after-singleton.md` (触发实例)
+  - `docs/harness-feedback/bundles/2026-06-30-eval-friction-c1-empty-window-after-singleton/raw/rollup-report.json` (`signalCount=0` 结构值 vs phenomenon 叙事 mismatch)
+  - thread `thread_eval_friction` 2026-07-08 → 07-12 联合 audit (gpt52 + opus-47)
+- 原理：evidence trail 必须可重放；narrative-only claim = untraceable provenance = 下游 audit / learning / debugging 无法 trace。verdict.md 是可读层不是虚构层——不能在 bundle 结构上没有的地方补上下文。与 KD-4 "工具不 fabricate empty" 天然对偶：工具不造假 → 作者也不造引用。
+
+- 关联：F245 KD-4 read-only rollup | thread_eval_friction 联合 audit synthesis (opus-47 + gpt52) | 所有 eval-domain 写作纪律 (F245 / F192 / F236 / task-outcome / memory)
+
+### LL-091: assumption-driven 决策需 spec 层 Assumption Inventory + acceptance 层 live-calibration gate 双层校验
+- 状态：draft
+- 更新时间：2026-07-12
+
+- 坑：F245 立项 baseline L58-63 "invocation 量级估算数百次/天起跳 → 摩擦按 invocation 粒度产生 → 攒一周几百上千条 raw"——把 invocation 量级测量**外推**为 friction density 假设。KD-2 cadence 决策 (本家 every-3d) + Risk#1 "signal 体量打爆 eval 猫 context" mitigation (Top-N 配额) 都建立在此未测假设上。Shipped 25 天 (2026-06-22 → 07-12) `FrictionMetricsProviderImpl.resolve()` 反算 4 个窗口 4 通道 raw = 0，provider 级实际数据与 spec 期望有 3-4 个量级落差。Vision Guardian (opus-47 2026-06-22 APPROVE) 复核 5 条 operator 诉求全 ✅，但没校准这条内部技术假设，approve 时 assumption blind spot 被 user-诉求 天然覆盖过去。
+- 根因：F245 AC-A2 fixture-based precision/recall 只验采集器机制正确 (给 N 条 → 采 N 条)，不验 "shipped 后 live 到底有多少 signal 通过采集器"。fixture 世界的正确性无法推断 live world 的率。Vision Guardian evidence table 只验 operator 诉求，没独立段位区分 "内部技术假设 vs 用户诉求"——内部假设 blind spot 天然逃过 approve 检查。整体 spec/AC 契约缺 "assumption calibration" 一环。
+- 触发条件：任何 F 号立项 spec 中出现：(1) invocation 量级外推为 signal density；(2) fixture / mock 数据推断 live 量级；(3) expert judgment / extrapolation 驱动 cadence / capacity / risk threshold 决策；(4) "signal 体量担忧" 类内部技术假设无对应 AC。特别是 KD 决策段 (KD-1 / KD-2...) 显式以 "实证 X → 决定 Y" 结构写但 X 是估算的，风险最高。
+- 修复：spec 立项流程修 (无 runtime code fix)——feature-lifecycle SOP 加两层 gate: (1) spec 层强制 `Assumption Inventory` 段；(2) acceptance / post-ship 层强制 `live-calibration gate`。
+- 防护：
+  - **Layer 1 (Spec 层立项时)**：spec 必须包含 `Assumption Inventory` 段——显式列出所有 design-driving assumptions，每条说明 (来源：measurement / extrapolation / expert judgment) + (前提：何时成立) + (驱动了哪些设计决策：cadence / risk / capacity)。空 inventory 允许 (trivial feature) 但需**显式声明** "无 design-driving assumption"。
+  - **Layer 2 (Acceptance / post-ship 层)**：每条 Assumption Inventory 条目必须对应 (a) 一条 **AC** 校验 assumption 核心前提 (if verifiable at test time)，或 (b) 一条 **post-ship `live-calibration gate`**：ship 后 X 天内 measure Y ≥/≤ Z，触发 assumption 失效 review protocol。
+  - **Vision Guardian 复盘 checklist 加一项**："内部技术假设 vs 用户诉求" 显式分离审查——两栏独立打勾，内部假设未校准即 APPROVE 视为 blind spot 记录 (不 block approve，但记 lesson trail)。
+  - **Author 自检 reflex**：写 KD 决策段 / Risk mitigation 段时问 "这条决策依据的 X 是 measured 还是 extrapolated?"——extrapolated 就必须进 Assumption Inventory。
+- 来源锚点：
+  - `docs/features/F245-friction-signal-eval.md` L58-63 ("数百/天" invocation extrapolation)
+  - `docs/features/F245-friction-signal-eval.md` KD-2 段 (cadence 频率决策依据 = 实证 signal 体量)
+  - `docs/features/F245-friction-signal-eval.md` Risk 段 (Risk#1 signal 体量 mitigation)
+  - `docs/features/F245-friction-signal-eval.md` Vision Guardian Evidence 段 (opus-47 2026-06-22 APPROVE 5 条 ✅ 但未校 assumption)
+  - thread `thread_eval_friction` 2026-07-08 → 07-12 联合 audit (gpt52 provider-level 4-channel raw = 0 反证)
+- 原理：assumption 是设计决策的原料，如果原料不做 calibration，决策上层的 verification 无论多严谨都在 blind spot 上运行。fixture-based 验证只保证机制层正确，不保证 assumption 层成立——两者是正交的完整性维度。Vision Guardian 应当区分 "用户诉求达成" 和 "内部技术假设成立"，二者混淆时后者天然被前者盖过。分层 gate (立项列 + 验收/post-ship 验) 是把 assumption 从 blind spot 拉到 explicit 轨道的最小 mechanism。
+
+- 关联：F245 KD-2 cadence 决策 | F245 Vision Guardian Evidence table (opus-47 2026-06-22 approve) | LL-090 verdict provenance (同源于"未测/未 trail-refable 支撑推理") | F192 harness-eval 控制面 (母 feature，acceptance 契约主承重)
