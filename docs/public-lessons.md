@@ -1772,16 +1772,17 @@ created: 2026-02-26
 <a id="ll-090"></a>
 ### LL-090: verdict.md narrative 段只允许 replayable / trail-refable 证据
 - 状态：draft
-- 更新时间：2026-07-12
+- 更新时间：2026-07-15
 
 - 坑：`2026-06-30-eval-friction-c1-empty-window-after-singleton` verdict phenomenon 段引用 "immediately preceding 72h window" 出现 medium-severity user-feedback singleton `text_frustration: 错了`，但该 singleton 在 3 层 canonical raw source 均无支撑——harness-feedback trail 全 grep 只命中 verdict.md 自身 / F222 `RedisFrustrationIssueStore.listConfirmedInWindow()` `[06-24T03Z, 06-27T03Z)` = 0 / `default-user` message timeline 843 条精扫 = 0。verdict 命名 "after-singleton" 直接建立在 narrative-only claim 上，create 了 untraceable provenance。
 - 根因：eval-domain verdict.md 的 phenomenon / counterarguments 等 narrative 段是"人话可读层"，但 spec 没把它绑到"引用的证据必须 trail-refable"这条硬约束上，允许作者写入自然叙事而不做 evidence-ref 校验。KD-4 "read-only rollup + no writeback + no fabricate" 约束了工具生成，没约束作者文字。
 - 触发条件：任何 eval-domain 写 verdict.md 时 phenomenon / counterarguments 段引用 "in the preceding window we saw X" / "another cat mentioned Y" / 未 filed 到 harness-feedback trail 的观察；特别是 empty-window verdict 写"叙事上下文"补白时最容易发生。
 - 修复：文档纪律修 (无 runtime code fix)。verdict.md 所有 narrative 段只允许引用: (1) 本 verdict 自己的 bundle 内产物 (snapshot / attribution / raw)；(2) 既往 published verdict 的 bundle refs (明示 kind + selector)；(3) 已 filed 在 harness-feedback trail 或其他 canonical 存储的 replayable evidence (published selector / metric ref / canonical trace ref / issue ref)。判据：稳定标识符 + 授权读者未来能独立 retrieve + 已 filed 在 durable 存储。
 - 防护：
+  - **Author pre-publish 命令级验证（硬规程）**：所有 code path / API 名称 / file-path / message-ref anchor **必须**用命令级验证（`find` / `grep` / `Read` / `gh` 三选一）打开确认，不允许 memory-based inference。发布前 self-run 每一条 anchor 的 "命令 → 结果" 验证 loop，把 anchor 声明 ↔ 实际存在物双向对齐。**触发根据**：本 lesson 首次归档 PR #124 期间，author (opus-47) 连续 3 轮违反 LL-090 自身 rule——round 1 overclaim "已归档"（uncommitted）/ round 2 body claim 缺锚点 / round 3 code path + signature 瞎写；根因均为 memory-based inference，全部由 cross-family reviewer gpt52 命令级复核（找不到分支上不存在的 path 等硬事实）抓出。硬规程内化 = author 提前跑 reviewer 会跑的验证 loop，把 3 轮 self-violation 从系统性问题压到 0 轮。
   - **短期 (人工守门)**：peer review checklist 加一项——reviewer grep verdict.md 中所有引用/断言，交叉 check 目标是否有 trail-side stable identifier。
   - **中期 (schema validator)**：publish_verdict tool 添加 verdict.md 引用 pattern 解析 + 交叉 check bundle/trail 存在性 (可行性待评估)。
-  - **Author 自检 reflex**：写 verdict.md 前先问"我引用的每句话都能找到 replayable ref 吗?"——找不到就删或改成 "observed via structured signal that yielded 0/K signals" 这种可校验句式。
+  - **Author 自检 reflex（软性 complement，与硬规程配对）**：写 verdict.md 前先问"我引用的每句话都能找到 replayable ref 吗?"——找不到就删或改成 "observed via structured signal that yielded 0/K signals" 这种可校验句式。
 - 来源锚点：
   - `docs/features/F245-friction-signal-eval.md` KD-4 段 (read-only + no fabricate)
   - `docs/harness-feedback/verdicts/2026-06-30-eval-friction-c1-empty-window-after-singleton.md` (触发实例)
