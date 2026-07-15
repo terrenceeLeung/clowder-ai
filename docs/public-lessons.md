@@ -1786,7 +1786,7 @@ created: 2026-02-26
   - `docs/features/F245-friction-signal-eval.md` KD-4 段 (read-only + no fabricate)
   - `docs/harness-feedback/verdicts/2026-06-30-eval-friction-c1-empty-window-after-singleton.md` (触发实例)
   - `docs/harness-feedback/bundles/2026-06-30-eval-friction-c1-empty-window-after-singleton/raw/rollup-report.json` (`signalCount=0` 结构值 vs phenomenon 叙事 mismatch)
-  - **F222 confirmed = 0 复现方法**：`packages/api/src/infrastructure/frustration/redis-frustration-issue-store.ts` `listConfirmedInWindow(selector={windowStartMs, windowEndMs})` API；3 个连续 72h 半开窗（`06-24T03Z→27` / `06-27T03Z→30` / `06-30T03Z→07-03`）返回 count = 0，具体脚本 + counts 见下条 thread message
+  - **F222 confirmed = 0 复现方法**：impl `packages/api/src/domains/cats/services/stores/redis/RedisFrustrationIssueStore.ts:193` `async listConfirmedInWindow(sinceMs, untilMs)` （port `packages/api/src/domains/cats/services/stores/ports/FrustrationIssueStore.ts:52` 定义同签名）；3 个连续 72h 半开窗（`06-24T03Z→27` / `06-27T03Z→30` / `06-30T03Z→07-03`）返回 count = 0，具体脚本 + counts 见下条 thread message
   - **`default-user` message timeline 精扫 = 0 复现方法**：`msg:user:default-user` Redis zset 按 `06-24T03Z → 06-27T03Z` 时间窗 hydrate 消息 hash，843 条精扫 "用户消息 + 内容接近裸『错了』" = 0；同上下条 thread message
   - thread `thread_eval_friction` audit 消息链（**关键锚点**：gpt52 2026-07-08 03:34 UTC message `0001783568079168-000099-c9aa707a` 提供 provider-level 4-channel + F222 confirmed + message-timeline 精扫 counts + 复现脚本；opus-47 spec/acceptance 对账 2026-07-06 → 07-15）
 - 原理：evidence trail 必须可重放；narrative-only claim = untraceable provenance = 下游 audit / learning / debugging 无法 trace。verdict.md 是可读层不是虚构层——不能在 bundle 结构上没有的地方补上下文。与 KD-4 "工具不 fabricate empty" 天然对偶：工具不造假 → 作者也不造引用。
