@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-07-15-eval-a2a-pr116-merged-runtime-not-restarted",
+  "evalSnapshotId": "eval-F167-2026-07-15",
+  "featureId": "F167",
+  "generatedAt": "2026-07-15T03:00:00.154Z",
+  "window": {
+    "startMs": 1784084400154,
+    "endMs": 1784084400154,
+    "durationHours": 0
+  },
+  "counterWindow": {
+    "startMs": 1783760322285,
+    "endMs": 1784084400152,
+    "durationHours": 90.02162978725694
+  },
+  "components": [
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "grounding.sample_count": 135,
+        "grounding.mismatch_sample_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}

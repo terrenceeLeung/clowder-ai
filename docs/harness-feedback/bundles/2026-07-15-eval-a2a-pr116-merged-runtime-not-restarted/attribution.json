@@ -1,0 +1,81 @@
+{
+  "verdictId": "2026-07-15-eval-a2a-pr116-merged-runtime-not-restarted",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-15",
+  "generatedAt": "2026-07-15T03:04:20Z",
+  "findings": [
+    {
+      "id": "f167-pr116-merged-but-runtime-not-restarted",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_restart_blocker",
+        "severity": "high",
+        "confidence": 0.96
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "f167-phase-o-confidence-followup",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 334156 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-15T03:00:00.150Z; 2026-05-30 through 2026-07-15 remain single-fire, making a 47-day streak after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "prewrite",
+            "anchor": "counter-window/counter_window.duration_hours",
+            "excerpt": "The 2026-07-15 cron callback supplied sourceRefs.snapshotName=2026-07-15-f167-a2a-snapshot.yaml, and the raw snapshot contains counter_window.duration_hours=90.02162978725694."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.sample_count",
+            "excerpt": "grounding_sample_evidence.total_sampled increased from 119 to 135, with by_tool hold_ball=86 and register_pr_tracking=49; all 135 samples are insufficient."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.mismatch_sample_count",
+            "excerpt": "grounding.mismatch_sample_count remains 0 across 135 samples, so no fail-closed escalation signal appears in this window."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/grounding.check_total",
+            "excerpt": "grounding-phase-o confidence remains no-data and the gap impact still uses the old hook-not-wired wording, proving the runtime has not loaded PR #116's samples-only confidence rule."
+          },
+          {
+            "type": "github",
+            "anchor": "github/pr116/merged",
+            "excerpt": "PR #116 merged at e67f2772d2f8cf625e7be25790abc083ddaf94fb on 2026-07-14T03:09:30Z, and all checks including Test Public were green."
+          },
+          {
+            "type": "github",
+            "anchor": "github/pr119-pr120/artifact-amend-merged",
+            "excerpt": "The live verdict artifact blocker was resolved before PR #116 merged: PR #119 merged at 3a8f8192 and PR #120 merged at d8b2f711."
+          },
+          {
+            "type": "process",
+            "anchor": "counter-window/counter_window.start_ms",
+            "excerpt": "The active node dist/index.js process is still PID 43487, started 2026-07-11 16:58:41 +08, with elapsed time 3 days 18 hours at inspection; this matches the 90h counter_window and predates PR #116."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "rebuild_and_restart_runtime",
+          "target": "eval-domain-daily runtime process PID 43487",
+          "rationale": "PR #116 and the CI artifact fixes are already merged. The only remaining acceptance blocker is that node dist/index.js still holds the pre-PR #116 generateF167Snapshot implementation in memory."
+        },
+        {
+          "action": "verify_next_eval_bundle",
+          "target": "2026-07-16 eval:a2a callback",
+          "rationale": "After restart, the next snapshot should keep sourceRefs/counter_window and report grounding-phase-o confidence=low or better when grounding samples exist without counters."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
