@@ -1,0 +1,27 @@
+{
+  "verdictId": "2026-07-15-eval-friction-empty-every-3d-window",
+  "evalSnapshotId": "eval-F245-2026-07-15",
+  "featureId": "F245",
+  "generatedAt": "2026-07-15T03:01:37.243Z",
+  "window": {
+    "startMs": 1783825200000,
+    "endMs": 1784084400000,
+    "durationHours": 72
+  },
+  "components": [
+    {
+      "id": "friction-rollup",
+      "name": "friction rollup (Top-N + sensorForm)",
+      "confidence": "low",
+      "activationCounts": {},
+      "frictionCounts": {
+        "cluster_count": 2,
+        "top_cluster_count": 2,
+        "tail_cluster_count": 0,
+        "tail_signal_count": 0,
+        "cluster_0e3d594e8fa5": 1,
+        "cluster_64cf55eaa5ab": 1
+      }
+    }
+  ]
+}
