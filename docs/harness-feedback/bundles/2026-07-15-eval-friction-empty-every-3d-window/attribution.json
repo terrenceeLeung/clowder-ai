@@ -1,0 +1,36 @@
+{
+  "verdictId": "2026-07-15-eval-friction-empty-every-3d-window",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-07-15",
+  "generatedAt": "2026-07-15T03:01:37.243Z",
+  "findings": [
+    {
+      "id": "FR-2026-07-15-0e3d594e8fa5",
+      "relatedFeature": "F245",
+      "frictionSignal": {
+        "type": "friction.cluster_0e3d594e8fa5",
+        "severity": "low",
+        "confidence": 0.7,
+        "detectedAt": "2026-07-15T03:01:37.243Z"
+      },
+      "attribution": {
+        "primaryLayer": "needs_investigation",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "friction-rollup/cluster_0e3d594e8fa5",
+            "excerpt": "cluster 'cognitive_count=2' count=1 severity=low sensorForms=[aggregate_proxy]"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "triage-top-friction-cluster",
+          "target": "F245/friction-rollup",
+          "rationale": "Highest-ranked friction cluster in the window — eval cat assigns the 7-class root cause in the verdict before handoff."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
