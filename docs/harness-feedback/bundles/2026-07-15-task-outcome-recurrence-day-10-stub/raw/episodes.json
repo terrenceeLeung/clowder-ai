@@ -1,0 +1,142 @@
+{
+  "verdictId": "2026-07-15-task-outcome-recurrence-day-10-stub",
+  "windowStartMs": 1783998000000,
+  "windowEndMs": 1784084400000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1784004209020-j7gd9h",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-14T04:43:29.020Z"
+    },
+    {
+      "episodeId": "ep-1784011943417-n49yf4",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrdhvpzkr6zgatqq",
+      "participants": [
+        "sol"
+      ],
+      "artifacts": [],
+      "terminalState": "in_progress",
+      "verdict": null,
+      "createdAt": "2026-07-14T06:52:23.417Z"
+    },
+    {
+      "episodeId": "ep-1784012613214-v7vbil",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-14T07:03:33.214Z"
+    },
+    {
+      "episodeId": "ep-1784013689026-i57n64",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-14T07:21:29.026Z"
+    },
+    {
+      "episodeId": "ep-1784015969084-18y3xm",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-14T07:59:29.084Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 96,
+      "episodeId": "ep-1784004209020-j7gd9h",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#281",
+        "outcome": "success",
+        "timestamp": "2026-07-14T04:43:29.022Z"
+      },
+      "createdAt": "2026-07-14T04:43:29.022Z"
+    },
+    {
+      "id": 97,
+      "episodeId": "ep-1784011943417-n49yf4",
+      "category": "a2",
+      "record": {
+        "type": "proposal_reject",
+        "proposalId": "proposal_mrkalsgc6pkcyyt3",
+        "proposalType": "thread",
+        "catId": "sol",
+        "threadId": "thread_mrdhvpzkr6zgatqq",
+        "proposalTitle": "Echo 多租 Tenant Workspace 与 Project 存储架构",
+        "timestamp": "2026-07-14T06:52:23.416Z"
+      },
+      "createdAt": "2026-07-14T06:52:23.419Z"
+    },
+    {
+      "id": 98,
+      "episodeId": "ep-1784011943417-n49yf4",
+      "category": "a2",
+      "record": {
+        "type": "proposal_reject",
+        "proposalId": "proposal_mrkap3argqtf932j",
+        "proposalType": "thread",
+        "catId": "sol",
+        "threadId": "thread_mrdhvpzkr6zgatqq",
+        "proposalTitle": "Echo 多租 Tenant Workspace 与 Project 存储架构",
+        "timestamp": "2026-07-14T06:55:02.792Z"
+      },
+      "createdAt": "2026-07-14T06:55:02.792Z"
+    },
+    {
+      "id": 99,
+      "episodeId": "ep-1784012613214-v7vbil",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#283",
+        "outcome": "success",
+        "timestamp": "2026-07-14T07:03:33.218Z"
+      },
+      "createdAt": "2026-07-14T07:03:33.218Z"
+    },
+    {
+      "id": 100,
+      "episodeId": "ep-1784013689026-i57n64",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#282",
+        "outcome": "success",
+        "timestamp": "2026-07-14T07:21:29.031Z"
+      },
+      "createdAt": "2026-07-14T07:21:29.031Z"
+    },
+    {
+      "id": 101,
+      "episodeId": "ep-1784015969084-18y3xm",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#284",
+        "outcome": "success",
+        "timestamp": "2026-07-14T07:59:29.089Z"
+      },
+      "createdAt": "2026-07-14T07:59:29.089Z"
+    }
+  ],
+  "eventRows": []
+}
