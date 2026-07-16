@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-16-eval-a2a-pr116-still-not-loaded-runtime-restart-blocker",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-16-f167-a2a-snapshot.yaml",
+      "sha256": "e7a3a2c97cc4e50f63f014165db83e432c3a0aa24aa643e7e15a847a19417e03"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-16-f167-a2a-attribution.yaml",
+      "sha256": "059bfa714e4dd7cc06e5316e17bf207a149d9fdfee74da57ab09347b52548288"
+    }
+  ],
+  "generatedAt": "2026-07-16T03:04:20Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}

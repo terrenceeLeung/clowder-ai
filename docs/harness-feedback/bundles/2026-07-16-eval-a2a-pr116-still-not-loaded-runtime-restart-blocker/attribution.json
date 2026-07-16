@@ -1,0 +1,81 @@
+{
+  "verdictId": "2026-07-16-eval-a2a-pr116-still-not-loaded-runtime-restart-blocker",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-16",
+  "generatedAt": "2026-07-16T03:04:20Z",
+  "findings": [
+    {
+      "id": "f167-pr116-still-not-loaded-runtime-restart-blocker",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_restart_blocker",
+        "severity": "high",
+        "confidence": 0.97
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "f167-phase-o-confidence-followup",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 340307 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-16T03:00:00.153Z; 2026-05-30 through 2026-07-16 remain single-fire, making a 48-day streak after the 2026-05-29 duplicate."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "prewrite",
+            "anchor": "counter-window/counter_window.duration_hours",
+            "excerpt": "The 2026-07-16 cron callback supplied sourceRefs.snapshotName=2026-07-16-f167-a2a-snapshot.yaml, and the raw snapshot contains counter_window.duration_hours=114.02159379495362."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.sample_count",
+            "excerpt": "grounding_sample_evidence.total_sampled increased from 135 to 141, with by_tool hold_ball=89 and register_pr_tracking=52; all 141 samples are insufficient."
+          },
+          {
+            "type": "counter",
+            "anchor": "grounding-phase-o/grounding.mismatch_sample_count",
+            "excerpt": "grounding.mismatch_sample_count remains 0 across 141 samples, so no fail-closed escalation signal appears in this window."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/grounding.check_total",
+            "excerpt": "grounding-phase-o confidence remains no-data and the gap impact still uses the old hook-not-wired wording, so the runtime still has not loaded PR #116's samples-only confidence rule."
+          },
+          {
+            "type": "github",
+            "anchor": "github/pr116/merged",
+            "excerpt": "PR #116 merged at e67f2772d2f8cf625e7be25790abc083ddaf94fb on 2026-07-14T03:09:30Z, and all checks including Test Public were green."
+          },
+          {
+            "type": "github",
+            "anchor": "github/pr123/verdict-runtime-not-restarted",
+            "excerpt": "The 2026-07-15 fix verdict PR #123 already isolated this same remaining blocker to runtime restart and merged at b3c343cf7330bed8244d7d3300ab4f1eab233967."
+          },
+          {
+            "type": "process",
+            "anchor": "counter-window/counter_window.start_ms",
+            "excerpt": "The active node dist/index.js process is still PID 43487, started 2026-07-11 16:58:41 +08, with elapsed time 4 days 18 hours at inspection; this matches the 114h counter_window and predates PR #116."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "rebuild_and_restart_runtime",
+          "target": "eval-domain-daily runtime process PID 43487",
+          "rationale": "No code or CI blocker remains. The only direct fix is to replace the old node dist/index.js process with a rebuilt runtime that includes PR #116."
+        },
+        {
+          "action": "track_restart_discipline_gap",
+          "target": "F192 harness governance",
+          "rationale": "The same process-control blocker has recurred for six daily eval cycles. After immediate restart, capture a separate F192 follow-up for restart automation or dev-mode reload discipline."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
