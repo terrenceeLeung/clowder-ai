@@ -1,0 +1,34 @@
+{
+  "verdictId": "2026-07-16-task-outcome-recurrence-day-11-stub",
+  "windowStartMs": 1784084400000,
+  "windowEndMs": 1784170800000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1784100090330-kbhdk6",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mrezz1y0rm5y8d8e",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-07-15T07:21:30.330Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 102,
+      "episodeId": "ep-1784100090330-kbhdk6",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#287",
+        "outcome": "success",
+        "timestamp": "2026-07-15T07:21:30.330Z"
+      },
+      "createdAt": "2026-07-15T07:21:30.330Z"
+    }
+  ],
+  "eventRows": []
+}
