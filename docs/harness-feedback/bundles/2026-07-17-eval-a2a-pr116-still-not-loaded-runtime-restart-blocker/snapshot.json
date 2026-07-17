@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-07-17-eval-a2a-pr116-still-not-loaded-runtime-restart-blocker",
+  "evalSnapshotId": "eval-F167-2026-07-17",
+  "featureId": "F167",
+  "generatedAt": "2026-07-17T03:00:00.150Z",
+  "window": {
+    "startMs": 1784257200150,
+    "endMs": 1784257200150,
+    "durationHours": 0
+  },
+  "counterWindow": {
+    "startMs": 1783760322546,
+    "endMs": 1784257200150,
+    "durationHours": 138.02155660701388
+  },
+  "components": [
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {
+        "grounding.sample_count": 139,
+        "grounding.mismatch_sample_count": 0
+      },
+      "frictionCounts": {}
+    }
+  ]
+}
