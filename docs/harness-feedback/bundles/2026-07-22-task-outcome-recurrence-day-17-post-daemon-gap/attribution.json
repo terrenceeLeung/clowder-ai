@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-22-task-outcome-recurrence-day-17-post-daemon-gap",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-07-22",
+  "generatedAt": "2026-07-22T03:02:51.630Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}

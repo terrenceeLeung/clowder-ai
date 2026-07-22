@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-22-task-outcome-recurrence-day-17-post-daemon-gap",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-22-task-outcome-recurrence-day-17-post-daemon-gap/raw/episodes.json",
+      "sha256": "71774ce41743513e7f23cebaebed55bfe6cc42c72a4162e9932488ec33c050a6"
+    }
+  ],
+  "generatedAt": "2026-07-22T03:02:51.630Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
