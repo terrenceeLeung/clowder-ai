@@ -1,0 +1,79 @@
+{
+  "verdictId": "2026-07-22-eval-a2a-main-clobbered-path-b-after-restart",
+  "evalSnapshotId": "eval-F167-2026-07-22",
+  "featureId": "F167",
+  "generatedAt": "2026-07-22T03:10:00Z",
+  "window": {
+    "startMs": 1784257200150,
+    "endMs": 1784689199880,
+    "durationHours": 120
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "medium",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_since_prior": 1,
+        "eval_domain_daily.eval_a2a_runs_on_2026_07_22": 1
+      },
+      "frictionCounts": {
+        "eval_domain_daily.missed_daily_runs_since_prior": 4,
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "runtime-preflight",
+      "name": "runtime process and checkout preflight",
+      "confidence": "high",
+      "activationCounts": {
+        "runtime.pid_2344_running": 1,
+        "runtime.process_started_after_pr116": 1,
+        "runtime.head_matches_origin_main": 1
+      },
+      "frictionCounts": {
+        "runtime.target_fixes_absent_from_head": 1,
+        "runtime.api_port_3004_listener_missing": 1
+      }
+    },
+    {
+      "id": "source-refs-prewrite",
+      "name": "F167 cron-side sourceRefs prewrite",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.prewritten_source_refs_missing": 1,
+        "telemetry.counter_window_missing": 1,
+        "telemetry.raw_2026_07_22_snapshot_preexisting": 0
+      }
+    },
+    {
+      "id": "implementation-lineage",
+      "name": "F167 path B implementation lineage",
+      "confidence": "high",
+      "activationCounts": {
+        "implementation.current_head_is_origin_main": 1
+      },
+      "frictionCounts": {
+        "implementation.pr102_not_ancestor_of_head": 1,
+        "implementation.pr116_not_ancestor_of_head": 1,
+        "implementation.pr119_not_ancestor_of_head": 1,
+        "implementation.pr120_not_ancestor_of_head": 1,
+        "implementation.cron_prewrite_source_files_missing_from_head": 1,
+        "implementation.grounding_has_samples_rule_missing_from_head": 1
+      }
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.grounding_phase_o_no_data": 1,
+        "telemetry.pr116_confidence_rule_missing": 1
+      }
+    }
+  ]
+}
