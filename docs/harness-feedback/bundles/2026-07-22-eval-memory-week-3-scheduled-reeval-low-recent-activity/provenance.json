@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-22-eval-memory-week-3-scheduled-reeval-low-recent-activity",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-07-22-eval-memory-week-3-scheduled-reeval-low-recent-activity/recall-metrics.json",
+      "sha256": "dbc54e9fe25f98edb89a7399af2ebea3cd828a5d2bd5ab876e84914c2da119bf"
+    },
+    {
+      "path": "generated/memory/2026-07-22-eval-memory-week-3-scheduled-reeval-low-recent-activity/library-health.json",
+      "sha256": "f29aae0a365bdfc046fd1b87e985d0c4b6c0330f82af38620ed3fb5f4ba35c34"
+    }
+  ],
+  "generatedAt": "2026-07-22T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}
