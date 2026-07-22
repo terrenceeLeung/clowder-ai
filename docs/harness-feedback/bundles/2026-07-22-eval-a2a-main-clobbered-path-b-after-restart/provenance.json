@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-22-eval-a2a-main-clobbered-path-b-after-restart",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-22-f167-a2a-snapshot.yaml",
+      "sha256": "fd9f7f777f562d05a938e29c62fd391c330c1e35d1b70619a01a4eab757b54d6"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-22-f167-a2a-attribution.yaml",
+      "sha256": "26268d1c118f42c95a9efca9f1615c312d3a1680470fc729b8de915fc2809cfc"
+    }
+  ],
+  "generatedAt": "2026-07-22T03:10:00Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}

@@ -1,0 +1,96 @@
+{
+  "verdictId": "2026-07-22-eval-a2a-main-clobbered-path-b-after-restart",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-22",
+  "generatedAt": "2026-07-22T03:10:00Z",
+  "findings": [
+    {
+      "id": "f167-main-clobbered-path-b-and-pr116-after-runtime-restart",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "sync_clobber_regression",
+        "severity": "high",
+        "confidence": 0.98
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-mainline-sync",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_since_prior",
+            "excerpt": "task_run_ledger shows eval-domain-daily/eval:a2a RUN_DELIVERED at id 346220 on 2026-07-17T03:00:00.145Z and id 353666 on 2026-07-22T02:59:59.880Z, with no eval:a2a rows for 2026-07-18 through 2026-07-21."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "process",
+            "anchor": "runtime-preflight/runtime.process_started_after_pr116",
+            "excerpt": "The active runtime is node dist/index.js PID 2344, started 2026-07-21 15:03:13 local time; current HEAD/origin/main is d5961fe3, so this is a post-restart runtime rather than the old PID 43487 blocker."
+          },
+          {
+            "type": "runtime",
+            "anchor": "runtime-preflight/runtime.api_port_3004_listener_missing",
+            "excerpt": "No process is listening on port 3004; PID 2344 listens on 127.0.0.1:3006, 127.0.0.1:4100, and *:9464. The eval scheduler logs for PID 2344 show the 2026-07-22 tick completed with 3 items in 20ms."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "source-refs-prewrite/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-07-22 scheduled callback payload included no sourceRefs, and docs/harness-feedback contained no 2026-07-22 f167-a2a snapshot/attribution raw YAML before this diagnostic sourceRefs write."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "source-refs-prewrite/telemetry.counter_window_missing",
+            "excerpt": "Because the runtime did not prewrite a snapshot, the callback has no counter_window/counterWindow block and no grounding-phase-o distribution to evaluate."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr102_not_ancestor_of_head",
+            "excerpt": "git merge-base --is-ancestor 4ccd0cee HEAD exits 1, and current HEAD lacks cron-predefine.ts, cron-telemetry-source.ts, and snapshot-writer.ts under packages/api/src/infrastructure/harness-eval."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr116_not_ancestor_of_head",
+            "excerpt": "git merge-base --is-ancestor e67f2772 HEAD exits 1; current src and dist f167-eval still use confidence: hasCounters ? 'medium' : 'no-data' for grounding-phase-o, without the samples-only low-confidence rule."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr119_not_ancestor_of_head",
+            "excerpt": "git merge-base --is-ancestor 3a8f8192 HEAD exits 1; the metric URI evidence-only amend is not present in current main."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr120_not_ancestor_of_head",
+            "excerpt": "git merge-base --is-ancestor d8b2f711 HEAD exits 1; the parallel metric URI evidence-only amend is also not present in current main."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/telemetry.pr116_confidence_rule_missing",
+            "excerpt": "The grounding-phase-o confidence fix from PR #116 is absent from current src/dist, so sample-store evidence cannot be classified as low confidence even after runtime restart."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "restore_f167_path_b_and_confidence_fix",
+          "target": "current origin/main",
+          "rationale": "Cherry-pick or otherwise restore PR #102's cron-side sourceRefs prewrite and PR #116's grounding samples-only confidence rule onto d5961fe3, then rebuild/restart the runtime and verify the next eval:a2a callback includes sourceRefs plus counter_window."
+        },
+        {
+          "action": "audit_recent_sync_clobber",
+          "target": "merge/sync control plane",
+          "rationale": "Current main also lacks the #119/#120 evidence-only CI unblock commits and the 7/12-7/17 verdict artifacts, showing the same upstream sync clobber pattern has recurred beyond F167 code."
+        },
+        {
+          "action": "add_post_sync_guard",
+          "target": "F192 harness governance or merge-gate",
+          "rationale": "A post-sync guard should fail when recently merged F167/eval verdict commits disappear from main, before a restarted runtime accepts the clobbered checkout."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
