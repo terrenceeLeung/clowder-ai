@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-07-22-eval-memory-week-3-scheduled-reeval-low-recent-activity",
+  "featureId": "F200",
+  "evalSnapshotId": "eval-F200-memory-2026-07-22",
+  "generatedAt": "2026-07-22T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Week-3 scheduled reeval per PR #98 nextEvalAt=2026-07-22. 30 days since initial 2026-06-22 escalation to co-creator (PR #69), 21 days since PR #85, 13 days since PR #98. Structural blockers unchanged: yaml frequency=daily on main (LL-071 anti-pattern persists), F200 Phase F spec section absent, LL-071 collision unresolved. Recall metrics reveal a new signal though: 7d=7 events (down sharply from prior 22-85 band), while 30d=180 events remains within normal 170-187 band. This suggests dev/usage activity in the last week was substantially lower than previous weeks — could be genuine downshift, holiday, or telemetry gap.",
+    "evidence": "recall_events_7d_count=7, recall_events_30d_count=180, days_since_pr_69_escalation=30, days_since_pr_98=13, phase_f_spec_section_count=0, ll_071_my_content_present=0, yaml_frequency_still_daily=1"
+  }
+}

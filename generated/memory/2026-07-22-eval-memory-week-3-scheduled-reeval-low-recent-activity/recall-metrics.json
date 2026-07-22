@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-07-22-eval-memory-week-3-scheduled-reeval-low-recent-activity",
+  "featureId": "F200",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-07-22T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1782097375602,
+      "toMs": 1784689375602,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 180,
+    "core": {
+      "consumedAt3": 0.17777777777777778,
+      "consumedMRR": 0.137037037037037,
+      "reformulationRate": 0.24444444444444444,
+      "searchAbandonRate": 0.6166666666666667
+    },
+    "extended": {
+      "readthroughAt3": 0.21164021164021168,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0,
+      "reformulateAfterExposure": 0.03333333333333333,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.695610119047619,
+      "liveOnShadowSubsetMRR": 0.7708333333333333
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}
