@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-07-22-task-outcome-recurrence-day-17-post-daemon-gap",
+  "windowStartMs": 1784257200000,
+  "windowEndMs": 1784689200000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}
