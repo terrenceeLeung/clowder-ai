@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-23-eval-a2a-pr134-recovered-runtime-not-refreshed",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-23-f167-a2a-snapshot.yaml",
+      "sha256": "b141079e9b5a007e4b44bf37ef2121fbf61b26ef9e2d884babf6a5410e7c5650"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-23-f167-a2a-attribution.yaml",
+      "sha256": "d7d11c2a5a7a2ba4df32567bafaaa0b45cf2a8dfc9cc9195870858b0d6460f4f"
+    }
+  ],
+  "generatedAt": "2026-07-23T03:04:00Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
