@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-07-23-task-outcome-recurrence-day-18-stub",
+  "windowStartMs": 1784689200000,
+  "windowEndMs": 1784775600000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}
