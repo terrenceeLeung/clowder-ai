@@ -1,0 +1,96 @@
+{
+  "verdictId": "2026-07-24-eval-a2a-pr134-runtime-refresh-blocker-day-2",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-07-24",
+  "generatedAt": "2026-07-24T03:01:30Z",
+  "findings": [
+    {
+      "id": "f167-pr134-runtime-refresh-blocker-day-2",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_refresh_blocker_after_recovery",
+        "severity": "high",
+        "confidence": 0.98
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_since_prior",
+            "excerpt": "task_run_ledger id 365821 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-07-24T02:59:59.899Z; 2026-07-22, 2026-07-23, and 2026-07-24 are now consecutive single-fire days."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "process",
+            "anchor": "runtime-preflight/runtime.same_pid_as_2026_07_23_eval",
+            "excerpt": "The active runtime is still node dist/index.js PID 2344, started 2026-07-21 15:03:13 local time; elapsed time is now 2 days 19 hours, confirming no post-PR #134 restart occurred before the 2026-07-24 eval."
+          },
+          {
+            "type": "git",
+            "anchor": "runtime-preflight/runtime.local_head_behind_origin_main_commits",
+            "excerpt": "The runtime checkout HEAD remains d5961fe3 while fetched origin/main is 6fd68e7a; git rev-list --count HEAD..origin/main reports 7 commits behind, including PR #134, PR #136, and related 2026-07-22/23 verdict PRs."
+          },
+          {
+            "type": "github",
+            "anchor": "implementation-lineage/implementation.pr134_merged_remote",
+            "excerpt": "PR #134 merged at 3f3a8e5ad0da4c51983f43baca3fad7ccd6e0850 and restored the F167 path B sourceRefs prewrite plus grounding samples confidence fix on remote main."
+          },
+          {
+            "type": "github",
+            "anchor": "implementation-lineage/implementation.pr136_verdict_merged_remote",
+            "excerpt": "PR #136 merged at 6fd68e7ada21947a59cf86cbe002c5286796ce08, documenting the first post-#134 runtime refresh blocker; origin/main now points at that verdict."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.remote_main_has_cron_predefine_file",
+            "excerpt": "origin/main contains packages/api/src/infrastructure/harness-eval/cron-predefine.ts, cron-telemetry-source.ts, and snapshot-writer.ts; local HEAD still lacks those files."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.remote_main_has_grounding_has_samples_rule",
+            "excerpt": "origin/main f167-eval.ts contains the hasSamples branch for samples-only low confidence; local HEAD still uses the old no-data rule."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "source-refs-prewrite/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-07-24 scheduled callback payload included no sourceRefs, and docs/harness-feedback contained no 2026-07-24 f167-a2a snapshot/attribution raw YAML before this diagnostic sourceRefs write."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "source-refs-prewrite/telemetry.counter_window_missing",
+            "excerpt": "Because PID 2344 is still running the pre-#134 checkout/dist, today's callback again has no counter_window/counterWindow block or grounding-phase-o sample distribution."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/telemetry.pr116_confidence_rule_not_loaded_in_runtime",
+            "excerpt": "The grounding-phase-o confidence fix exists on origin/main but is not loaded by the active runtime, so sample-store evidence cannot surface until the process is refreshed."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "pull_build_restart_runtime",
+          "target": "eval-domain-daily runtime process PID 2344",
+          "rationale": "Remote main contains the recovered F167 code and the scheduler is firing; the remaining blocker is loading origin/main into the runtime process."
+        },
+        {
+          "action": "run_post_restart_acceptance_probe",
+          "target": "F167 Phase O eval:a2a sourceRefs prewrite",
+          "rationale": "After restart, verify sourceRefs.snapshotName/sourceRefs.attributionName plus counter_window.duration_hours before waiting for another daily cycle."
+        },
+        {
+          "action": "assign_sync_clobber_guard_owner",
+          "target": "F192 harness governance or merge-gate",
+          "rationale": "The sync-clobber prevention work remains unowned even though PR #134 recovered the second occurrence."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

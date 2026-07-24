@@ -1,0 +1,87 @@
+{
+  "verdictId": "2026-07-24-eval-a2a-pr134-runtime-refresh-blocker-day-2",
+  "evalSnapshotId": "eval-F167-2026-07-24",
+  "featureId": "F167",
+  "generatedAt": "2026-07-24T03:01:30Z",
+  "window": {
+    "startMs": 1784775599889,
+    "endMs": 1784861999904,
+    "durationHours": 24
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_since_prior": 1,
+        "eval_domain_daily.eval_a2a_runs_on_2026_07_24": 1
+      },
+      "frictionCounts": {
+        "eval_domain_daily.missed_daily_runs_since_prior": 0,
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "runtime-preflight",
+      "name": "runtime process and checkout preflight",
+      "confidence": "high",
+      "activationCounts": {
+        "runtime.pid_2344_running": 1,
+        "runtime.same_pid_as_2026_07_23_eval": 1,
+        "runtime.origin_main_contains_pr134_recovery": 1,
+        "runtime.origin_main_contains_source_refs_prewrite_files": 1,
+        "runtime.origin_main_contains_grounding_samples_confidence_rule": 1
+      },
+      "frictionCounts": {
+        "runtime.process_started_before_pr134": 1,
+        "runtime.local_head_behind_origin_main_commits": 7,
+        "runtime.local_head_matches_origin_main": 0,
+        "runtime.post_pr134_failed_eval_days": 2,
+        "runtime.api_port_3004_listener_missing": 1
+      }
+    },
+    {
+      "id": "source-refs-prewrite",
+      "name": "F167 cron-side sourceRefs prewrite",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.prewritten_source_refs_missing": 1,
+        "telemetry.counter_window_missing": 1,
+        "telemetry.raw_2026_07_24_snapshot_preexisting": 0
+      }
+    },
+    {
+      "id": "implementation-lineage",
+      "name": "F167 path B implementation lineage",
+      "confidence": "medium",
+      "activationCounts": {
+        "implementation.pr134_merged_remote": 1,
+        "implementation.pr136_verdict_merged_remote": 1,
+        "implementation.remote_main_has_cron_predefine_file": 1,
+        "implementation.remote_main_has_cron_telemetry_source_file": 1,
+        "implementation.remote_main_has_snapshot_writer_file": 1,
+        "implementation.remote_main_has_grounding_has_samples_rule": 1
+      },
+      "frictionCounts": {
+        "implementation.local_runtime_head_lacks_cron_predefine_file": 1,
+        "implementation.local_runtime_head_lacks_cron_telemetry_source_file": 1,
+        "implementation.local_runtime_head_lacks_snapshot_writer_file": 1,
+        "implementation.local_runtime_head_lacks_grounding_has_samples_rule": 1
+      }
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.grounding_phase_o_no_data": 1,
+        "telemetry.pr116_confidence_rule_not_loaded_in_runtime": 1
+      }
+    }
+  ]
+}
