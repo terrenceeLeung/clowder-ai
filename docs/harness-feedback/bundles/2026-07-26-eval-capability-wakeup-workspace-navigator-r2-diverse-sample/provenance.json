@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-26-eval-capability-wakeup-workspace-navigator-r2-diverse-sample",
+  "rawInputs": [
+    {
+      "path": "generated/capability-wakeup/2026-07-26-eval-capability-wakeup-workspace-navigator-r2-diverse-sample/trials.json",
+      "sha256": "99351dc299665170d7e2318c55323c256e44ca928f9234e3cde7c581acbde167"
+    },
+    {
+      "path": "generated/capability-wakeup/2026-07-26-eval-capability-wakeup-workspace-navigator-r2-diverse-sample/summary.json",
+      "sha256": "144b2b3fa0f6a73beb5876c168ad0eb89022fdaddc7d52219e302fbeea480218"
+    }
+  ],
+  "generatedAt": "2026-07-26T03:04:41.253Z",
+  "generator": {
+    "name": "eval-capability-wakeup-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-capability-wakeup-v1"
+}
