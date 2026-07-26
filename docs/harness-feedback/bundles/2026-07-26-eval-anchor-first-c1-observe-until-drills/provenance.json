@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-26-eval-anchor-first-c1-observe-until-drills",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-26-eval-anchor-first-c1-observe-until-drills/raw/rollup.json",
+      "sha256": "8a771b71718529da2167039d18288f6c6289c64a2d2378f97b373d72957fffbc"
+    }
+  ],
+  "generatedAt": "2026-07-26T03:07:08.684Z",
+  "generator": {
+    "name": "eval-anchor-first-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f236-anchor-telemetry-v1"
+}
