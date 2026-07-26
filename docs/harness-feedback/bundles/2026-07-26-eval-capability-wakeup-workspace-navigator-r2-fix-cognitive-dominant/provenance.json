@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-26-eval-capability-wakeup-workspace-navigator-r2-fix-cognitive-dominant",
+  "rawInputs": [
+    {
+      "path": "generated/capability-wakeup/2026-07-26-eval-capability-wakeup-workspace-navigator-r2-fix-cognitive-dominant/trials.json",
+      "sha256": "4762dd3cb839637342ecf7633b6f6b9c205294bcc3fe5c43f7f5f11ee1377b22"
+    },
+    {
+      "path": "generated/capability-wakeup/2026-07-26-eval-capability-wakeup-workspace-navigator-r2-fix-cognitive-dominant/summary.json",
+      "sha256": "305c327e4d7af07f9942e00aa44ef9e71024e3fd0a16b7a79118d4c87b51df61"
+    }
+  ],
+  "generatedAt": "2026-07-26T03:07:29.185Z",
+  "generator": {
+    "name": "eval-capability-wakeup-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-capability-wakeup-v1"
+}
