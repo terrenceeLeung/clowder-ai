@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale",
+  "rawInputs": [
+    {
+      "path": "generated/sop/2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale/trace.json",
+      "sha256": "7dbe82c03896fc087dec104bdadaf7817a23a9ddcb71c9f774673af0bb21f943"
+    },
+    {
+      "path": "generated/sop/2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale/eval-results.json",
+      "sha256": "51256a8035215d7c6d12ea983fb1f133fd32910cf1f8d3059f64c1301905e44d"
+    }
+  ],
+  "generatedAt": "2026-07-25T03:00:00.000Z",
+  "generator": {
+    "name": "eval-sop-live-verdict",
+    "version": "2"
+  },
+  "sanitizeRulesVersion": "f192-sop-trace-v1"
+}
