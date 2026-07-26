@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale",
+  "evalSnapshotId": "sop-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale",
+  "featureId": "F192",
+  "generatedAt": "2026-07-25T03:00:00.000Z",
+  "window": {
+    "durationHours": 336
+  },
+  "components": [
+    {
+      "id": "sop-compliance",
+      "name": "SOP development / merge",
+      "confidence": "medium",
+      "activationCounts": {
+        "rules_passed": 6,
+        "rules_evaluated": 22
+      },
+      "frictionCounts": {
+        "violations_blocker": 6,
+        "violations_warn": 0,
+        "rules_skipped": 10
+      }
+    }
+  ],
+  "sopDefinitionId": "development",
+  "observedStage": "merge",
+  "sessionId": "eval-sop-2026-07-11-pr-113-clean-merge-cycle-observed"
+}

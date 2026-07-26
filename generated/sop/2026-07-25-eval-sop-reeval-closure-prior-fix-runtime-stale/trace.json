@@ -1,0 +1,34 @@
+{
+  "verdictId": "2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale",
+  "featureId": "F192",
+  "generatedAt": "2026-07-25T03:00:00.000Z",
+  "trace": {
+    "sessionId": "eval-sop-2026-07-11-pr-113-clean-merge-cycle-observed",
+    "sopDefinitionId": "development",
+    "observedStage": "merge",
+    "commands": [
+      {
+        "command": "gh pr merge 113 --squash --delete-branch",
+        "exitCode": 0
+      }
+    ],
+    "envSnapshot": {
+      "REDIS_URL": "redis://localhost:6399"
+    },
+    "gitState": {
+      "branch": "main",
+      "ahead": 0,
+      "behind": 0,
+      "clean": true,
+      "worktreeRoot": "/Users/tianyiliang/projects/clowder-ai"
+    },
+    "handles": {
+      "author": "opus-47"
+    },
+    "shaContext": {
+      "verdict_commit": "25399583757296f78d402f7c06cad689954e0a36",
+      "pr_base_at_publish": "978df08aa7561d8c8d80201aa1ce54ea546827ec",
+      "merged_at": "2026-07-12T03:10:19Z"
+    }
+  }
+}

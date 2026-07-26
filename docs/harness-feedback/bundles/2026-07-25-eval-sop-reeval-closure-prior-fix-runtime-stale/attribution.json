@@ -1,0 +1,176 @@
+{
+  "verdictId": "2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale",
+  "featureId": "F192",
+  "evalSnapshotId": "sop-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale",
+  "generatedAt": "2026-07-25T03:00:00.000Z",
+  "findings": [
+    {
+      "id": "SOP-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale-0",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "env_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-25T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "impl-redis-6398-only: env REDIS_URL=\"redis://localhost:6399\" must include \":6398\""
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "env REDIS_URL=\"redis://localhost:6399\" must include \":6398\""
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale-1",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_pattern",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-25T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "impl-user-journey-missing: required command pattern \"pnpm check:features|node scripts/check-feature-truth\" not found (or failed) in session commands"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "required command pattern \"pnpm check:features|node scripts/check-feature-truth\" not found (or failed) in session commands"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale-2",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_pattern",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-25T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "quality-gate-full-test-evidence: required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found (or failed) in session commands"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "required command pattern \"pnpm gate|pnpm test|pnpm --filter .* test|node --test\" not found (or failed) in session commands"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale-3",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "handle_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-25T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "review-no-self-review: no reviewer assigned"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "no reviewer assigned"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale-4",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "command_sequence",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-25T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "completion-pr-merged-feature-check: required command \"gh pr view\" missing from sequence"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "required command \"gh pr view\" missing from sequence"
+        }
+      ],
+      "status": "open"
+    },
+    {
+      "id": "SOP-2026-07-25-eval-sop-reeval-closure-prior-fix-runtime-stale-5",
+      "relatedFeature": "F192",
+      "frictionSignal": {
+        "type": "handle_check",
+        "severity": "high",
+        "confidence": 0.9,
+        "detectedAt": "2026-07-25T03:00:00.000Z"
+      },
+      "attribution": {
+        "primaryLayer": "sop-compliance",
+        "evidence": [
+          {
+            "type": "sop-violation",
+            "anchor": "sop-compliance/violations_blocker",
+            "excerpt": "completion-missing-guardian-handoff: guardian handoff not present"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe",
+          "target": "F192",
+          "rationale": "guardian handoff not present"
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
