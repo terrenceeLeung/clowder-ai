@@ -1,0 +1,31 @@
+{
+  "verdictId": "2026-07-26-eval-capability-wakeup-workspace-navigator-r2-fix-cognitive-dominant",
+  "evalSnapshotId": "eval-F203-workspace_navigator-2026-07-26",
+  "featureId": "F203",
+  "generatedAt": "2026-07-26T03:07:29.185Z",
+  "window": {
+    "startMs": 1783839669165,
+    "endMs": 1784080858129,
+    "durationHours": 66.997
+  },
+  "components": [
+    {
+      "id": "workspace-navigator",
+      "name": "workspace-navigator",
+      "activationCounts": {
+        "opportunity_count": 53,
+        "used_count": 0,
+        "false_positive_count": 0
+      },
+      "frictionCounts": {
+        "miss_count": 53,
+        "cognitive_count": 53,
+        "behavioral_count": 0,
+        "attention_dilution_count": 0,
+        "reachability_doubt_count": 0,
+        "unclassified_count": 0
+      },
+      "confidence": "medium"
+    }
+  ]
+}
