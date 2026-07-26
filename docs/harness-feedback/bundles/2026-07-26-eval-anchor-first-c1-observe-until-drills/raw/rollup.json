@@ -1,0 +1,36 @@
+{
+  "verdictId": "2026-07-26-eval-anchor-first-c1-observe-until-drills",
+  "selector": {
+    "kind": "anchor-telemetry-snapshot",
+    "windowStartMs": 1784948399396,
+    "windowEndMs": 1785034799396
+  },
+  "rollup": {
+    "perTool": {},
+    "orphanDrills": 0,
+    "adoption": {
+      "explicitAnchorCalls": 0,
+      "explicitFullCalls": 0,
+      "defaultAnchorCalls": 0,
+      "defaultFullCalls": 0,
+      "legacyEquivalentAnchorCalls": 0,
+      "legacyEquivalentFullCalls": 0,
+      "unknownModeCalls": 0,
+      "uniqueCatsExplicitAnchor": 0
+    },
+    "track1Snapshot": {
+      "returnedByTool": {
+        "thread-context": 3
+      },
+      "returnedCharsByTool": {
+        "thread-context": 18344
+      },
+      "drillByTool": {
+        "get-message": 3
+      },
+      "drillCharsByTool": {
+        "get-message": 2526
+      }
+    }
+  }
+}
