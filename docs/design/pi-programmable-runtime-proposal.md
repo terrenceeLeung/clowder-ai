@@ -259,7 +259,7 @@ pi 介入点：`session_before_compact`（可取消/可接管）、`context` 事
   3. 只注册一个 fixture tool，证明 host-side capability broker 与 **deny path**；不抽 toolkit
   4. 实测记录 `steer` 语义边界：当前 assistant turn 的 tool calls 结束后、下一次 LLM call 前生效（非 mid-tool preemption）
   5. UI request 证明 timeout-default-deny、进程退出、重连、orphan response 的确定行为
-  6. 产出 **"现有 carrier × 七项 capability" 版本化矩阵**（逐 carrier 逐版本写 capability delta，替代"黑盒/半残"概括），作为 keep/tune/sunset 决策输入
+  6. 产出 **版本化 capability 矩阵**——按 upstream 四轴规格（见附录 C），非 `programmable` 布尔档位；逐 carrier 逐版本写 capability delta，作为 keep/tune/sunset 决策输入，配 conformance fixtures
 - **Phase 1 — 地基（复核通过后）**：`PiAgentService` + `PiRpcFramer` + transformer；agent_dir 编译器；env-map 加行；§8 host 强制边界全量落地。
 - **Phase 2 — 柱子（收窄后）**：compaction 防线 1+3（save/restore）；steer + UI 桥基础版（confirm/select → Hub 卡片，timeout + 落 thread）；工具面消费 #955 结论。
 - **Phase 3 — 深水区**：compaction 防线 2（审计数据驱动）；policy hooks + UI 桥权限流（高危拦截→实时问人闭环）；进程内 eval 埋点。
@@ -278,7 +278,32 @@ pi 介入点：`session_before_compact`（可取消/可接管）、`context` 事
 | settle-check 单独切片 | 与我方"不依赖 pi、独立有价值"标注一致 | 移出本线独立推进 |
 | steer 语义精确化 | 采纳（tool calls 结束后、下次 LLM call 前，非 mid-tool）| Phase 0 实测项 #4 |
 
-## 11. 附录 B — 甄别落选记录（体现纪律，供 reviewer 检验）
+## 11. 附录 B — Upstream 技术基线（maintainer 2026-07-27 第三评，公开 main SHA `7207936a`）
+
+> 性质：capability matrix 与 Phase 0 conformance fixtures 的规格输入。maintainer 明示"不要求现在改 proposal、不改变球权"；此处收录防规格丢失，Phase 0 获准时按此定 fixture。
+
+**三条 carrier 实测基线（版本锚定）：**
+
+| Carrier | Bootstrap (L0) | Runtime hooks | 关键实测 |
+|---|---|---|---|
+| Codex | `injectsL0Natively()=true`，per-invocation 编译经 `developer_instructions` 进 native developer role，fail-closed | **生产链 `codex exec --json` 不 dispatch `.codex/hooks.json` Stop hook** → server-side routing guard 仍必需 | **native L0 与 runtime hook reachability 是两项独立能力**；启动前配置（MCP/sandbox/approval/auto-compact limit）≠ 运行中能力（dynamic tools/steer/UI delegation/compaction hook）|
+| Kimi | 无 native-L0，identity 走 prompt prepend | 无项目级 lifecycle hook / 动态工具 / UI bridge / compaction control | resume 只有 session id，**无 L0 generation/fingerprint freshness 契约**；临时 MCP config 仅 legacy `kimi-cli` 分支 argv 传入 |
+| 共享 HookPipeline | `session-init \| per-turn` stage × `message-prepend \| native-l0 \| pack-only \| always-delivered` delivery | — | 描述 prompt 组装与投递，**不能当作 carrier 支持 runtime hook 的证明** |
+
+**Matrix 四轴规格（替代 `programmable` 布尔值）：**
+
+1. **bootstrap / provisioning**：native L0、stage、delivery channel、fail-closed、去重
+2. **continuity**：resume 重放或冻结、L0 generation/fingerprint、变化后 fresh-start
+3. **lifecycle hooks**：event × effect level（observe / inject / mutate / block）× carrier mode 的**真实可达性**（配置存在 ≠ 可达，Codex Stop hook 为反例）
+4. **runtime control / tools / events / security**：pre-launch MCP 与 runtime dynamic tools 分开；auto-compact 配置与 compaction hook 分开；freshness input 与 general steering 分开
+
+`programmable` = 四轴协商后的聚合结果，不是吞掉差异的静态档位。
+
+**对 settle-check 切片的影响**：原设想"codex 无执行点、CC Stop hook 可接"需精化——codex 即使配置 hooks.json，`exec --json` 链上 Stop hook 亦不可达；server-side routing guard（F064 型出口检查）是 codex 系唯一现实执行点，pi extension 是其第一个 runtime 内执行点。
+
+**代码锚点（upstream 公开 main）**：`CodexAgentService.ts` / `KimiAgentService.ts` / `agent-hooks/sync-targets.ts` / `shared/types/prompt-hook.ts`
+
+## 11. 附录 C — 甄别落选记录（体现纪律，供 reviewer 检验）
 
 - **Session tree（fork/分支探索）**：无既存痛证据（三问第一问不过）——方案对比现用 expert-panel/多猫并行可覆盖。留作实验台仪器（失败分支 = eval 天然负样本）。若采用，需立规矩：球权只在一个 active branch。
 - **Per-turn 动态 L0**：F203 静态注入已工作，动态化属锦上添花。
