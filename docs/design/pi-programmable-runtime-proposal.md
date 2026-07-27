@@ -2,7 +2,8 @@
 topics: [pi, programmable-runtime, harness, carrier, compaction, extension, upstream-proposal]
 doc_kind: proposal
 created: 2026-07-27
-status: submitted — upstream issue zts212653/clowder-ai#1221（2026-07-27）；UI 桥经 co-creator verdict 升格为 A（交互友好）
+status: rev1 — upstream #1221 NEEDS-DISCUSSION（maintainer 2026-07-27）；按四 claim 收编重构 + Phase 0 收窄；暂不提交实现 PR，等 F241/#941 线复核
+upstream_alignment: 「programmable = F143/F241 capability 协商结果，非平行架构」「动态工具面归 #955」「Kimi 归 #1173/F161」「settle-check 独立切片」
 authors: [宪宪/claude-fable-5, 砚砚/gpt-5.6-sol(并行独立观点), co-creator]
 ---
 
@@ -66,7 +67,9 @@ clowder-ai 本质是一个 harness engineering 系统：在 CLI runtime 外包�
 
 ## 4. 提案核心 — 定义能力接口，而非绑定 pi
 
-向 upstream 提的不是"接入 pi"，而是：**clowder-ai 需要一个 programmable runtime slot** —— 在 F143 四维模型（Transport × Binding × RuntimeContract × EventAdapter）的 RuntimeContract 维度增加一档 `programmable`，定义 harness 主权能力接口：
+> **Rev 1（upstream review 收编）**：`programmable` 不是 RuntimeContract 新增的静态档位，而是 **F143/F241 既有架构线下的 capability profile 协商结果**——runtime 声明自己满足哪些能力项，harness 按协商结果启用对应策略。pi 以 `pi-rpc` **experimental transport** 身份挂 #941（plugin-owned agentProvider）线接入，不新建平行 runtime 架构、不新增 registry/supervisor/session/security 体系。本提案由此收窄为四个独立 claim：① capability profile + pi-rpc experimental transport（本文档主体）；② 动态工具面归 #955（MCP Tool Hub + Lazy Tool Retrieval），本提案只消费其结论；③ Kimi 归 #1173/F161，pi+Kimi 仅作将来对照 carrier；④ settle-check 独立切片，不绑定 pi 上线。
+
+能力接口定义（capability profile 的协商项）：
 
 ```
 ProgrammableRuntimeContract（能力接口，任何满足者皆可为 carrier）:
@@ -115,16 +118,11 @@ pi --mode rpc
         └─ harness endpoints（settle-check / compaction-summary / policy / telemetry）
 ```
 
-### 5.1 工具层：toolkit 双投影（P4 单一真相源）
+### 5.1 工具层：toolkit 双投影（P4 单一真相源）—— 长期方向，非 spike 前置
 
-代码现状已支持：`packages/mcp-server` 中工具已是结构化 `ToolDef = { name, description, inputSchema, handler }` 注册表，handler 为纯 TS 函数（HTTP 调 backend / 本地 SQLite），McpServer 只是薄壳；且已有按 runtime/凭证裁剪暴露的先例（F061 `READONLY_ALLOWED_TOOLS`、F178 `AGENT_KEY_TOOLS`）。
+> **Rev 1 修正**：初稿称此步"纯重构零行为变化"——**该说法不成立**（upstream Q4 WARN 采纳）。现有 MCP 注册面承载的不只是 ToolDef 列表：auth-aware whitelist（F061 `READONLY_ALLOWED_TOOLS` / F178 `AGENT_KEY_TOOLS` 是凭证语义）、`json-schema-to-zod` 转换层、freshness/lifecycle 包装——抽包属于**安全与行为迁移**，需独立设计与验证。且此域与 #955（MCP Tool Hub）职责重叠，真相源收敛方案应在 #955 线上决定，本提案只消费其结论。
 
-改造 = 把 ToolDef 层抽成 **`@cat-cafe/toolkit`**（runtime-agnostic 包），两个消费者：
-
-- **MCP serving 面**（现状保留，claude code / codex / gemini / opencode 继续用，零行为变化）
-- **clowder-extension serving 面**（pi 专用薄投影：循环 `registerTool()`，schema 做 zod/JSON-Schema → TypeBox 机械转换）
-
-**MCP 从"工具的形态"降格为"工具的 serving 面之一"。** 加新工具零 extension 改动；未来新 harness = 加一个薄投影。
+长期方向不变：工具能力是真相源，协议是投影——pi extension 面最终应与 MCP 面同源。但路径修正为：**Phase 0 只注册一个 fixture tool 证明 host-side capability broker 与 deny path，不动现有注册面**；toolkit 收敛等 #955 结论后对齐。
 
 ### 5.2 瘦 extension 原则（铁律）
 
@@ -189,11 +187,9 @@ pi 介入点：`session_before_compact`（可取消/可接管）、`context` 事
 
 分期：先上 1+3（无损外存+重灌，纯增益零风险）；防线 2 拿审计数据迭代（自定义总结做差可能不如默认，不冒进）。
 
-### 6.2 工具面积动态化 —— 治 KD-12/FU-4
+### 6.2 工具面积动态化 —— 治 KD-12/FU-4（归 #955，本提案消费其结论）
 
-pi 官方 "Dynamic Tool Loading Pattern"（一等公民设计，非 hack）：全量 `registerTool` → 初始只激活 loader tool → loader 调 `setActiveTools` 增量激活；Anthropic 4.5+ / GPT-5.4+ 有 provider 级 native deferred loading。
-
-落法：核心高频工具 10~15 个起步 + discover 元工具按需激活长尾。对 128k 猫是量级性工作空间释放。验证后模式反哺 MCP 面（按 cat/session 裁剪，现有白名单机制是雏形）。
+> **Rev 1**：lazy tool retrieval 已由 #955（MCP Tool Hub — 集中纳管 + Lazy Tool Retrieval）拥有，本提案不重开此域。保留的增量论点仅一条：pi 的 `setActiveTools` + 官方 "Dynamic Tool Loading Pattern"（含 Anthropic 4.5+/GPT-5.4+ provider 级 native deferred loading）为 #955 的方案提供一个**运行时侧的实现面与实验数据源**——per-turn 动态激活在 pi 上是原生操作，可为 #955 的裁剪策略跑出 context 占用/compaction 频率的实测对照。
 
 ### 6.3 运行中双向交互 —— steer（人→猫）+ UI 桥（猫→人）
 
@@ -232,8 +228,7 @@ pi 官方 "Dynamic Tool Loading Pattern"（一等公民设计，非 hack）：�
 
 | Gap | 现实 | 缓解 | 阶段 |
 |---|---|---|---|
-| 无权限系统 | 无 allow/deny/ask 引擎，默认全权执行 | `tool_call` hook 即权限原语（可 block/改 args）；社区 pi-permission-system 证明生态位；**UI 桥补第三选项**（机制见 §6.3）：policy 拦到高危操作 → Hub 卡片实时问 operator，不必 hard-block 或放行 | P1 接受（现有 CLI 猫本多 bypass 跑，风险不新增）；P2/P3 policy-hook + UI 桥权限流 |
-| 无 OS sandbox | bash 直接用户权限（codex 有 seatbelt/landlock）| worktree 纪律 + 五条铁律 + agent_dir 隔离；**是接受不是解决**，长期容器化 | 接受并声明 |
+| 无权限系统 + 无 OS sandbox | pi extension 官方边界 = arbitrary code / full system permissions，无 seatbelt/landlock 类隔离 | **Rev 1 修正**：初稿"现有 CLI 猫本多 bypass 跑、风险不新增"的论证**不成立**（upstream Q5 FAIL 采纳）——现有 harness 有 vendor 安全工程，pi extension 是我们向无 sandbox 进程注入代码，边界责任在 host。获得任何生产球权前，host 必须强制：cwd 约束、credential 隔离（短期 capability token）、callback 白名单、tool allowlist、timeout/cancel/reconnect 语义、extension provenance（版本 pin + 哈希校验）。`tool_call` hook 权限原语 + UI 桥"实时问人"（§6.3）为补充层，不替代 host 强制边界 | **Phase 0 即全量生效**（spike 无生产身份/球权/共享凭证）；host 边界清单是 pi 转正的硬前置 |
 | 无 subagent/fan-out | 原生无 Agent tool 类能力 | A2A 补位（本系统的跨猫编排本就是 subagent 替代）；extension 可 spawn `pi -p` 自建 | 接受 |
 | 内置工具仅四件套 | 无 WebSearch/WebFetch | extension 补注册（toolkit 投影顺带解决）| P2 |
 | Extension API 无版本承诺 | 活跃演化（repo badlogic → earendil-works 迁移中）| 版本 pin + 协议 fixture 测试（F105 管 opencode 同款）；adapter 层隔离 | 常态 |
@@ -256,13 +251,34 @@ pi 官方 "Dynamic Tool Loading Pattern"（一等公民设计，非 hack）：�
 
 ## 10. 分期路线（供 upstream 讨论，非本地承诺）
 
-- **Phase 0 — Spike（~1 天）**：`pi --mode rpc` 跑通 prompt→事件流；extension `registerTool` schema 格式确认 + HTTP 调 backend；`context`/`session_before_compact` 事件行为实测；`setActiveTools` 会话中动态性；RPC 下 `extension_ui_request` 往返；`project_trust` 程序化应答。**六个问号全是小实验，出否决项即停。**
-- **Phase 1 — 地基**：`@cat-cafe/toolkit` 抽包（纯重构，现有 runtime 零行为变化）；`PiAgentService` + `PiRpcFramer` + transformer；agent_dir 编译器；env-map 加行。
-- **Phase 2 — 三根柱子**：clowder-extension（工具投影 + deferred loading）；compaction 防线 1+3；steer 通道 + UI 桥基础版（confirm/select → Hub 卡片，timeout + 落 thread）；settle-check endpoint + 双家族执行点（CC Stop hook 顺带接入）。
-- **Phase 3 — 深水区**：compaction 防线 2（审计数据驱动）；policy hooks + UI 桥权限流（高危拦截→实时问人闭环）；进程内 eval 埋点。
-- **Phase 4 — 定级**：eval 数据 → operator 决策：pi carrier 转正 / 维持实验台 / 退役。
+> **Rev 1**：Phase 0 按 upstream 窄版重写；toolkit 抽包移出前置（等 #955 结论）；settle-check 移出本线（独立切片）；spike 开工待 upstream 在 F241/#941 线复核批准，**暂不提交实现 PR**。
 
-## 11. 附录 — 甄别落选记录（体现纪律，供 reviewer 检验）
+- **Phase 0 — 窄版 Spike（upstream 认可边界，出否决项即停）**：
+  1. pin pi 版本（maintainer 锚点 v0.82.1）+ license 审计；fixture 覆盖 strict LF framing、`agent_settled` 收口、crash/cancel/resume
+  2. 隔离 `PI_CODING_AGENT_DIR`，不读 ambient config；**不给生产猫身份、球权、共享凭证**
+  3. 只注册一个 fixture tool，证明 host-side capability broker 与 **deny path**；不抽 toolkit
+  4. 实测记录 `steer` 语义边界：当前 assistant turn 的 tool calls 结束后、下一次 LLM call 前生效（非 mid-tool preemption）
+  5. UI request 证明 timeout-default-deny、进程退出、重连、orphan response 的确定行为
+  6. 产出 **"现有 carrier × 七项 capability" 版本化矩阵**（逐 carrier 逐版本写 capability delta，替代"黑盒/半残"概括），作为 keep/tune/sunset 决策输入
+- **Phase 1 — 地基（复核通过后）**：`PiAgentService` + `PiRpcFramer` + transformer；agent_dir 编译器；env-map 加行；§8 host 强制边界全量落地。
+- **Phase 2 — 柱子（收窄后）**：compaction 防线 1+3（save/restore）；steer + UI 桥基础版（confirm/select → Hub 卡片，timeout + 落 thread）；工具面消费 #955 结论。
+- **Phase 3 — 深水区**：compaction 防线 2（审计数据驱动）；policy hooks + UI 桥权限流（高危拦截→实时问人闭环）；进程内 eval 埋点。
+- **Phase 4 — 定级**：eval 数据 → operator 决策：pi carrier 转正 / 维持实验台 / 退役（转正需过 §8 host 边界硬前置）。
+
+**移出本线的独立切片**：settle-check endpoint（runtime-neutral 判定服务，独立 issue 推进，各 carrier 自接执行点——pi extension / CC Stop hook——不绑定 pi 上线）。
+
+## 11. 附录 A — Rev 1 修订记录（upstream #1221 maintainer review，2026-07-27）
+
+| 来源 | 判定 | 我方处理 |
+|---|---|---|
+| Q2 WARN：与 #941/F241、#955、#1173/F161 重叠 | 信息差（提案前未扫 upstream open issues——检索缺口，已沉淀教训）| 四 claim 收编（§4 Rev 1 块）|
+| Q3 WARN："黑盒/半残"概括不严谨 | 采纳 | Phase 0 产出版本化 capability 矩阵替代概括 |
+| Q4 WARN：toolkit"纯重构零行为变化"不成立 | **我方错误，采纳**（auth whitelist/schema 转换/lifecycle 包装 = 行为迁移）| §5.1 改为长期方向、非 spike 前置、等 #955 |
+| Q5 FAIL："风险不新增"论证不成立 | **我方糊弄修辞，采纳** | §8 重写为 host 强制边界清单，Phase 0 即生效 |
+| settle-check 单独切片 | 与我方"不依赖 pi、独立有价值"标注一致 | 移出本线独立推进 |
+| steer 语义精确化 | 采纳（tool calls 结束后、下次 LLM call 前，非 mid-tool）| Phase 0 实测项 #4 |
+
+## 11. 附录 B — 甄别落选记录（体现纪律，供 reviewer 检验）
 
 - **Session tree（fork/分支探索）**：无既存痛证据（三问第一问不过）——方案对比现用 expert-panel/多猫并行可覆盖。留作实验台仪器（失败分支 = eval 天然负样本）。若采用，需立规矩：球权只在一个 active branch。
 - **Per-turn 动态 L0**：F203 静态注入已工作，动态化属锦上添花。
