@@ -108,6 +108,46 @@ related: [pi-programmable-runtime-proposal.md, F194, F211, F225, F203, F161, F06
 3. **Programmable Agent Runtime Contract 需求清单**（sol 起草，宪宪确认，共八项）：before-turn/context mutation · dynamic tool activation · tool-call policy (allow/deny/ask) · before-settle interception + same-loop follow-up · structured lifecycle/heartbeat · session create/resume/fork/switch · steer/UI request-response · **workspace rebind（或带连续性语义的 process handoff）**。pi 是首个参考实现 ≠ 永久绑定 pi。
 4. **权限 package**（co-creator 指出）：pi-permission-system 作为 tool-hook 权限候选，先过 provenance/license/版本/绕过面审计；它管工具调用权限，不管进程被攻破后的 OS 隔离。
 
+## 附：Auto-Harness / Harness Lab 对照（2026-07-28 三猫收敛，co-creator 方向）
+
+### 猫咖自进化现状（F192 闭环，四层修改路径）
+
+检测（weekly/3d 周期体检，非实时告警）→ verdict handoff（48h ack）→ 修改：① skill/L0 文本=下轮生效；② hooks=同步后下轮；③ backend 代码=**PR+rebuild+重启**（唯一需重启层，且 merge→重启无自动化衔接——7-23 verdict "runtime not refreshed" 实证）；④ MCP 工具 → re-eval 下周期复验。**一轮 ≈ 2~3 周**。
+
+### 经三轮 co-creator 压力测试后的 pi 净优势（修正史保留）
+
+- ~~拯救 F192 采数断链~~（划掉：那批 no-data 主因是本地 OTel 开关+旧进程运维态，pi 不解决）
+- ~~独有 session fork~~（划掉：CC 有 SDK `forkSession`；猫咖 bg chainKey 补偿就在消化 CC 的 fork 行为）
+- ✅ 行为级信号原生采集点（settle/compaction/工具事件，CC/codex 无处可埋；生态实证：@braintrust/pi-extension 已做 extension 埋点→eval 平台）
+- ✅ extension 进化单元：介于文本层与 backend 层之间的新一层——**可执行代码的能力 + 文本层的生效速度**（显式 `ctx.reload()`，terminal operation，settled 后执行；非 watch mode，恰适合可审计 eval）
+- ✅ fork AB 仪器化增益（CC 可做基础版；pi 增益=RPC 同进程编排 + 稳定 entryId 游标 + 树谱系保留废弃分支；fork 从 user message 分叉，非任意 tool event）
+
+### S 级命题（sol）：三件套组合成实验机
+
+单独看：tree=B 级便利、reload=开发提速、model recipe=配置管理。**组合后**：
+
+> 能固定上下文（失败现场→sessionId+entryId→回归 fixture）、替换可执行 harness（settled 边界 reload 候选 revision）、自动回归并保留因果谱系（appendEntry 写 recipeHash/experimentArm/verdictId）的实验机。
+
+派生能力：paired counterfactual（同前缀 AB）、**harness bisect**（对同一失败现场二分定位引入退化的 extension revision）、shadow harness（候选 policy 只记 would_block 不真拦，比较误杀/漏拦后转正——**权限系统上线的正确路径**）、canary rollout（部分 session 用 recipe B，异常只切配置不回滚 backend）。
+
+边界（sol 守住的）：session tree 只固定对话上下文——完整复现还需 git snapshot、工具 fixture、model 版本、extension hash、recipe hash 一起钉死。
+
+### 判分器接口（宪宪补）
+
+实验机重跑后的 paired verdict 判分显式对接现有分野：掉球/工具调用/token/人工介入 = **machine predicate** 自动判；任务质量 = **judgment rubric** + verifier 猫（复用 #748 tagged-union 与 F192 verdict 体系）。否则"重测快、判分慢"成为新瓶颈。
+
+### Model 动态装配（四层确定性合并，sol 起草）
+
+`constitutional base + runtime capability profile + model recipe + task/phase overlay + experimental delta = EffectiveHarnessRecipe`。处方输入两类：客观 capability（context window/native deferred tools/thinking levels）+ eval 学到的画像（工具准确率/压缩后保持/长上下文偏移）。调的是执行结构（active tools/prompt 密度/compaction 阈值/settle 强度/ask-deny 阈值），不是性格文案。
+
+### 生态调研结论（2026-07-28）
+
+pi 生态（5382 包）：零件齐（@braintrust 埋点桥、pi-reason-harness 推理自优化、gentle-pi SOP 硬化、pi-smart-router 离线路由 eval）、**"eval→verdict→自动改 harness→回归验证"闭环成品空白**。研究界已证方向（Self-Harness weakness-mining 三阶段 40.5%→61.9%；HarnessX +14.5%）。F192 与 Self-Harness 结构同构——猫咖已拥有闭环里最难的 verdict 流程，缺的是"自动提案+回归门"一步。
+
+### 首个 Harness Lab 实验（sol 设计概要，spike 通过后内部做，不进 #1221）
+
+脱敏掉球 session → 固定 checkpoint/git/model/fixture → A=server remedial vs B=pi settle-check extension → appendEntry 写实验标记 → settled 后采同组指标 → 若干组 → F192 paired verdict → shadow/canary → promotion。附带验证五个工程前提：RPC tree 语义一致性、RPC 触发 reload、reload 后状态隔离、AB recipe 跨 session 泄漏、worktree/file state 与 checkpoint 联合恢复。
+
 ## 与 upstream #1221 的关系
 
-本审计是猫咖侧（fork）的内部证据工作，**不进 #1221**（Design Gate 期间不扩设计）。若 gate 放行，实验 D 的 capability 矩阵直接以本文七病灶为"猫咖侧需求列"；Contract 八项可在 spike 数据支撑后作为后续提案。
+本审计是猫咖侧（fork）的内部证据工作，**不进 #1221**（Design Gate 期间不扩设计）。若 gate 放行，实验 D 的 capability 矩阵直接以本文七病灶为"猫咖侧需求列"；Contract 八项可在 spike 数据支撑后作为后续提案；Harness Lab 全部属 spike 之后的内部实验层。
