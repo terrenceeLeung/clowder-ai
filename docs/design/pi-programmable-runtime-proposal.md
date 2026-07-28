@@ -106,7 +106,8 @@ Cat identity / AgentRouter
       ▼
 PiAgentService（AgentService 接口）── ProcessPool / SessionBinding（复用 F149 栈）
       │  strict JSONL RPC (spawn: PI_CODING_AGENT_DIR=<per-cat> pi --mode rpc
-      │   --no-extensions -e <clowder-extension> --no-prompt-templates ...)
+      │   -e <constitutional-bridge> ...；实验层经隔离 agent_dir 的
+      │   auto-discovery 加载——见 §5.3 Rev 2 分层修正)
       ▼
 pi --mode rpc
   ├─ GPT / Kimi / ... provider
@@ -149,7 +150,13 @@ pi --mode rpc
   sessions/                           ← 与 cliSessionId 持久绑定
 ```
 
-启动叠加 `--no-extensions -e <bridge> --no-skills --skill <allowlisted> --no-prompt-templates` 显式加载双保险；ambient `~/.pi/agent` 永不读取。headless 首跑信任：extension 处理 `project_trust` 事件程序化应答。
+**Rev 2 修正（sol review finding，2026-07-28）**：初稿的 `--no-extensions` 全关方案与 hot-reload 实验层冲突——pi 的 auto-discovery 是 extension reload 的正规路径，全关即自断 harness lab。改为**两层加载模型**：
+
+- **宪法层**：`-e <constitutional-bridge>` 显式加载（安全/身份/球权/broker），签名锁定，**不参与 reload**；
+- **实验层**：隔离 agent_dir 内的 allowlist 版本化目录走 auto-discovery，承载可 reload 的候选 harness 模块（revision/hash/verdict provenance 必带）；
+- 隔离保证不变：`PI_CODING_AGENT_DIR` 指向猫咖编译目录，ambient `~/.pi/agent` 永不读取；第三方未审计 package 禁止；`--no-skills --skill <allowlisted> --no-prompt-templates` 照旧。
+
+headless 首跑信任：extension 处理 `project_trust` 事件程序化应答。
 
 ### 5.4 Harness endpoints（runtime 无关的大脑建设）
 
