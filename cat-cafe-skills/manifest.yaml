@@ -535,6 +535,38 @@ skills:
     sop_step: null
     merged_from: null
 
+  github-multiparty-collab:
+    category: "引导与协作"
+    description: >
+      多单位基于 GitHub PR+Issue 协作的外交协议：治理发现（先读 repo 声明的制度再启用协议）、
+      唯一 writer 制（改 vs 通知）、Issue 契约回写闭环、裁决-落地-验收环（三层 ack 模型 + 版本锚定）、
+      以 operator 名义发言的过目铁则。
+      Use when: 与外部单位（其他 GitHub 账号的人类+AI 组合）在共享 repo 协作、跨单位设计收敛/合同冻结、
+      发现别人权威文档的问题、里程碑后同步 Issue/PR 状态、准备以 operator 名义发 comment。
+      Not for: 家内猫协作（用 cross-cat-handoff / request-review）、单团队自己 repo 的合入（用 merge-gate）。
+      GOTCHA: 判断外部协作者身份只看 GitHub 账号——对方单位的 AI 可能与自家猫同名同模型；
+      writer 制/Issue 契约不是 GitHub 通则，先跑协议 0 治理发现，无声明的 repo 不得强加。
+      Output: governance profile + 合规的 GitHub comment / Issue 回写闭环 / 分类验收结论。
+    triggers:
+      - "外部单位"
+      - "跨单位"
+      - "多方协作"
+      - "multiparty"
+      - "唯一 writer"
+      - "writer 制"
+      - "re-ack"
+      - "boundary ack"
+      - "以 operator 名义"
+      - "跨单位设计收敛"
+      - "contract freeze"
+    not_for:
+      - "家内猫协作（用 cross-cat-handoff / request-review）"
+      - "单团队自己 repo 的合入（用 merge-gate）"
+    output: "governance profile + 合规 comment / Issue 回写闭环 / 分类验收结论"
+    next: ["merge-gate", "cross-cat-handoff"]
+    sop_step: null
+    merged_from: null
+
   # ── Thread 编排 ──
   thread-orchestration:
     category: "引导与协作"

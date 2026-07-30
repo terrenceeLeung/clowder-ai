@@ -31,6 +31,7 @@ feat-lifecycle → Design Gate(设计确认) → writing-plans → worktree → 
 | `merge-gate` | 门禁→PR→remote review→merge→清理 | ④⑤⑥ |
 | `open-source-teardown` | 热门开源项目/竞品 agent/runtime 的源码拆解、算法剥皮、营销水分和 tradeoff 判断 | — |
 | `cross-cat-handoff` | 跨猫交接/传话（五件套） | — |
+| `github-multiparty-collab` | 与外部单位在共享 repo 协作（writer 制/Issue 契约/裁决环/operator 名义发言） | — |
 | `deep-research` | 多源深度调研 | — |
 | `source-audit` | 外部数字/benchmark/因果/趋势等高风险 claim 的信源审计与 provenance | — |
 | `ttfund-skills` | 天天基金官方 Skills 网关：基金搜索/净值/持仓/经理/指数/黄金/债市/活期宝事实数据 | — |
