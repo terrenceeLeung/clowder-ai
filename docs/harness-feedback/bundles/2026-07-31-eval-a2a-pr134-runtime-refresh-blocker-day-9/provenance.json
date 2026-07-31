@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-07-31-eval-a2a-pr134-runtime-refresh-blocker-day-9",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-07-31-f167-a2a-snapshot.yaml",
+      "sha256": "348234e953f888a93f4d4b2fe4e281f77a9237538c613680caaab717bd280334"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-07-31-f167-a2a-attribution.yaml",
+      "sha256": "10f5cfc0a974e36c1595cb8c0003e0715d21eb2cc950005a4428b51431408b00"
+    }
+  ],
+  "generatedAt": "2026-07-31T03:01:30Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
