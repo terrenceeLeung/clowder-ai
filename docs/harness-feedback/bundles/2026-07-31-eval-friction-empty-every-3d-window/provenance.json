@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-07-31-eval-friction-empty-every-3d-window",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-07-31-eval-friction-empty-every-3d-window/raw/rollup-report.json",
+      "sha256": "9fc5d3dc593734e4a8d3e0413bb1ce6895bff9c98f1723375e1cbc40df9daa6c"
+    }
+  ],
+  "generatedAt": "2026-07-31T03:01:25.852Z",
+  "generator": {
+    "name": "eval-friction-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f245-friction-rollup-v1"
+}
