@@ -1,0 +1,39 @@
+{
+  "verdictId": "2026-08-01-task-outcome-recurrence-day-27-stub",
+  "windowStartMs": 1785466800000,
+  "windowEndMs": 1785553200000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1785477079711-nnetpo",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "participants": [
+        "fable5"
+      ],
+      "artifacts": [],
+      "terminalState": "in_progress",
+      "verdict": null,
+      "createdAt": "2026-07-31T05:51:19.711Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 103,
+      "episodeId": "ep-1785477079711-nnetpo",
+      "category": "a2",
+      "record": {
+        "type": "proposal_reject",
+        "proposalId": "proposal_ms8ii83d7gnz32fe",
+        "proposalType": "thread",
+        "catId": "fable5",
+        "threadId": "thread_mryn57y41bb86bnn",
+        "proposalTitle": "G01 Task/Thread Ledger 实施（A1–A4）",
+        "timestamp": "2026-07-31T05:51:19.708Z"
+      },
+      "createdAt": "2026-07-31T05:51:19.713Z"
+    }
+  ],
+  "eventRows": []
+}
