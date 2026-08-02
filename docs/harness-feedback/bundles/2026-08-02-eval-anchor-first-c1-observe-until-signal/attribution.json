@@ -1,0 +1,18 @@
+{
+  "verdictId": "2026-08-02-eval-anchor-first-c1-observe-until-signal",
+  "featureId": "F236",
+  "evalSnapshotId": "eval-F236-2026-08-02",
+  "generatedAt": "2026-08-02T03:01:46.689Z",
+  "findings": [],
+  "sunsetAssessment": {
+    "toolCount": 0,
+    "toolsWithAnchorTax": 0,
+    "toolsNetNegative": 0,
+    "toolsHighOpenRate": 0,
+    "lowSampleToolCount": 2
+  },
+  "noFindingRecord": {
+    "reason": "low_sample",
+    "evidence": "2 tool(s) had fewer than 10 previewed items — insufficient data for sunset signal assessment. Raw stats are in verdict markdown Open-Rate Detail."
+  }
+}

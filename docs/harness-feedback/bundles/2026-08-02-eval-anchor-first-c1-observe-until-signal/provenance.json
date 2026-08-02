@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-02-eval-anchor-first-c1-observe-until-signal",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-02-eval-anchor-first-c1-observe-until-signal/raw/rollup.json",
+      "sha256": "fb55d9797895b9bf88eab70fee9839c7c3cb9dfd2f65470bd870dc4fbf7f00c5"
+    }
+  ],
+  "generatedAt": "2026-08-02T03:01:46.689Z",
+  "generator": {
+    "name": "eval-anchor-first-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f236-anchor-telemetry-v1"
+}
