@@ -1,0 +1,86 @@
+{
+  "verdictId": "2026-08-02-eval-a2a-third-sync-clobber-after-runtime-restart",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-02",
+  "generatedAt": "2026-08-02T03:04:30Z",
+  "findings": [
+    {
+      "id": "f167-third-sync-clobber-after-runtime-restart",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "sync_clobber_runtime_refresh_failure",
+        "severity": "high",
+        "confidence": 0.94
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "upstream-sync-main",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 418935 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-02T03:00:00.075Z; 2026-07-22 through 2026-08-02 each have exactly one eval:a2a delivery."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.dynamic_task_defs.harness_fit_digest_count",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "runtime-process",
+            "anchor": "runtime-checkout/runtime.pid_21571_running",
+            "excerpt": "The active API process is PID 21571, node dist/index.js, started 2026-08-01 11:52 local time; old PID 2344 is gone, so a runtime restart happened after the prior blocker period."
+          },
+          {
+            "type": "git",
+            "anchor": "runtime-checkout/runtime.checkout_not_on_origin_main_head",
+            "excerpt": "The runtime checkout HEAD is e0c11043 and tracks upstream/main; after fetch, origin/main is c055fc45, making the runtime checkout 3 commits behind origin/main."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr134_not_ancestor_of_origin_main",
+            "excerpt": "PR #134 is MERGED with merge commit 3f3a8e5ad0da4c51983f43baca3fad7ccd6e0850, but git merge-base --is-ancestor returns false for both origin/main and the runtime checkout."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr160_not_ancestor_of_origin_main",
+            "excerpt": "PR #160 is MERGED with merge commit d219432e86472a81c34b8268789caa609ad0eed5, but it is also not an ancestor of origin/main or the runtime checkout."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "implementation-lineage/implementation.origin_main_missing_cron_predefine_file",
+            "excerpt": "origin/main and upstream/main list only f167-eval.ts and f167-eval-counter-window.ts under packages/api/src/infrastructure/harness-eval for the F167 paths; cron-predefine.ts, cron-telemetry-source.ts, and snapshot-writer.ts are absent."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "implementation-lineage/implementation.origin_main_missing_grounding_has_samples_confidence_rule",
+            "excerpt": "origin/main f167-eval.ts still contains confidence: hasCounters ? 'medium' : 'no-data', so the PR #116 hasSamples -> low confidence rule is absent."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-08-02 eval:a2a scheduled callback included no sourceRefs, and docs/harness-feedback had no 2026-08-02 f167-a2a raw snapshot or attribution before this eval-cat write."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "recover_pr134_path_b_again",
+          "target": "origin/main",
+          "rationale": "Cherry-pick or otherwise restore PR #134's Path B and PR #116 confidence fix onto current origin/main; this is the third observed systemic sync-clobber of the same F167 recovery line."
+        },
+        {
+          "action": "restart_runtime_after_recovery",
+          "target": "runtime API PID 21571",
+          "rationale": "PID 21571 restarted onto clobbered upstream-tracking code; after origin/main is recovered, rebuild dist and restart the runtime so the next eval:a2a delivery carries sourceRefs and counter_window again."
+        },
+        {
+          "action": "block_upstream_sync_clobber",
+          "target": "sync or merge-gate governance",
+          "rationale": "Three clobber events in the same F167 line show that evidence and code merges can silently disappear during upstream sync; add a pre-sync guard or fail-fast check before the next sync window."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
