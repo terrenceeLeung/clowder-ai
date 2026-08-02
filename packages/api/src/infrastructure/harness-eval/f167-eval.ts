@@ -370,13 +370,36 @@ function buildGroundingPhaseO(
     ).length;
   }
 
+  const hasSamples = groundingSamples.length > 0;
+
   const gaps: TelemetryGap[] = [];
   if (!hasCounters) {
     gaps.push({
       metric: 'grounding.check_total',
       reason: 'no_counter',
-      impact: 'Phase O shadow grounding not emitting — hook may not be wired or no stateful tool calls observed',
+      impact: hasSamples
+        ? `Counter-derived rates unavailable (sample-store evidence available: ${groundingSamples.length} events)`
+        : 'Phase O shadow grounding not emitting — hook may not be wired or no stateful tool calls observed',
     });
+  }
+
+  // Confidence rule (F167 Phase O 2026-07-14 fix per verdict PR #108 build ask):
+  //   hasCounters → 'medium' — counter-derived rates available, high signal quality.
+  //   !hasCounters && hasSamples → 'low' — sample-store evidence exists (verdicts by
+  //     tool / mismatch counts / recent actionable events), enough for basic mismatch
+  //     pattern detection but no rate-per-window; NOT the same as truly no data.
+  //   else → 'no-data' — neither counters nor samples; hook unwired or truly quiet.
+  //
+  // Previously all !hasCounters cases collapsed to 'no-data', which caused 82+ real
+  // grounding samples (0 mismatches, 90 total_sampled) to be classified as no-signal
+  // in eval:a2a bundles. See thread_eval_a2a verdict PR #108 for the escalation trail.
+  let confidence: ComponentHealth['confidence'];
+  if (hasCounters) {
+    confidence = 'medium';
+  } else if (hasSamples) {
+    confidence = 'low';
+  } else {
+    confidence = 'no-data';
   }
 
   return {
@@ -387,7 +410,7 @@ function buildGroundingPhaseO(
     frictionSamples: {},
     falsePositiveCandidates: [],
     bypassCandidates: [],
-    confidence: hasCounters ? 'medium' : 'no-data',
+    confidence,
     telemetryGaps: gaps,
   };
 }
