@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-08-02-eval-capability-wakeup-workspace-navigator-r3-intervention-pending",
+  "featureId": "F203",
+  "evalSnapshotId": "eval-F203-workspace_navigator-2026-08-02",
+  "generatedAt": "2026-08-02T03:05:12.011Z",
+  "findings": [
+    {
+      "id": "CW-workspace_navigator-2026-08-02",
+      "relatedFeature": "F203",
+      "frictionSignal": {
+        "type": "workspace_navigator.miss_rate",
+        "severity": "high",
+        "confidence": 0.95,
+        "detectedAt": "2026-08-02T03:05:12.011Z"
+      },
+      "attribution": {
+        "primaryLayer": "cognitive",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "workspace-navigator/cognitive_count",
+            "excerpt": "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+          },
+          {
+            "type": "counter",
+            "anchor": "workspace-navigator/cognitive_count",
+            "excerpt": "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+          },
+          {
+            "type": "counter",
+            "anchor": "workspace-navigator/cognitive_count",
+            "excerpt": "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "doc-fix",
+          "target": "F203/workspace-navigator",
+          "rationale": "how-to guidance update for workspace-navigator"
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

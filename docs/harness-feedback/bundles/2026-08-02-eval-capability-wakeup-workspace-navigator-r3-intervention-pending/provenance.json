@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-02-eval-capability-wakeup-workspace-navigator-r3-intervention-pending",
+  "rawInputs": [
+    {
+      "path": "generated/capability-wakeup/2026-08-02-eval-capability-wakeup-workspace-navigator-r3-intervention-pending/trials.json",
+      "sha256": "5602fe377974c8bf210494be851f18f3e790a65e664ce2d1c2994bc33e85974b"
+    },
+    {
+      "path": "generated/capability-wakeup/2026-08-02-eval-capability-wakeup-workspace-navigator-r3-intervention-pending/summary.json",
+      "sha256": "bd4f92517b7c0c4562097bb96b9a9786f9f49f7671140a31f9828ec67ce916ce"
+    }
+  ],
+  "generatedAt": "2026-08-02T03:05:12.011Z",
+  "generator": {
+    "name": "eval-capability-wakeup-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-capability-wakeup-v1"
+}
