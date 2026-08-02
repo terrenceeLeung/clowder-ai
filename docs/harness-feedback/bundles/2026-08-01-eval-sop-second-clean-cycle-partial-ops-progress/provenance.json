@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress",
+  "rawInputs": [
+    {
+      "path": "generated/sop/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/trace.json",
+      "sha256": "69aa299f66bf36299781f8e677751fb7be72fc956044a61223323a34dbf1082c"
+    },
+    {
+      "path": "generated/sop/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/eval-results.json",
+      "sha256": "197302e6f45980343542eaedfe22c8991878a57ca8061ffad37feea24549593b"
+    }
+  ],
+  "generatedAt": "2026-08-01T03:00:00.000Z",
+  "generator": {
+    "name": "eval-sop-live-verdict",
+    "version": "2"
+  },
+  "sanitizeRulesVersion": "f192-sop-trace-v1"
+}

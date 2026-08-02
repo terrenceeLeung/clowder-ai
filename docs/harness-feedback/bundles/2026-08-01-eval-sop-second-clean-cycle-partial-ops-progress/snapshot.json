@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress",
+  "evalSnapshotId": "sop-2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress",
+  "featureId": "F192",
+  "generatedAt": "2026-08-01T03:00:00.000Z",
+  "window": {
+    "durationHours": 336
+  },
+  "components": [
+    {
+      "id": "sop-compliance",
+      "name": "SOP development / merge",
+      "confidence": "medium",
+      "activationCounts": {
+        "rules_passed": 6,
+        "rules_evaluated": 22
+      },
+      "frictionCounts": {
+        "violations_blocker": 6,
+        "violations_warn": 0,
+        "rules_skipped": 10
+      }
+    }
+  ],
+  "sopDefinitionId": "development",
+  "observedStage": "merge",
+  "sessionId": "eval-sop-2026-07-25-pr-144-clean-reeval-cycle-observed"
+}

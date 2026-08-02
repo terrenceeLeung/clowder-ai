@@ -1,0 +1,34 @@
+{
+  "verdictId": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress",
+  "featureId": "F192",
+  "generatedAt": "2026-08-01T03:00:00.000Z",
+  "trace": {
+    "sessionId": "eval-sop-2026-07-25-pr-144-clean-reeval-cycle-observed",
+    "sopDefinitionId": "development",
+    "observedStage": "merge",
+    "commands": [
+      {
+        "command": "gh pr merge 144 --squash --delete-branch",
+        "exitCode": 0
+      }
+    ],
+    "envSnapshot": {
+      "REDIS_URL": "redis://localhost:6399"
+    },
+    "gitState": {
+      "branch": "main",
+      "ahead": 0,
+      "behind": 0,
+      "clean": true,
+      "worktreeRoot": "/Users/tianyiliang/projects/clowder-ai"
+    },
+    "handles": {
+      "author": "opus-47"
+    },
+    "shaContext": {
+      "verdict_commit": "56ed162e617dca28b640427b018473812917b781",
+      "merged_at": "2026-07-26T03:05:10Z",
+      "prior_verdict_pr": "144"
+    }
+  }
+}
