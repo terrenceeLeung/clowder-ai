@@ -1,0 +1,72 @@
+{
+  "verdictId": "2026-08-02-eval-a2a-third-sync-clobber-after-runtime-restart",
+  "evalSnapshotId": "eval-F167-2026-08-02",
+  "featureId": "F167",
+  "generatedAt": "2026-08-02T03:04:30Z",
+  "window": {
+    "durationHours": 24
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1,
+        "eval_domain_daily.single_fire_streak_days_since_2026_07_22": 12
+      },
+      "frictionCounts": {
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "runtime-checkout",
+      "name": "runtime process and git checkout alignment",
+      "confidence": "high",
+      "activationCounts": {
+        "runtime.pid_21571_running": 1,
+        "runtime.process_restarted_after_pr134_merge": 1,
+        "runtime.checkout_matches_upstream_main": 1
+      },
+      "frictionCounts": {
+        "runtime.checkout_behind_origin_main_commits": 3,
+        "runtime.checkout_not_on_origin_main_head": 1,
+        "runtime.origin_main_lacks_pr134_recovery_commit": 1,
+        "runtime.origin_main_lacks_pr160_verdict_commit": 1,
+        "runtime.path_b_files_missing_from_runtime_checkout": 1
+      }
+    },
+    {
+      "id": "counter-window",
+      "name": "counter-domain denominator availability",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.counter_window_missing": 1,
+        "telemetry.prewritten_source_refs_missing": 1,
+        "telemetry.raw_2026_08_02_source_refs_missing_before_eval_cat_write": 1
+      }
+    },
+    {
+      "id": "implementation-lineage",
+      "name": "F167 Path B implementation lineage",
+      "confidence": "high",
+      "activationCounts": {
+        "implementation.pr134_state_merged": 1,
+        "implementation.pr116_was_recovered_by_pr134": 1
+      },
+      "frictionCounts": {
+        "implementation.pr134_not_ancestor_of_origin_main": 1,
+        "implementation.pr134_not_ancestor_of_runtime_checkout": 1,
+        "implementation.pr160_not_ancestor_of_origin_main": 1,
+        "implementation.origin_main_missing_cron_predefine_file": 1,
+        "implementation.origin_main_missing_cron_telemetry_source_file": 1,
+        "implementation.origin_main_missing_snapshot_writer_file": 1,
+        "implementation.origin_main_missing_grounding_has_samples_confidence_rule": 1,
+        "implementation.systemic_sync_clobber_observed_count": 3
+      }
+    }
+  ]
+}

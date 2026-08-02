@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-02-eval-a2a-third-sync-clobber-after-runtime-restart",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-08-02-f167-a2a-snapshot.yaml",
+      "sha256": "c7228be3d41753243e454c8a136a0d32f72482cf8715188cabb6b9be40262102"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-08-02-f167-a2a-attribution.yaml",
+      "sha256": "3798a8aebb76f8d7d1749f13efd6d77bdc216d789baa39f6e94f4a90cb83a567"
+    }
+  ],
+  "generatedAt": "2026-08-02T03:04:30Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
