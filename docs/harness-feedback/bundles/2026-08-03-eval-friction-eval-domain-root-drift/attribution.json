@@ -1,0 +1,36 @@
+{
+  "verdictId": "2026-08-03-eval-friction-eval-domain-root-drift",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-08-03",
+  "generatedAt": "2026-08-03T03:04:42.954Z",
+  "findings": [
+    {
+      "id": "FR-2026-08-03-3aa52c4cc410",
+      "relatedFeature": "F245",
+      "frictionSignal": {
+        "type": "friction.cluster_3aa52c4cc410",
+        "severity": "low",
+        "confidence": 0.7,
+        "detectedAt": "2026-08-03T03:04:42.954Z"
+      },
+      "attribution": {
+        "primaryLayer": "needs_investigation",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "friction-rollup/cluster_3aa52c4cc410",
+            "excerpt": "cluster 'violations_blocker=6' count=1 severity=low sensorForms=[aggregate_proxy]"
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "triage-top-friction-cluster",
+          "target": "F245/friction-rollup",
+          "rationale": "Highest-ranked friction cluster in the window — eval cat assigns the 7-class root cause in the verdict before handoff."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "verdictId": "2026-08-03-eval-friction-eval-domain-root-drift",
+  "selector": {
+    "kind": "friction-rollup-snapshot",
+    "windowStartMs": 1785466800000,
+    "windowEndMs": 1785726000000,
+    "topN": 10,
+    "tokenCap": 4000
+  },
+  "window": {
+    "sinceMs": 1785466800000,
+    "untilMs": 1785726000000
+  },
+  "signalCount": 2,
+  "clusterCount": 2,
+  "degraded": true,
+  "droppedChannels": [],
+  "report": {
+    "window": {
+      "sinceMs": 1785466800000,
+      "untilMs": 1785726000000
+    },
+    "generatedAt": "2026-08-03T03:04:42.954Z",
+    "topClusters": [
+      {
+        "clusterId": "3aa52c4cc410",
+        "representative": "violations_blocker=6",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 1,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#violations_blocker",
+            "rawRef": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#violations_blocker",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      },
+      {
+        "clusterId": "f2c9df4f2ce6",
+        "representative": "rules_skipped=10",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 1,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#rules_skipped",
+            "rawRef": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#rules_skipped",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low"
+      }
+    ],
+    "actionableCandidates": [],
+    "referenceOnly": [
+      {
+        "clusterId": "3aa52c4cc410",
+        "representative": "violations_blocker=6",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 1,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#violations_blocker",
+            "rawRef": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#violations_blocker",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low",
+        "actionability": "reference_only",
+        "evidenceRefs": [
+          "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#violations_blocker"
+        ]
+      },
+      {
+        "clusterId": "f2c9df4f2ce6",
+        "representative": "rules_skipped=10",
+        "channels": [
+          "eval-domain"
+        ],
+        "count": 1,
+        "members": [
+          {
+            "signalId": "eval-domain:2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#rules_skipped",
+            "rawRef": "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#rules_skipped",
+            "channel": "eval-domain"
+          }
+        ],
+        "method": "rule",
+        "sensorForms": [
+          "aggregate_proxy"
+        ],
+        "severity": "low",
+        "actionability": "reference_only",
+        "evidenceRefs": [
+          "2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress#sop-compliance#rules_skipped"
+        ]
+      }
+    ],
+    "tailSummary": {
+      "clusterCount": 0,
+      "signalCount": 0,
+      "byChannel": {}
+    },
+    "degraded": true,
+    "droppedChannels": [],
+    "tokenBudget": {
+      "cap": 4000,
+      "estimated": 577
+    }
+  }
+}

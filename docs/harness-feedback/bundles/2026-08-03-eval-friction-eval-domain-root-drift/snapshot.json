@@ -1,0 +1,27 @@
+{
+  "verdictId": "2026-08-03-eval-friction-eval-domain-root-drift",
+  "evalSnapshotId": "eval-F245-2026-08-03",
+  "featureId": "F245",
+  "generatedAt": "2026-08-03T03:04:42.954Z",
+  "window": {
+    "startMs": 1785466800000,
+    "endMs": 1785726000000,
+    "durationHours": 72
+  },
+  "components": [
+    {
+      "id": "friction-rollup",
+      "name": "friction rollup (Top-N + sensorForm)",
+      "confidence": "low",
+      "activationCounts": {},
+      "frictionCounts": {
+        "cluster_count": 2,
+        "top_cluster_count": 2,
+        "tail_cluster_count": 0,
+        "tail_signal_count": 0,
+        "cluster_3aa52c4cc410": 1,
+        "cluster_f2c9df4f2ce6": 1
+      }
+    }
+  ]
+}
