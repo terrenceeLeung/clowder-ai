@@ -1,0 +1,86 @@
+{
+  "verdictId": "2026-08-03-eval-a2a-pr169-recovered-runtime-not-refreshed",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-03",
+  "generatedAt": "2026-08-03T03:01:17Z",
+  "findings": [
+    {
+      "id": "f167-pr169-recovered-origin-but-runtime-not-refreshed",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_refresh_gap",
+        "severity": "high",
+        "confidence": 0.92
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 424533 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-03T03:00:00.039Z; 2026-07-22 through 2026-08-03 each have exactly one eval:a2a delivery."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "origin-recovery-lineage/implementation.pr169_state_merged",
+            "excerpt": "PR #169 merged at ae2db1102a5bb56f9860a3e893ab6ce15662643e and restored cron-predefine.ts, cron-telemetry-source.ts, snapshot-writer.ts, and the hasSamples -> low grounding confidence rule on origin/main."
+          },
+          {
+            "type": "ci",
+            "anchor": "origin-recovery-lineage/implementation.pr169_test_public_failed_redis_exclusion_expired",
+            "excerpt": "PR #169 Build, Lint, and Windows Smoke passed, but Test (Public) failed because public test exclusion 'redis' expired on 2026-07-31; Directory Size Guard also failed on expired exceptions."
+          },
+          {
+            "type": "runtime-process",
+            "anchor": "runtime-refresh/runtime.pid_21571_not_restarted_after_pr169_merge",
+            "excerpt": "The active API process is still PID 21571, node dist/index.js, started 2026-08-01 11:52:04 local time; PR #169 merged on 2026-08-02T03:10:37Z, so the process has not restarted after recovery."
+          },
+          {
+            "type": "git",
+            "anchor": "runtime-refresh/runtime.checkout_behind_origin_main_commits",
+            "excerpt": "The runtime checkout HEAD is c055fc45 while fetched origin/main is dc87ef80; git rev-list --left-right --count HEAD...origin/main reports 0 ahead / 4 behind."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "runtime-refresh/runtime.checkout_missing_cron_predefine_file",
+            "excerpt": "The runtime checkout lists only f167-eval.ts and f167-eval-counter-window.ts under packages/api/src/infrastructure/harness-eval; it lacks cron-predefine.ts, cron-telemetry-source.ts, and snapshot-writer.ts."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "runtime-refresh/runtime.checkout_missing_grounding_has_samples_confidence_rule",
+            "excerpt": "The runtime checkout f167-eval.ts still contains confidence: hasCounters ? 'medium' : 'no-data', so PR #116's hasSamples -> low rule is not loaded."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-08-03 eval:a2a scheduled callback included no sourceRefs, and docs/harness-feedback had no 2026-08-03 f167-a2a raw snapshot or attribution before this eval-cat write."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "pull_build_restart_runtime_from_origin_main",
+          "target": "runtime API PID 21571",
+          "rationale": "origin/main now contains the PR #169 recovery, but the active runtime still runs the pre-recovery checkout and dist. Pull origin/main, rebuild packages/api/dist, and restart PID 21571 before the next eval:a2a daily fire."
+        },
+        {
+          "action": "pin_runtime_checkout_to_origin_main",
+          "target": "runtime/main-sync startup discipline",
+          "rationale": "The runtime checkout continues to track upstream/main rather than origin/main; future acceptance checks should fail if the runtime branch is not aligned to the fork acceptance branch."
+        },
+        {
+          "action": "fix_ci_housekeeping_signal",
+          "target": "Test Public and Directory Size Guard",
+          "rationale": "The PR #169 recovery is functionally present, but GitHub signal remains polluted by expired redis public-test exclusion and expired directory-size exceptions."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
