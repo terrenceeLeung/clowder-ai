@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-03-eval-friction-eval-domain-root-drift",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-03-eval-friction-eval-domain-root-drift/raw/rollup-report.json",
+      "sha256": "2b36716c79fe38e8d2ff6f90c80b3b239f508e4f539c76b4d1b12009787bf59e"
+    }
+  ],
+  "generatedAt": "2026-08-03T03:04:42.954Z",
+  "generator": {
+    "name": "eval-friction-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f245-friction-rollup-v1"
+}
