@@ -1,0 +1,91 @@
+{
+  "verdictId": "2026-08-04-eval-a2a-pr169-runtime-refresh-blocker-day-2",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-04",
+  "generatedAt": "2026-08-04T03:04:40Z",
+  "findings": [
+    {
+      "id": "f167-pr169-runtime-refresh-blocker-day-2",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "runtime_refresh_gap",
+        "severity": "high",
+        "confidence": 0.93
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-runtime",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 431848 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-04T03:00:00.030Z; 2026-07-22 through 2026-08-04 each have exactly one eval:a2a delivery."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "origin-recovery-lineage/implementation.pr169_state_merged",
+            "excerpt": "PR #169 merged at ae2db1102a5bb56f9860a3e893ab6ce15662643e on 2026-08-02T03:10:37Z; that merge commit is an ancestor of fetched origin/main 713fe4b6."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "origin-recovery-lineage/implementation.origin_main_contains_cron_predefine_file",
+            "excerpt": "origin/main contains cron-predefine.ts, cron-telemetry-source.ts, snapshot-writer.ts, and the hasSamples -> low grounding confidence rule in packages/api/src/infrastructure/harness-eval/f167-eval.ts."
+          },
+          {
+            "type": "runtime-process",
+            "anchor": "runtime-refresh/runtime.pid_21571_not_restarted_after_pr169_merge",
+            "excerpt": "The active API process is still PID 21571, node dist/index.js, started 2026-08-01 11:52:04 local time, so it has not restarted after PR #169 merged."
+          },
+          {
+            "type": "git",
+            "anchor": "runtime-refresh/runtime.checkout_behind_origin_main_commits",
+            "excerpt": "The runtime checkout HEAD is c055fc45 while fetched origin/main is 713fe4b6; git rev-list --left-right --count HEAD...origin/main reports 0 ahead / 8 behind, and PR #169 is not an ancestor of HEAD."
+          },
+          {
+            "type": "git",
+            "anchor": "runtime-refresh/runtime.checkout_tracks_upstream_main_not_origin_main",
+            "excerpt": "The runtime/main-sync branch tracks upstream/main and reports 3 ahead / 0 behind against upstream/main, while acceptance evidence lives on origin/main."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "runtime-refresh/runtime.checkout_missing_cron_predefine_file",
+            "excerpt": "The runtime checkout lists f167-eval.ts and f167-eval-counter-window.ts but still lacks cron-predefine.ts, cron-telemetry-source.ts, and snapshot-writer.ts under packages/api/src/infrastructure/harness-eval."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "runtime-refresh/runtime.checkout_missing_grounding_has_samples_confidence_rule",
+            "excerpt": "The runtime checkout f167-eval.ts still contains confidence: hasCounters ? 'medium' : 'no-data', so PR #116's hasSamples -> low rule is not loaded."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-08-04 eval:a2a scheduled callback included no sourceRefs, and docs/harness-feedback had no 2026-08-04 f167-a2a raw snapshot or attribution before this eval-cat write."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "pull_build_restart_runtime_from_origin_main",
+          "target": "runtime API PID 21571",
+          "rationale": "origin/main contains the PR #169 recovery, but the active runtime still runs the pre-recovery checkout and dist. Pull origin/main, rebuild packages/api/dist, and restart PID 21571 before the next eval:a2a daily fire."
+        },
+        {
+          "action": "pin_runtime_checkout_to_origin_main",
+          "target": "runtime/main-sync startup discipline",
+          "rationale": "The runtime checkout continues to track upstream/main while acceptance evidence and verdict PRs land on origin/main; startup/acceptance should fail if the running checkout is not aligned to origin/main."
+        },
+        {
+          "action": "fix_ci_housekeeping_signal",
+          "target": "Test Public and Directory Size Guard",
+          "rationale": "The PR #169 recovery is functionally present, but CI signal remains polluted by expired redis public-test exclusion and expired directory-size exceptions."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
