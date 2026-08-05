@@ -1,0 +1,37 @@
+{
+  "verdictId": "2026-08-05-eval-memory-week-5-scheduled-reeval-hard-escalation",
+  "featureId": "F200",
+  "windowDays": 30,
+  "filters": {},
+  "generatedAt": "2026-08-05T03:01:00.000Z",
+  "metrics": {
+    "period": {
+      "fromMs": 1783306883770,
+      "toMs": 1785898883770,
+      "days": 30
+    },
+    "filters": {},
+    "totalEvents": 127,
+    "core": {
+      "consumedAt3": 0.05511811023622047,
+      "consumedMRR": 0.047244094488188976,
+      "reformulationRate": 0.25196850393700787,
+      "searchAbandonRate": 0.7086614173228346
+    },
+    "extended": {
+      "readthroughAt3": 0.10714285714285714,
+      "firstConsumedRankMedian": 1,
+      "reformulationsBeforeConsumption": 0,
+      "reformulateAfterExposure": 0.031496062992125984,
+      "grepFallbackRate": 0,
+      "tokenCostPerHit": 0,
+      "consumedAnchorNotInPoolRate": 0,
+      "shadowConsumedMRR": 0.9047619047619049,
+      "liveOnShadowSubsetMRR": 0.8571428571428571
+    },
+    "graph": {
+      "nonFirstSelectionRate": 0,
+      "traversalCompletion": 0
+    }
+  }
+}
