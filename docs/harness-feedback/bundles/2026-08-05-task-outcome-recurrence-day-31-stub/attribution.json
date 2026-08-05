@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-05-task-outcome-recurrence-day-31-stub",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-08-05",
+  "generatedAt": "2026-08-05T03:00:42.056Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
