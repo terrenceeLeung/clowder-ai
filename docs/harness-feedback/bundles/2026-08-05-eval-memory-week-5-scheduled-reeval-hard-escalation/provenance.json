@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-05-eval-memory-week-5-scheduled-reeval-hard-escalation",
+  "rawInputs": [
+    {
+      "path": "generated/memory/2026-08-05-eval-memory-week-5-scheduled-reeval-hard-escalation/recall-metrics.json",
+      "sha256": "85d4558972855bbeac7daa519e049f62fd70001cf9faefa500d0dadb90c5dd65"
+    },
+    {
+      "path": "generated/memory/2026-08-05-eval-memory-week-5-scheduled-reeval-hard-escalation/library-health.json",
+      "sha256": "1a8ef06e5a7206e903cd08637be085f8ab5a6f02176a618110d6e94e8cb63ecb"
+    }
+  ],
+  "generatedAt": "2026-08-05T03:01:00.000Z",
+  "generator": {
+    "name": "eval-memory-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-memory-recall-v1"
+}

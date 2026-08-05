@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-05-eval-memory-week-5-scheduled-reeval-hard-escalation",
+  "featureId": "F200",
+  "evalSnapshotId": "eval-F200-memory-2026-08-05",
+  "generatedAt": "2026-08-05T03:01:00.000Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "Combined scheduled reeval (per PR #131 nextEvalAt=2026-08-05) + 30-day hard escalation trigger. 44 days since initial 2026-06-22 escalation (PR #69); 27 days since PR #98; 14 days since PR #131. Structural state unchanged across all 5 verdicts (yaml daily / Phase F 0 / LL-071 collision). Recall metrics: 7d=21, 30d=127 (down from prior 170-187 band, suggesting sustained lower activity than earlier baseline). CVO fully silent through 3 scheduled reevals + 1 re-escalation trigger + 1 hard-escalation trigger.",
+    "evidence": "recall_events_7d_count=21, recall_events_30d_count=127, days_since_pr_69_escalation=44, days_since_pr_131=14, cumulative_cvo_verdicts_no_response=5, phase_f_spec_section_count=0, yaml_frequency_still_daily=1"
+  }
+}
