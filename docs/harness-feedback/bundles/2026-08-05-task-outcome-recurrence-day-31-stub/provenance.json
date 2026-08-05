@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-05-task-outcome-recurrence-day-31-stub",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-05-task-outcome-recurrence-day-31-stub/raw/episodes.json",
+      "sha256": "b6a8ef8dfd9b37b44f8b8cd8f5fb957ea93187a3864c7713d1c8970ee8a0c723"
+    }
+  ],
+  "generatedAt": "2026-08-05T03:00:42.056Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
