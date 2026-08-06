@@ -1,0 +1,56 @@
+{
+  "verdictId": "2026-08-06-task-outcome-recurrence-day-32-stub",
+  "windowStartMs": 1785898800000,
+  "windowEndMs": 1785985200000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1785922687225-oyztss",
+      "trigger": "cat_initiated",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-05T09:38:07.225Z"
+    },
+    {
+      "episodeId": "ep-1785926945588-wq4zh9",
+      "trigger": "cat_initiated",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-05T10:49:05.588Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 107,
+      "episodeId": "ep-1785922687225-oyztss",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#297",
+        "outcome": "success",
+        "timestamp": "2026-08-05T09:38:07.226Z"
+      },
+      "createdAt": "2026-08-05T09:38:07.226Z"
+    },
+    {
+      "id": 109,
+      "episodeId": "ep-1785926945588-wq4zh9",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#290",
+        "outcome": "success",
+        "timestamp": "2026-08-05T10:49:05.588Z"
+      },
+      "createdAt": "2026-08-05T10:49:05.588Z"
+    }
+  ],
+  "eventRows": []
+}
