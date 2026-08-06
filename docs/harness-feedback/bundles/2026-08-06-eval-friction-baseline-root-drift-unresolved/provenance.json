@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-06-eval-friction-baseline-root-drift-unresolved",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-06-eval-friction-baseline-root-drift-unresolved/raw/rollup-report.json",
+      "sha256": "205667ec7ed05a637d4f1d37a7d09430bc11db321466e4e4e10a1570cc3de43b"
+    }
+  ],
+  "generatedAt": "2026-08-06T03:07:30.049Z",
+  "generator": {
+    "name": "eval-friction-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f245-friction-rollup-v1"
+}

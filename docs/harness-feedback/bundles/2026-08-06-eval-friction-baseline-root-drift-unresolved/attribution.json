@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-06-eval-friction-baseline-root-drift-unresolved",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-08-06",
+  "generatedAt": "2026-08-06T03:07:30.049Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no friction cluster surfaced in the selected window",
+    "evidence": "friction-rollup/cluster_count"
+  }
+}
