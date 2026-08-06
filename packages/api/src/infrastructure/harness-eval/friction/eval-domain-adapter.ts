@@ -27,6 +27,14 @@ interface RawSnapshot {
 export class EvalDomainAdapter implements IFrictionSignalSource {
   readonly channelId = 'eval-domain' as const;
 
+  /**
+   * Process-lifetime dedup set for fail-loud "bundles/ missing" warnings.
+   * Warn once per unique feedbackRoot to surface configuration drift without
+   * flooding logs on every rollup. Cleared only on process restart, which is
+   * the right granularity — root value is fixed at provider construction.
+   */
+  private static readonly _warnedMissingBundlesRoots = new Set<string>();
+
   private readonly excludeFeatureIds: ReadonlySet<string>;
 
   constructor(
@@ -38,7 +46,23 @@ export class EvalDomainAdapter implements IFrictionSignalSource {
 
   async pull(sinceMs: number, untilMs: number): Promise<FrictionSignal[]> {
     const bundlesDir = join(this.feedbackRoot, 'bundles');
-    if (!existsSync(bundlesDir)) return [];
+    if (!existsSync(bundlesDir)) {
+      // Fail-loud (LL-092 candidate from 2026-08 environment_drift investigation, PR #181 ownerAsk):
+      // Missing bundles/ under configured feedbackRoot = under-capture root cause.
+      // Silent empty return was the exact silent-drift mechanism that let 4 通道
+      // under-capture escape audit for weeks. Warn-once (per unique root) surfaces
+      // the misconfiguration without flooding logs.
+      if (!EvalDomainAdapter._warnedMissingBundlesRoots.has(this.feedbackRoot)) {
+        EvalDomainAdapter._warnedMissingBundlesRoots.add(this.feedbackRoot);
+        console.warn(
+          `[EvalDomainAdapter] bundles/ missing at feedbackRoot=${this.feedbackRoot}; ` +
+            `returning empty (this warning fires once per unique root per process). ` +
+            `If unexpected, verify friction-metrics-provider was constructed with the ` +
+            `correct monorepo docs/harness-feedback path.`,
+        );
+      }
+      return [];
+    }
     const signals: FrictionSignal[] = [];
     for (const entry of safeReaddir(bundlesDir)) {
       if (!entry.isDirectory()) continue;
