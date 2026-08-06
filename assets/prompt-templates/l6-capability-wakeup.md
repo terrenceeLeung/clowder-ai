@@ -3,7 +3,7 @@
 - 想发一堆文字 / 日志 / 步骤 → `rich-messaging`（卡片 / 列表 / diff / 语音 / 图）
 - 改前端 UI 想说"开浏览器看看" → `browser-preview` 渲染到 Hub panel
 - 需要图（架构 / mock / 真实场景） → `image-generation` AI 生图
-- 铲屎官说"打开X" / "看看代码" / "看看文件" / "查看文件" / "帮我打开X" / "文件在 X 路径" (open/show the file/dir) → `workspace-navigator` 程式打开（F203/eval:capability-wakeup 2026-08-02 R3 broadening：R1+R2+R3 累计 68 cognitive misses 触发；触发词从"文件在 X 路径"扩展到 rule regex 完整表面）
+- 铲屎官想让你打开/查看文件、代码、目录（"打开X" / "看看代码" / "帮我打开" / "文件在 X 路径" / open/show the file|dir）→ `workspace-navigator` 程式打开
 - 改 UI 视觉 / 设计界面 → `pencil-design` 在 .pen 里探索
 - co-creator问"怎么用 / 怎么配置" → `guide-interaction` 场景式引导
 - 架构决定 / bug 死磕 / 多视角 → `expert-panel` 多猫辩论；多猫表决用 `cat_cafe_start_vote`（不无限互 @）
