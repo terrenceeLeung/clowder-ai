@@ -1,0 +1,100 @@
+{
+  "verdictId": "2026-08-07-eval-task-outcome-d33-stub",
+  "windowStartMs": 1786021200000,
+  "windowEndMs": 1786107600000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1786023335314-vhmqpk",
+      "trigger": "cat_initiated",
+      "threadId": "thread_msh9zg33ddrf1lfk",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-06T13:35:35.314Z"
+    },
+    {
+      "episodeId": "ep-1786028735779-b00bs0",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-06T15:05:35.779Z"
+    },
+    {
+      "episodeId": "ep-1786063123677-o71url",
+      "trigger": "cat_initiated",
+      "threadId": "thread_mshnzqt6s3mbk3hq",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-07T00:38:43.677Z"
+    },
+    {
+      "episodeId": "ep-1786068823882-t7rqx6",
+      "trigger": "cat_initiated",
+      "threadId": "thread_msheitf94wwu1lih",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-07T02:13:43.882Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 113,
+      "episodeId": "ep-1786023335314-vhmqpk",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#335",
+        "outcome": "success",
+        "timestamp": "2026-08-06T13:35:35.314Z"
+      },
+      "createdAt": "2026-08-06T13:35:35.314Z"
+    },
+    {
+      "id": 114,
+      "episodeId": "ep-1786028735779-b00bs0",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#350",
+        "outcome": "success",
+        "timestamp": "2026-08-06T15:05:35.782Z"
+      },
+      "createdAt": "2026-08-06T15:05:35.782Z"
+    },
+    {
+      "id": 115,
+      "episodeId": "ep-1786063123677-o71url",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#354",
+        "outcome": "success",
+        "timestamp": "2026-08-07T00:38:43.680Z"
+      },
+      "createdAt": "2026-08-07T00:38:43.680Z"
+    },
+    {
+      "id": 116,
+      "episodeId": "ep-1786068823882-t7rqx6",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#360",
+        "outcome": "success",
+        "timestamp": "2026-08-07T02:13:43.883Z"
+      },
+      "createdAt": "2026-08-07T02:13:43.883Z"
+    }
+  ],
+  "eventRows": []
+}
