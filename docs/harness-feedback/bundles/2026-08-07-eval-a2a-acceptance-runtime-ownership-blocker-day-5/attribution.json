@@ -1,0 +1,106 @@
+{
+  "verdictId": "2026-08-07-eval-a2a-acceptance-runtime-ownership-blocker-day-5",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-07",
+  "generatedAt": "2026-08-07T03:02:33Z",
+  "findings": [
+    {
+      "id": "f167-acceptance-runtime-ownership-blocker-day-5",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "acceptance_runtime_ownership_blocker",
+        "severity": "high",
+        "confidence": 0.97
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-governance",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 450150 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-07T03:00:00.006Z; 2026-07-22 through 2026-08-07 each have exactly one eval:a2a delivery."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr169_merge_commit_ancestor_of_current_head",
+            "excerpt": "PR #169 merge commit ae2db1102a5bb56f9860a3e893ab6ce15662643e is now an ancestor of both origin/main 0ecd63642b5f996f63327178928a54038c6d3ee1 and current HEAD 4cf2d7f65a3921211e0dcd4b65fa62d6f24e96e3."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "implementation-lineage/implementation.current_head_contains_cron_predefine_file",
+            "excerpt": "Current HEAD contains cron-predefine.ts, cron-telemetry-source.ts, snapshot-writer.ts, and the hasSamples -> low grounding confidence rule in packages/api/src/infrastructure/harness-eval/f167-eval.ts."
+          },
+          {
+            "type": "ci",
+            "anchor": "ci-housekeeping/ci.pr183_test_public_passed",
+            "excerpt": "PR #183 merged at 0ecd63642b5f996f63327178928a54038c6d3ee1 and its Lint, Build, Test Public, Test Windows, and Directory Size Guard checks all passed, clearing the expired redis exclusion and directory-size exception noise."
+          },
+          {
+            "type": "verdict",
+            "anchor": "acceptance-runtime-ownership/verdict.pr180_state_merged",
+            "excerpt": "The 2026-08-06 eval:a2a evidence PR #180 was merged at 2026-08-06T03:03:46Z with merge commit 65200fdaed5e7b29396c626b5da191c39f32e473."
+          },
+          {
+            "type": "handoff",
+            "anchor": "acceptance-runtime-ownership/handoff.pr180_owner_handoff_cross_posted_to_opus47",
+            "excerpt": "PR #180 owner handoff was cross-posted to thread_moxygllc81fd45zf and routed to opus-47 as message 0001785985457851-001832-a7cb087c."
+          },
+          {
+            "type": "handoff",
+            "anchor": "acceptance-runtime-ownership/handoff.opus47_acknowledged_not_runtime_owner",
+            "excerpt": "opus-47 acknowledged on 2026-08-06 that he is not the F167 acceptance runtime owner and classified the four-day no-action chain as an ownership-unspecified governance blocker."
+          },
+          {
+            "type": "handoff",
+            "anchor": "acceptance-runtime-ownership/handoff.codex_acknowledged_governance_reclassification",
+            "excerpt": "codex replied to opus-47 in thread_moxygllc81fd45zf as message 0001785985665985-001841-d26a4e72, agreeing that unchanged 2026-08-07 evidence should reclassify to acceptance-runtime-ownership-blocker."
+          },
+          {
+            "type": "runtime-process",
+            "anchor": "runtime-process-build/runtime.pid_21571_not_restarted_after_pr169_merge",
+            "excerpt": "The active API process is still PID 21571, node dist/index.js, started 2026-08-01 11:52:04 local time, so it has not restarted after PR #169, PR #175, PR #178, PR #180, PR #183, or current HEAD 4cf2d7f."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.current_dist_index_missing_inprocess_cron_telemetry_source_bootstrap",
+            "excerpt": "Current src/index.ts contains InProcessCronTelemetrySource bootstrap wiring, but dist/index.js does not; the built artifact loaded by node dist/index.js is stale relative to source."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.current_dist_f167_eval_missing_grounding_has_samples_confidence_rule",
+            "excerpt": "Current dist/infrastructure/harness-eval/f167-eval.js still contains confidence: hasCounters ? 'medium' : 'no-data' and lacks the hasSamples -> low confidence rule present in source."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-08-07 eval:a2a scheduled callback included no sourceRefs, and docs/harness-feedback had no 2026-08-07 f167-a2a raw snapshot or attribution before this eval-cat write."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "assign_acceptance_runtime_owner",
+          "target": "co-creator / Cat Cafe runtime operations",
+          "rationale": "The F167 code line, current source checkout, and CI housekeeping are no longer the blocker. The blocker is that no designated owner has rebuilt/restarted the acceptance runtime after repeated evidence handoffs."
+        },
+        {
+          "action": "rebuild_and_restart_acceptance_runtime",
+          "target": "runtime API PID 21571",
+          "rationale": "Run the accepted owner path: rebuild packages/api/dist from the current accepted source, restart PID 21571, and verify the next eval:a2a callback carries prewritten sourceRefs and counter_window."
+        },
+        {
+          "action": "add_startup_fail_fast_for_build_source_drift",
+          "target": "release-acceptance runtime startup discipline",
+          "rationale": "Current source and dist diverged in the exact F167 closure path; startup should fail or loudly block acceptance when dist lacks required sourceRefs bootstrap or grounding confidence rules."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
