@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-08-eval-task-outcome-d34-query-correction",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-08-08",
+  "generatedAt": "2026-08-08T03:03:07.171Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
