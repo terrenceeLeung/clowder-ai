@@ -1,0 +1,76 @@
+{
+  "verdictId": "2026-08-08-eval-a2a-acceptance-runtime-ownership-blocker-day-6",
+  "evalSnapshotId": "eval-F167-2026-08-08",
+  "featureId": "F167",
+  "generatedAt": "2026-08-08T03:04:39Z",
+  "window": {
+    "durationHours": 24
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "daily eval domain scheduler slot guard",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1,
+        "eval_domain_daily.single_fire_streak_days_since_2026_07_22": 18,
+        "eval_domain_daily.eval_a2a_ledger_row_id": 456831
+      },
+      "frictionCounts": {
+        "eval_domain_daily.eval_a2a_duplicate_runs_per_day": 0,
+        "legacy.dynamic_task_defs.harness_fit_digest_count": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "implementation-lineage",
+      "name": "F167 Path B recovery in current source checkout",
+      "confidence": "high",
+      "activationCounts": {
+        "implementation.pr169_state_merged": 1,
+        "implementation.pr169_merge_commit_ancestor_of_origin_main": 1,
+        "implementation.pr169_merge_commit_ancestor_of_current_head": 1,
+        "implementation.pr183_state_merged": 1,
+        "implementation.pr183_merge_commit_ancestor_of_current_head": 1,
+        "implementation.current_head_contains_cron_predefine_file": 1,
+        "implementation.current_head_contains_cron_telemetry_source_file": 1,
+        "implementation.current_head_contains_snapshot_writer_file": 1,
+        "implementation.current_head_contains_grounding_has_samples_confidence_rule": 1
+      },
+      "frictionCounts": {
+        "implementation.current_checkout_is_feature_branch_not_main": 1,
+        "implementation.current_head_ahead_origin_main_commits": 1,
+        "implementation.current_head_behind_origin_main_commits": 2
+      }
+    },
+    {
+      "id": "runtime-process-build",
+      "name": "running API process and built artifact freshness",
+      "confidence": "high",
+      "activationCounts": {
+        "runtime.pid_21571_running": 1,
+        "runtime.api_port_3006_listening": 1,
+        "runtime.current_source_contains_f167_recovery": 1
+      },
+      "frictionCounts": {
+        "runtime.pid_21571_not_restarted_after_pr169_merge": 1,
+        "runtime.pid_21571_not_restarted_after_pr185_merge": 1,
+        "runtime.pid_21571_started_before_current_head": 1,
+        "runtime.current_dist_index_missing_inprocess_cron_telemetry_source_bootstrap": 1,
+        "runtime.current_dist_f167_eval_missing_grounding_has_samples_confidence_rule": 1,
+        "runtime.dist_artifacts_older_than_source_changes": 1
+      }
+    },
+    {
+      "id": "counter-window",
+      "name": "counter-domain denominator availability",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.counter_window_missing": 1,
+        "telemetry.prewritten_source_refs_missing": 1,
+        "telemetry.raw_2026_08_08_source_refs_missing_before_eval_cat_write": 1
+      }
+    }
+  ]
+}
