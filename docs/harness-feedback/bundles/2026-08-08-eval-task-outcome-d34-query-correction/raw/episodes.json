@@ -1,0 +1,34 @@
+{
+  "verdictId": "2026-08-08-eval-task-outcome-d34-query-correction",
+  "windowStartMs": 1786107600000,
+  "windowEndMs": 1786194000000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [
+    {
+      "episodeId": "ep-1786111665676-ppr9rw",
+      "trigger": "cat_initiated",
+      "threadId": "thread_msiqsw3pq28swt1x",
+      "participants": [],
+      "artifacts": [],
+      "terminalState": "completed",
+      "verdict": null,
+      "createdAt": "2026-08-07T14:07:45.676Z"
+    }
+  ],
+  "signals": [
+    {
+      "id": 124,
+      "episodeId": "ep-1786111665676-ppr9rw",
+      "category": "a1",
+      "record": {
+        "type": "merge",
+        "ref": "PR#389",
+        "outcome": "success",
+        "timestamp": "2026-08-07T14:07:45.679Z"
+      },
+      "createdAt": "2026-08-07T14:07:45.679Z"
+    }
+  ],
+  "eventRows": []
+}

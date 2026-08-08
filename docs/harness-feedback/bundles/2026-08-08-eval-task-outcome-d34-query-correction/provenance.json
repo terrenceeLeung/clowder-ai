@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-08-eval-task-outcome-d34-query-correction",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-08-eval-task-outcome-d34-query-correction/raw/episodes.json",
+      "sha256": "626bfcefa02c671dc6d700458835a6ab4a9e8123cec77c1035ae806bf2de12c1"
+    }
+  ],
+  "generatedAt": "2026-08-08T03:03:07.171Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
