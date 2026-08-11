@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-08-10-eval-task-outcome-d36-stub",
+  "windowStartMs": 1786280400000,
+  "windowEndMs": 1786366800000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}
