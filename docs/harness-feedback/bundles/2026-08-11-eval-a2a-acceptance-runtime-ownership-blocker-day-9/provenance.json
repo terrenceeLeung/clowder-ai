@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-11-eval-a2a-acceptance-runtime-ownership-blocker-day-9",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-08-11-f167-a2a-snapshot.yaml",
+      "sha256": "7bad9bd6813d108db812a8de230ead037d073b1f74460ddfdd8cd39f8f69caaf"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-08-11-f167-a2a-attribution.yaml",
+      "sha256": "76f0b25e3761a82bc20af7657690741c2b1b75c3bd0ef0649d6efb1b0487aef2"
+    }
+  ],
+  "generatedAt": "2026-08-11T03:01:23Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
