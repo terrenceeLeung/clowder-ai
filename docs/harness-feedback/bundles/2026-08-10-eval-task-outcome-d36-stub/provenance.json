@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-10-eval-task-outcome-d36-stub",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-10-eval-task-outcome-d36-stub/raw/episodes.json",
+      "sha256": "7b3deb7ba338100f8619bcddc864294f92b4b2c3eb14c778d641b00c73c34e03"
+    }
+  ],
+  "generatedAt": "2026-08-11T03:00:53.569Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
