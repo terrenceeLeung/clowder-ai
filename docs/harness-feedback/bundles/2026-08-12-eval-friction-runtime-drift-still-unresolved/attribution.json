@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-12-eval-friction-runtime-drift-still-unresolved",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-08-12",
+  "generatedAt": "2026-08-12T03:11:18.196Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no friction cluster surfaced in the selected window",
+    "evidence": "friction-rollup/cluster_count"
+  }
+}

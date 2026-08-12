@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-12-eval-friction-runtime-drift-still-unresolved",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-12-eval-friction-runtime-drift-still-unresolved/raw/rollup-report.json",
+      "sha256": "89c6f9c28fef676a7ec1075d590b6a1fcfc48bc8685ac2ba5f24248a6073eaa1"
+    }
+  ],
+  "generatedAt": "2026-08-12T03:11:18.196Z",
+  "generator": {
+    "name": "eval-friction-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f245-friction-rollup-v1"
+}
