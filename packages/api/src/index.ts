@@ -1997,11 +1997,20 @@ async function main(): Promise<void> {
     const { FrictionMetricsProviderImpl } = await import(
       './infrastructure/harness-eval/friction/friction-metrics-provider-impl.js'
     );
+    const _frictionHarnessRoot = resolve(repoRoot, 'docs', 'harness-feedback');
+    // Startup log (LL-092 candidate from 2026-08 environment_drift investigation, PR #181):
+    // Surface the resolved harnessFeedbackRoot value at boot so any future root-drift
+    // diagnosis has a definitive record without needing to guess process cwd or trace
+    // resolveMemoryRepoPaths behavior post-hoc.
+    app.log.info(
+      { harnessFeedbackRoot: _frictionHarnessRoot, cwd: process.cwd(), repoRoot },
+      '[startup] friction provider harnessFeedbackRoot resolved',
+    );
     const frictionProvider = new FrictionMetricsProviderImpl({
       messageStore,
       taskOutcomeStore,
       frustrationIssueStore,
-      harnessFeedbackRoot: resolve(repoRoot, 'docs', 'harness-feedback'),
+      harnessFeedbackRoot: _frictionHarnessRoot,
       ...(memoryServices.embeddingService ? { embeddingService: memoryServices.embeddingService } : {}),
     });
     verdictGenerators['eval:friction'] = createFrictionGeneratorAdapter(frictionProvider);
