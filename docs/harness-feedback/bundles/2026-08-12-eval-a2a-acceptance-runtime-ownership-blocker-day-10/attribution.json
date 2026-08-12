@@ -1,0 +1,96 @@
+{
+  "verdictId": "2026-08-12-eval-a2a-acceptance-runtime-ownership-blocker-day-10",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-12",
+  "generatedAt": "2026-08-12T03:01:25Z",
+  "findings": [
+    {
+      "id": "f167-acceptance-runtime-ownership-blocker-day-10",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "acceptance_runtime_ownership_blocker",
+        "severity": "high",
+        "confidence": 0.99
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-governance",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 481105 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-12T02:59:59.921Z; 2026-07-22 through 2026-08-12 each have exactly one eval:a2a delivery."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr169_merge_commit_ancestor_of_current_head",
+            "excerpt": "PR #169 merge commit ae2db1102a5bb56f9860a3e893ab6ce15662643e remains an ancestor of current HEAD 4cf2d7f65a3921211e0dcd4b65fa62d6f24e96e3 and origin/main 8693cb85cdeecd789ea424d2b0de79c9e6d569fd."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "implementation-lineage/implementation.current_head_contains_cron_predefine_file",
+            "excerpt": "Current HEAD contains cron-predefine.ts, cron-telemetry-source.ts, snapshot-writer.ts, and the hasSamples -> low grounding confidence rule in packages/api/src/infrastructure/harness-eval/f167-eval.ts."
+          },
+          {
+            "type": "verdict",
+            "anchor": "prior-verdict-handoff/verdict.pr191_state_merged",
+            "excerpt": "The 2026-08-11 eval:a2a evidence PR #191 was merged at 2026-08-11T03:03:37Z with merge commit 8693cb85cdeecd789ea424d2b0de79c9e6d569fd."
+          },
+          {
+            "type": "runtime-process",
+            "anchor": "runtime-process-build/runtime.pid_21571_not_restarted_after_pr191_merge",
+            "excerpt": "The active API process is still PID 21571, node dist/index.js, started 2026-08-01 11:52:04 local time, so it has not restarted after PR #169, PR #183, PR #185, PR #187, PR #189, PR #191, or today's current checkout."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.current_dist_index_missing_inprocess_cron_telemetry_source_bootstrap",
+            "excerpt": "Current src/index.ts contains InProcessCronTelemetrySource bootstrap wiring, but dist/index.js does not; dist/index.js was last modified 2026-08-01T11:51:33+0800 while src/index.ts changed 2026-08-06T12:01:13+0800."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.current_dist_f167_eval_missing_grounding_has_samples_confidence_rule",
+            "excerpt": "Current src/infrastructure/harness-eval/f167-eval.ts contains the hasSamples -> low confidence rule, but dist/infrastructure/harness-eval/f167-eval.js still contains confidence: hasCounters ? 'medium' : 'no-data'."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-08-12 eval:a2a scheduled callback included no sourceRefs, and docs/harness-feedback had no 2026-08-12 f167-a2a raw snapshot or attribution before this eval-cat write."
+          },
+          {
+            "type": "verdict-cadence",
+            "anchor": "prior-verdict-handoff/eval_loop.eval_a2a_2026_08_09_verdict_missing",
+            "excerpt": "The unresolved eval-loop traceability gap from 2026-08-09 remains: that daily fire delivered once but has no corresponding eval:a2a evidence or verdict PR."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "assign_acceptance_runtime_owner",
+          "target": "co-creator / Cat Cafe runtime operations",
+          "rationale": "The F167 source line and CI housekeeping remain recovered; the unresolved blocker is still that no accepted runtime owner has rebuilt/restarted the acceptance API after repeated evidence PRs and co-creator-reviewed owner asks."
+        },
+        {
+          "action": "rebuild_and_restart_acceptance_runtime",
+          "target": "runtime API PID 21571",
+          "rationale": "Build packages/api/dist from the accepted source, restart PID 21571, and verify the next eval:a2a callback carries prewritten sourceRefs plus counter_window and non-no-data grounding-phase-o telemetry."
+        },
+        {
+          "action": "repair_eval_a2a_verdict_cadence",
+          "target": "eval:a2a daily verdict loop",
+          "rationale": "The 2026-08-09 daily fire delivered once but did not produce a verdict PR; keep the scheduler single-fire fix, but restore eval-loop traceability so delivered daily invocations either publish or explicitly hand off a valid route exit."
+        },
+        {
+          "action": "add_startup_fail_fast_for_build_source_drift",
+          "target": "release-acceptance runtime startup discipline",
+          "rationale": "The running dist artifact remains older than source in the exact F167 closure path; startup should fail or loudly block acceptance when dist lacks required sourceRefs bootstrap or grounding confidence rules."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
