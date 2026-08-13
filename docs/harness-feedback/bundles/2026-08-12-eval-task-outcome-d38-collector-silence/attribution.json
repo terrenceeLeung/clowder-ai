@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-12-eval-task-outcome-d38-collector-silence",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-08-13",
+  "generatedAt": "2026-08-13T03:03:44.301Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}
