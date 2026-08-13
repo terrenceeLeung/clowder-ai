@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-12-eval-task-outcome-d38-collector-silence",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-12-eval-task-outcome-d38-collector-silence/raw/episodes.json",
+      "sha256": "faa57716666006e82e1ae286d5a61c759469d18874f2aeff4b881ceed138314a"
+    }
+  ],
+  "generatedAt": "2026-08-13T03:03:44.301Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
