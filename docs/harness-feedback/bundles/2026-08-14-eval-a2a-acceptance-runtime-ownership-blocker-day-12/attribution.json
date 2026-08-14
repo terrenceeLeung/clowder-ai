@@ -1,0 +1,121 @@
+{
+  "verdictId": "2026-08-14-eval-a2a-acceptance-runtime-ownership-blocker-day-12",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-14",
+  "generatedAt": "2026-08-14T03:03:32Z",
+  "findings": [
+    {
+      "id": "f167-acceptance-runtime-ownership-blocker-day-12",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "acceptance_runtime_ownership_blocker",
+        "severity": "high",
+        "confidence": 0.99
+      },
+      "attribution": {
+        "primaryLayer": "release-acceptance-governance",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 493399 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-14T02:59:59.979Z; 2026-07-22 through 2026-08-14 each have exactly one eval:a2a delivery."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "dynamic_task_defs has zero id/template_id='harness-fit-digest' rows, and task_run_ledger has zero harness-fit-digest runs."
+          },
+          {
+            "type": "git",
+            "anchor": "implementation-lineage/implementation.pr169_merge_commit_ancestor_of_current_head",
+            "excerpt": "PR #169 merge commit ae2db1102a5bb56f9860a3e893ab6ce15662643e remains an ancestor of current HEAD 4cf2d7f65a3921211e0dcd4b65fa62d6f24e96e3 and origin/main 4424282296d0a3323ceea65876bc53fc56002585."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "implementation-lineage/implementation.current_source_contains_f245_startup_friction_diagnostics",
+            "excerpt": "Current source contains the #182 friction startup diagnostic log and EvalDomainAdapter bundles-missing warning, but those diagnostics are absent from dist/index.js and dist/infrastructure/harness-eval/friction/eval-domain-adapter.js."
+          },
+          {
+            "type": "checkout-drift",
+            "anchor": "implementation-lineage/implementation.current_head_behind_origin_main_commits",
+            "excerpt": "After git fetch origin main, current branch fix/f245-friction-eval-domain-fail-loud is still 1 commit ahead and 14 commits behind origin/main; origin/main includes #182, #193, #194, #195, and #196."
+          },
+          {
+            "type": "verdict",
+            "anchor": "prior-verdict-handoff/verdict.pr194_state_merged",
+            "excerpt": "The 2026-08-13 eval:a2a evidence PR #194 was merged at 2026-08-13T03:04:02Z with merge commit 209040cf3e7aaa6ea3f8b491e72907b025c73a71."
+          },
+          {
+            "type": "diagnostics",
+            "anchor": "prior-verdict-handoff/diagnostics.pr182_state_merged",
+            "excerpt": "PR #182 merged at 2026-08-12T03:14:15Z with commit 88ec413d213b488834854b176eef0e3126cea7a1; it adds friction eval-domain fail-loud diagnostics and startup logging in packages/api/src/index.ts and eval-domain-adapter.ts."
+          },
+          {
+            "type": "verdict",
+            "anchor": "prior-verdict-handoff/verdict.pr193_friction_runtime_drift_state_merged",
+            "excerpt": "PR #193 merged the 2026-08-12 eval:friction runtime-drift verdict, reinforcing the same stale runtime / ownership blocker from another eval domain."
+          },
+          {
+            "type": "handoff",
+            "anchor": "prior-verdict-handoff/handoff.restart_packet_sent_to_co_creator",
+            "excerpt": "Opus 4.7 sent co-creator the restart packet and pre-flight supplement after PR #182/#193, asking for checkout alignment, rebuild, PID 21571 restart, and startup log capture."
+          },
+          {
+            "type": "runtime-process",
+            "anchor": "runtime-process-build/runtime.pid_21571_not_restarted_after_pr182_merge",
+            "excerpt": "The active API process is still PID 21571, node dist/index.js on 127.0.0.1:3006, started 2026-08-01 11:52:04 local time, so it has not restarted after PR #169, PR #182, PR #193, PR #194, or the latest origin/main updates."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.current_dist_index_missing_inprocess_cron_telemetry_source_bootstrap",
+            "excerpt": "Current src/index.ts contains InProcessCronTelemetrySource bootstrap wiring, but dist/index.js does not; dist/index.js was last modified 2026-08-01T11:51:33+0800 while src/index.ts changed 2026-08-06T12:01:13+0800."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.current_dist_f167_eval_missing_grounding_has_samples_confidence_rule",
+            "excerpt": "Current src/infrastructure/harness-eval/f167-eval.ts contains the hasSamples -> low confidence rule, but dist/infrastructure/harness-eval/f167-eval.js still contains confidence: hasCounters ? 'medium' : 'no-data'."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.restart_without_rebuild_would_not_load_source_diagnostics",
+            "excerpt": "Because dist still lacks the #182 startup diagnostics and F167 recovery code paths present in src, a restart without rebuilding dist would continue to run stale acceptance code."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "counter-window/telemetry.prewritten_source_refs_missing",
+            "excerpt": "The 2026-08-14 eval:a2a scheduled callback included no sourceRefs, and docs/harness-feedback had no 2026-08-14 f167-a2a raw snapshot, attribution, bundle, or verdict before this eval-cat write."
+          },
+          {
+            "type": "verdict-cadence",
+            "anchor": "prior-verdict-handoff/eval_loop.eval_a2a_2026_08_09_verdict_missing",
+            "excerpt": "The unresolved eval-loop traceability gap from 2026-08-09 remains: that daily fire delivered once but has no corresponding eval:a2a evidence or verdict PR."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "align_checkout_to_accepted_source",
+          "target": "co-creator / Cat Cafe runtime operations",
+          "rationale": "The live acceptance checkout is still on fix/f245-friction-eval-domain-fail-loud and behind origin/main by 14 commits, while origin/main now contains the accepted diagnostics and prior eval verdicts."
+        },
+        {
+          "action": "rebuild_and_restart_acceptance_runtime",
+          "target": "runtime API PID 21571",
+          "rationale": "Build packages/api/dist from origin/main including 88ec413d, restart PID 21571, and capture the first startup log with harnessFeedbackRoot, cwd, repoRoot, plus any bundles-missing warning."
+        },
+        {
+          "action": "repair_eval_a2a_verdict_cadence",
+          "target": "eval:a2a daily verdict loop",
+          "rationale": "The 2026-08-09 daily fire delivered once but did not produce a verdict PR; keep the scheduler single-fire fix, but restore eval-loop traceability so delivered daily invocations either publish or explicitly hand off a valid route exit."
+        },
+        {
+          "action": "add_startup_fail_fast_for_build_source_drift",
+          "target": "release-acceptance runtime startup discipline",
+          "rationale": "The running dist artifact remains older than source in the exact F167 closure path; startup should fail or loudly block acceptance when dist lacks required sourceRefs bootstrap, startup diagnostics, or grounding confidence rules."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
