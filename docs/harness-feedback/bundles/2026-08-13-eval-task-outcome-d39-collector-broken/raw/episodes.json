@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-08-13-eval-task-outcome-d39-collector-broken",
+  "windowStartMs": 1786539600000,
+  "windowEndMs": 1786626000000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}

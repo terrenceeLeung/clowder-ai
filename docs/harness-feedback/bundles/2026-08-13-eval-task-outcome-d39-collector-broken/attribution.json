@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-13-eval-task-outcome-d39-collector-broken",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-08-14",
+  "generatedAt": "2026-08-14T03:01:23.516Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}

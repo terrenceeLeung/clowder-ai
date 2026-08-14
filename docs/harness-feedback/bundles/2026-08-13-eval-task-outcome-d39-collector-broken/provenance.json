@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-13-eval-task-outcome-d39-collector-broken",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-13-eval-task-outcome-d39-collector-broken/raw/episodes.json",
+      "sha256": "a2bda73cd52b53e3bd04fc5653a5d4dd289511142c4729adbe7fdcf660135aa4"
+    }
+  ],
+  "generatedAt": "2026-08-14T03:01:23.516Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
