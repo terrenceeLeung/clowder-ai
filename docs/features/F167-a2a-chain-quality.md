@@ -701,6 +701,16 @@ operator experience："简直了你和Maine Coon是没头脑（Maine Coon听不�
 | 纠正轮次 | 1（operator 问“这是我的问题吗”并指出星空会自动唤起宇宙级航行后，fable-5 完成深空化；codex-sol 再校准唤醒码与变轨并收敛）。 |
 | 元心智哪条没执行 | Q3 坐标变换——验证了每条映射，却没把所有元素放回听众会自动加载的同一个物理坐标系做整体预测。 |
 
+### Case E8: 用静态流程推断代替 Reviewer 运行时取证（2026-08-21，codex-sol）
+
+| 维度 | 内容 |
+|------|------|
+| 我以为 | 用 `feat-lifecycle` / `request-review` / `receive-review` 等静态 skill 对比与 review packet 结构，就能回答 tutu-vessel 为什么连续零 findings；把“非作者 Reviewer”近似当成了认知上的独立 review。 |
+| 实际要求 | 先读 F044 真实 Pi transcript，对齐 Design / Phase 1 / Phase 2 / repair 的 session 连续性、GLM-5.3 候选 finding 处置、自建探针靶点和最终 verdict，再用 FM GAP 与独立 P1 反查因果；同时解释为什么猫咖的长期经验没有同类大面积假零。 |
+| 偏差根因 | **真相源倒置 + 抽象先行**：先用静态规则解释现象，没有先查可直接观测的 runtime decision trace；也没有区分“与作者身份独立”和“与自己前轮 verdict / 设计承诺独立”。 |
+| 纠正轮次 | 4（用户连续把问题从“现有流程”收窄到 reviewer 独立性、系统提示词、猫咖对照，最后明确要求深入 F044 runtime transcript）。 |
+| 元心智哪条没执行 | Q2 信息验证：没有先用最高层级的运行时证据回放具体候选与探针；Q3 坐标变换：把“为什么没找到问题”停在 SOP/skill 坐标，没转到 session-state × model-decision × probe-selection 的运行时坐标。 |
+
 ## Review Gate
 
 - Phase 0: **多猫协作审视**（所有猫参与各自 prompt 审视）+ 现有 system-prompt-builder 测试全绿
