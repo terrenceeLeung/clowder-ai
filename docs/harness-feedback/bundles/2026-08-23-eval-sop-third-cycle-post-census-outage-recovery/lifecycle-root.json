@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-23-eval-sop-third-cycle-post-census-outage-recovery",
+  "domainId": "eval:sop",
+  "createdAt": "2026-08-23T03:00:00.000Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F192",
+    "componentId": "publish-verdict-tool",
+    "name": "SOP verdict publish pipeline census-file dependency resilience"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F192",
+    "targetOwnerCatId": "opus",
+    "requestedAction": "Two follow-ups: (1) land opus-46's ENOENT-to-domain-error code patch (currently written + TDD-green but not yet PR'd) so future census gaps surface as actionable errors rather than generic 500s; (2) consider adding CI check that ALLOWED_EXACT_PATHS whitelist entries exist in repo tip — addresses the recurring 'code adds dependency, artifact not committed' pattern (same class as 2026-07-11 MCP schema gap). Neither blocks current publish operations."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-30T03:00:00.000Z",
+    "closureCondition": "Fresh publish cycle at 2026-08-30 lands with diff ≤ 10 files and passes CI + census file still present in origin/main tip; if achieved, formally close both 2026-07-11 fix verdict AND today's outage observation."
+  },
+  "schemaVersion": 1
+}

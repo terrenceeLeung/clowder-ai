@@ -1,13 +1,13 @@
 kind: f267-measurement-bundle-census
 schemaVersion: 2
-generatedAt: 2026-08-23T03:06:13Z
+generatedAt: 2026-08-23T03:00:00.000Z
 sources:
   registryDir: docs/harness-feedback/eval-domains
   instructionMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#DOMAIN_INSTRUCTIONS
   publishMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#PUBLISH_VERDICT_INSTRUCTIONS_BY_DOMAIN
   verdictDir: docs/harness-feedback/verdicts
-verdictCorpusHash: 368f1c669ca7756fbf48eb74a52fa056d562cc431e310b4af824e68a53f7cb36
-committedVerdictArtifactCount: 6
+verdictCorpusHash: 75b6ba9bb831f036f0c75856198a9cd3a30b03e4e85f5d0d5c62d3de4c95d491
+committedVerdictArtifactCount: 7
 entries:
   - domainId: eval:a2a
     classification: active_decision_bearing
@@ -259,7 +259,7 @@ entries:
     sourceSelector:
       adapter: sop-trace-eval
       kind: sop-trace-eval
-    committedVerdictArtifactCount: 0
+    committedVerdictArtifactCount: 1
     functionalEquivalents:
       - sop-trace-eval
       - sop-trace-eval

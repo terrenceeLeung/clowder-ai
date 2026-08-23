@@ -1,0 +1,28 @@
+{
+  "verdictId": "2026-08-23-eval-sop-third-cycle-post-census-outage-recovery",
+  "evalSnapshotId": "sop-2026-08-23-eval-sop-third-cycle-post-census-outage-recovery",
+  "featureId": "F192",
+  "generatedAt": "2026-08-23T03:00:00.000Z",
+  "window": {
+    "durationHours": 336
+  },
+  "components": [
+    {
+      "id": "sop-compliance",
+      "name": "SOP development / merge",
+      "confidence": "medium",
+      "activationCounts": {
+        "rules_passed": 7,
+        "rules_evaluated": 24
+      },
+      "frictionCounts": {
+        "violations_blocker": 6,
+        "violations_warn": 0,
+        "rules_skipped": 11
+      }
+    }
+  ],
+  "sopDefinitionId": "development",
+  "observedStage": "merge",
+  "sessionId": "eval-sop-2026-08-01-pr-165-clean-second-cycle-anchor-with-outage-recovery-context"
+}
