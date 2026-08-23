@@ -1,13 +1,13 @@
 kind: f267-measurement-bundle-census
 schemaVersion: 2
-generatedAt: 2026-08-23T03:00:00.000Z
+generatedAt: 2026-08-23T03:11:14Z
 sources:
   registryDir: docs/harness-feedback/eval-domains
   instructionMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#DOMAIN_INSTRUCTIONS
   publishMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#PUBLISH_VERDICT_INSTRUCTIONS_BY_DOMAIN
   verdictDir: docs/harness-feedback/verdicts
-verdictCorpusHash: 75b6ba9bb831f036f0c75856198a9cd3a30b03e4e85f5d0d5c62d3de4c95d491
-committedVerdictArtifactCount: 7
+verdictCorpusHash: 96806bebc736b730d8958673575d7b23a6a4b232d4b1e554d7526c8d1628f1ff
+committedVerdictArtifactCount: 8
 entries:
   - domainId: eval:a2a
     classification: active_decision_bearing
@@ -153,7 +153,7 @@ entries:
     sourceSelector:
       adapter: f254-freshness-replay
       kind: freshness-closure-replay
-    committedVerdictArtifactCount: 0
+    committedVerdictArtifactCount: 1
     functionalEquivalents:
       - f254-freshness-replay
       - freshness-closure-replay

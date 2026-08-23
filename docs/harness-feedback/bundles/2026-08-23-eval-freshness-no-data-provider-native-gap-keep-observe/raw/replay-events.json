@@ -1,0 +1,438 @@
+{
+  "selector": {
+    "kind": "freshness-closure-replay",
+    "windowStartMs": 1786849561424,
+    "windowEndMs": 1787454361424
+  },
+  "samples": [
+    {
+      "id": "fixture:original-double-message-dogfood",
+      "scenario": "original_double_message_dogfood",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-original-double-message",
+      "catIds": [
+        "gpt52"
+      ],
+      "traceRef": "trace:f254-ac-e9/original-double-message-dogfood",
+      "evidenceRefs": [
+        "fixture:f254/original-double-message-dogfood"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 1,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 0,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:existing-coverage-without-closure",
+      "scenario": "existing_coverage_without_closure",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-existing-coverage",
+      "catIds": [
+        "gpt52"
+      ],
+      "traceRef": "trace:f254-ac-e9/existing-coverage-without-closure",
+      "evidenceRefs": [
+        "fixture:f254/existing-coverage-without-closure"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 1,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 0,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:crash-cancel",
+      "scenario": "crash_cancel",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-crash-cancel",
+      "catIds": [
+        "gpt52"
+      ],
+      "traceRef": "trace:f254-ac-e9/crash-cancel",
+      "evidenceRefs": [
+        "fixture:f254/crash-cancel"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 2,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 0,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:continuous-new-messages",
+      "scenario": "continuous_new_messages",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-continuous-new-messages",
+      "catIds": [
+        "gpt52"
+      ],
+      "traceRef": "trace:f254-ac-e9/continuous-new-messages",
+      "evidenceRefs": [
+        "fixture:f254/continuous-new-messages"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 2,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 1,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:multi-target",
+      "scenario": "multi_target",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-multi-target",
+      "catIds": [
+        "gpt52",
+        "codex"
+      ],
+      "traceRef": "trace:f254-ac-e9/multi-target",
+      "evidenceRefs": [
+        "fixture:f254/multi-target"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 2,
+        "accountedTargetCount": 2,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 1,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 0,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:parallel-same-batch",
+      "scenario": "parallel_same_batch",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-parallel-same-batch",
+      "catIds": [
+        "gpt52",
+        "codex"
+      ],
+      "traceRef": "trace:f254-ac-e9/parallel-same-batch",
+      "evidenceRefs": [
+        "fixture:f254/parallel-same-batch"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 1,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 0,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:attempt-recheck-budget",
+      "scenario": "attempt_recheck_budget",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-attempt-recheck-budget",
+      "catIds": [
+        "gpt52"
+      ],
+      "traceRef": "trace:f254-ac-e9/attempt-recheck-budget",
+      "evidenceRefs": [
+        "fixture:f254/attempt-recheck-budget"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 5,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 3,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    },
+    {
+      "id": "fixture:connector-blocked",
+      "scenario": "connector_blocked",
+      "source": "fixture",
+      "occurredAt": 1786849561424,
+      "threadId": "fixture-thread-f254-connector-blocked",
+      "catIds": [
+        "gpt52"
+      ],
+      "traceRef": "trace:f254-ac-e9/connector-blocked",
+      "evidenceRefs": [
+        "fixture:f254/connector-blocked"
+      ],
+      "facts": {
+        "responsibilityCount": 1,
+        "custodyCount": 1,
+        "formalFinalCount": 1,
+        "formalFinalLimit": 1,
+        "knownStaleFinalCount": 0,
+        "targetCount": 1,
+        "accountedTargetCount": 1,
+        "sameBatchSiblingWakeCount": 0,
+        "automaticAttemptCount": 1,
+        "automaticAttemptLimit": 5,
+        "commitRecheckCount": 0,
+        "commitRecheckLimit": 3,
+        "terminalEvidenceComplete": true
+      },
+      "attentionReasons": []
+    }
+  ],
+  "aggregateSnapshot": {
+    "window": {
+      "fromInclusive": 1786849561424,
+      "toExclusive": 1787454361424
+    },
+    "closureCount": 0,
+    "committedCount": 0,
+    "blockedCount": 0,
+    "disposedCount": 0,
+    "unresolvedCount": 0,
+    "supersededAttemptCount": 0,
+    "redundantCommittedAttemptCount": 0,
+    "attemptBudgetExhaustedCount": 0,
+    "commitRecheckExhaustedCount": 0,
+    "startupRecoveryBlockedCount": 0,
+    "preflightIncompleteCount": 0,
+    "lineageIdentityGapCount": 0,
+    "custodyGapCount": 0,
+    "verdict": "no_data"
+  },
+  "report": {
+    "window": {
+      "startMs": 1786849561424,
+      "endMs": 1787454361424
+    },
+    "eligibleSampleCount": 8,
+    "passedSampleCount": 8,
+    "failedSampleCount": 0,
+    "attentionSampleCount": 0,
+    "fixtureSampleCount": 8,
+    "liveSampleCount": 0,
+    "scenarioCounts": {
+      "original_double_message_dogfood": 1,
+      "existing_coverage_without_closure": 1,
+      "crash_cancel": 1,
+      "continuous_new_messages": 1,
+      "multi_target": 1,
+      "parallel_same_batch": 1,
+      "attempt_recheck_budget": 1,
+      "connector_blocked": 1
+    },
+    "evaluations": [
+      {
+        "sampleId": "fixture:original-double-message-dogfood",
+        "scenario": "original_double_message_dogfood",
+        "traceRef": "trace:f254-ac-e9/original-double-message-dogfood",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:existing-coverage-without-closure",
+        "scenario": "existing_coverage_without_closure",
+        "traceRef": "trace:f254-ac-e9/existing-coverage-without-closure",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:crash-cancel",
+        "scenario": "crash_cancel",
+        "traceRef": "trace:f254-ac-e9/crash-cancel",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:continuous-new-messages",
+        "scenario": "continuous_new_messages",
+        "traceRef": "trace:f254-ac-e9/continuous-new-messages",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:multi-target",
+        "scenario": "multi_target",
+        "traceRef": "trace:f254-ac-e9/multi-target",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:parallel-same-batch",
+        "scenario": "parallel_same_batch",
+        "traceRef": "trace:f254-ac-e9/parallel-same-batch",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:attempt-recheck-budget",
+        "scenario": "attempt_recheck_budget",
+        "traceRef": "trace:f254-ac-e9/attempt-recheck-budget",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      },
+      {
+        "sampleId": "fixture:connector-blocked",
+        "scenario": "connector_blocked",
+        "traceRef": "trace:f254-ac-e9/connector-blocked",
+        "passed": true,
+        "violations": [],
+        "attentionReasons": []
+      }
+    ],
+    "verdict": "no_data",
+    "healthy": false,
+    "noDataReason": "No eligible live freshness closure samples resolved for this window."
+  },
+  "providerNativeCoverage": {
+    "cells": [
+      {
+        "provider": "anthropic",
+        "carrier": "claude_print_sdk",
+        "deliverySemantics": "unsupported",
+        "toolSurface": "command_execution",
+        "observedCount": 0,
+        "opportunityCount": 1,
+        "deliveredCount": 0,
+        "missedCount": 1,
+        "seenCount": 0,
+        "handledCount": 0
+      },
+      {
+        "provider": "anthropic",
+        "carrier": "claude_print_sdk",
+        "deliverySemantics": "unsupported",
+        "toolSurface": "other",
+        "observedCount": 0,
+        "opportunityCount": 1,
+        "deliveredCount": 0,
+        "missedCount": 1,
+        "seenCount": 0,
+        "handledCount": 0
+      },
+      {
+        "provider": "openai_codex",
+        "carrier": "codex_exec_json",
+        "deliverySemantics": "unsupported",
+        "toolSurface": "command_execution",
+        "observedCount": 0,
+        "opportunityCount": 3,
+        "deliveredCount": 0,
+        "missedCount": 3,
+        "seenCount": 0,
+        "handledCount": 0
+      }
+    ],
+    "carriers": [
+      {
+        "provider": "anthropic",
+        "carrier": "claude_print_sdk",
+        "deliverySemantics": "unsupported",
+        "dataStatus": "observed",
+        "allToolCoverage": false,
+        "missingSurfaces": [
+          "command_execution",
+          "file_change",
+          "mcp_tool_call",
+          "dynamic_tool_call"
+        ],
+        "unknownItemCount": 0
+      },
+      {
+        "provider": "openai_codex",
+        "carrier": "codex_exec_json",
+        "deliverySemantics": "unsupported",
+        "dataStatus": "observed",
+        "allToolCoverage": false,
+        "missingSurfaces": [
+          "command_execution",
+          "file_change",
+          "mcp_tool_call",
+          "dynamic_tool_call",
+          "collab_agent_tool_call",
+          "web_search",
+          "image_view",
+          "image_generation",
+          "sleep"
+        ],
+        "unknownItemCount": 0
+      }
+    ],
+    "verdict": "partial"
+  }
+}

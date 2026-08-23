@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-23-eval-freshness-no-data-provider-native-gap-keep-observe",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-23-eval-freshness-no-data-provider-native-gap-keep-observe/raw/replay-events.json",
+      "sha256": "32378d4bbc87c2dbc842c950055543f836d7671c0a59cc2533eb0320830bddd9"
+    }
+  ],
+  "generatedAt": "2026-08-23T03:13:04.982Z",
+  "generator": {
+    "name": "eval-freshness-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f254-freshness-replay-v1"
+}
