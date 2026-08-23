@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-23-eval-capability-wakeup-workspace-navigator-r5-fix-blocked-by-gate",
+  "domainId": "eval:capability-wakeup",
+  "createdAt": "2026-08-23T03:00:00.000Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F203",
+    "componentId": "workspace-navigator",
+    "name": "capability-wakeup-rules"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F203",
+    "targetOwnerCatId": "opus-47",
+    "requestedAction": "Two parallel actions: (1) Re-open L6 broadening PR against UPSTREAM zts212653/clowder-ai via opensource-ops flow (recover content from fork PR #168/#170); (2) Request measurement_validity_gate promotion for capability-wakeup domain from contract_ready to active_decision_bearing by checking in canonical measurement bundle evidence (R1+R2+R3 verdicts already provide 68 cognitive misses attribution)."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-30T03:00:00.000Z",
+    "closureCondition": "R6 checks both tracks: (a) upstream PR landed AND next sync preserves L6 broadening (verified by grep on origin/main post-sync); (b) domain promoted to active_decision_bearing so R6+ can author fix verdicts when evidence supports. Full closure: miss_rate drops below 30% AND fix-authoring authority restored."
+  },
+  "schemaVersion": 1
+}

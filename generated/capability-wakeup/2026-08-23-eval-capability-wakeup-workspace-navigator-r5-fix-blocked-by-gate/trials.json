@@ -1,0 +1,329 @@
+{
+  "verdictId": "2026-08-23-eval-capability-wakeup-workspace-navigator-r5-fix-blocked-by-gate",
+  "capability": "workspace-navigator",
+  "trials": [
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "5e7213d0-3d3e-4026-93fc-4cf50c4c4084",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "80917780-b912-47d8-993a-144f55d503ec",
+        "nextInvocationId": "abec43d4-5f80-4ddc-9d95-a9f25efc65fe",
+        "invocationIndex": 11
+      },
+      "eventNoSpan": {
+        "start": 317,
+        "end": 3234
+      },
+      "timeSpan": {
+        "startMs": 1786094393832,
+        "endMs": 1786094542760
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "5e7213d0-3d3e-4026-93fc-4cf50c4c4084",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "d651c5d1-8d37-4412-9a28-d9fd724d5975",
+        "nextInvocationId": "4fbeae80-4b37-42ce-9fbc-afb1b6d9e60c",
+        "invocationIndex": 69
+      },
+      "eventNoSpan": {
+        "start": 1549,
+        "end": 4459
+      },
+      "timeSpan": {
+        "startMs": 1786145736249,
+        "endMs": 1786145907516
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "5e7213d0-3d3e-4026-93fc-4cf50c4c4084",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "dcf57dc1-9611-4db8-bfef-17ef26eec32e",
+        "nextInvocationId": "ee194a3e-9881-424a-be84-6e7273711fd6",
+        "invocationIndex": 112
+      },
+      "eventNoSpan": {
+        "start": 2319,
+        "end": 5227
+      },
+      "timeSpan": {
+        "startMs": 1786185431261,
+        "endMs": 1786185542800
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "5e7213d0-3d3e-4026-93fc-4cf50c4c4084",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "3ee1b110-9d35-4405-8c9c-a62b93b1a6c3",
+        "nextInvocationId": "877fab12-2b4f-422a-804b-b0fc46b9e116",
+        "invocationIndex": 114
+      },
+      "eventNoSpan": {
+        "start": 2355,
+        "end": 5278
+      },
+      "timeSpan": {
+        "startMs": 1786252380058,
+        "endMs": 1786254522187
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "5e7213d0-3d3e-4026-93fc-4cf50c4c4084",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "d71b2c10-2cd2-4d73-923a-db8ef31a3bde",
+        "nextInvocationId": "d38be2f0-a782-4ead-a757-8ad7e6458187",
+        "invocationIndex": 133
+      },
+      "eventNoSpan": {
+        "start": 5657,
+        "end": 5712
+      },
+      "timeSpan": {
+        "startMs": 1786327338258,
+        "endMs": 1786327701517
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "b42aeecf-8b9c-4fca-a8b7-10e032a82d61",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "2882c003-5cd5-4bab-ac54-3f1383fd59c2",
+        "nextInvocationId": "747922a9-e8b4-4a18-bd0e-ba32080066a5",
+        "invocationIndex": 66
+      },
+      "eventNoSpan": {
+        "start": 1766,
+        "end": 4507
+      },
+      "timeSpan": {
+        "startMs": 1786086056766,
+        "endMs": 1786086350963
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": true,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "3ee3b1a8-39ed-4150-bd07-02014f200997",
+      "threadId": "thread_mryn57y41bb86bnn",
+      "catId": "fable5",
+      "window": {
+        "currentInvocationId": "cbf7ebd1-9db0-4297-876b-7f610437aa96",
+        "nextInvocationId": "e56d1f69-f908-4df0-a63d-6bb2268ae34e",
+        "invocationIndex": 9
+      },
+      "eventNoSpan": {
+        "start": 552,
+        "end": 4301
+      },
+      "timeSpan": {
+        "startMs": 1785929131309,
+        "endMs": 1785929912947
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "9b869220-f9e3-4c1e-a346-3153a2f76fb4",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "catId": "opus5",
+      "window": {
+        "currentInvocationId": "e0f5182b-2a54-4b27-8db5-b950ad591bc9",
+        "nextInvocationId": "e8dfbd03-d429-418f-bdfe-2adf68117a90",
+        "invocationIndex": 18
+      },
+      "eventNoSpan": {
+        "start": 1141,
+        "end": 2732
+      },
+      "timeSpan": {
+        "startMs": 1785999229759,
+        "endMs": 1785999629995
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "cd795d6c-b885-4801-8f7a-f332d7bd0b0f",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "catId": "opus5",
+      "window": {
+        "currentInvocationId": "d9d2a585-daed-4fb1-b347-edb89e74e6a4",
+        "nextInvocationId": "250706f4-9201-4d8d-9e60-0dd28d869e5d",
+        "invocationIndex": 12
+      },
+      "eventNoSpan": {
+        "start": 1785,
+        "end": 7356
+      },
+      "timeSpan": {
+        "startMs": 1785902027008,
+        "endMs": 1785904156876
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "cd795d6c-b885-4801-8f7a-f332d7bd0b0f",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "catId": "opus5",
+      "window": {
+        "currentInvocationId": "0fc3026c-3fff-460f-8f60-444d45231269",
+        "nextInvocationId": "685dadeb-901b-4425-89ff-c4ef7b03b89a",
+        "invocationIndex": 14
+      },
+      "eventNoSpan": {
+        "start": 2158,
+        "end": 7537
+      },
+      "timeSpan": {
+        "startMs": 1785904363550,
+        "endMs": 1785912395518
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "274a13bc-ed0d-4f58-ab89-975fd050ec98",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "catId": "sol",
+      "window": {
+        "currentInvocationId": "b01dac1d-bf1d-4991-a7c3-b2aaa50d5c41",
+        "nextInvocationId": "ef5becb5-5c14-4eaf-ab6c-a00e5510aee4",
+        "invocationIndex": 33
+      },
+      "eventNoSpan": {
+        "start": 800,
+        "end": 1629
+      },
+      "timeSpan": {
+        "startMs": 1785893938265,
+        "endMs": 1785894512524
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    },
+    {
+      "ruleId": "workspace-navigator-show-file-request",
+      "capability": "workspace-navigator",
+      "sessionId": "274a13bc-ed0d-4f58-ab89-975fd050ec98",
+      "threadId": "thread_msbevkjr31ysrqmt",
+      "catId": "sol",
+      "window": {
+        "currentInvocationId": "ef5becb5-5c14-4eaf-ab6c-a00e5510aee4",
+        "invocationIndex": 34
+      },
+      "eventNoSpan": {
+        "start": 809,
+        "end": 1629
+      },
+      "timeSpan": {
+        "startMs": 1785894408077,
+        "endMs": 1785894512524
+      },
+      "outcome": "miss",
+      "zeroFrictionDefault": false,
+      "opportunityEvidence": [
+        "patterns:打开|看看代码|看看文件|查看文件|帮我打开|open the (file|dir|directory)|show me the (file|code)"
+      ],
+      "usageEvidence": [],
+      "label": "cognitive"
+    }
+  ]
+}

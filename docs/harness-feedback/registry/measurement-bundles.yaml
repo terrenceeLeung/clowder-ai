@@ -1,13 +1,13 @@
 kind: f267-measurement-bundle-census
 schemaVersion: 2
-generatedAt: 2026-08-23T03:00:00Z
+generatedAt: 2026-08-23T03:00:00.000Z
 sources:
   registryDir: docs/harness-feedback/eval-domains
   instructionMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#DOMAIN_INSTRUCTIONS
   publishMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#PUBLISH_VERDICT_INSTRUCTIONS_BY_DOMAIN
   verdictDir: docs/harness-feedback/verdicts
-verdictCorpusHash: 5531f343fb20215f82630b6e7138692b4c38ea83c222aaed3f9334560066da49
-committedVerdictArtifactCount: 4
+verdictCorpusHash: 444bd7ef30bd57be7b73207e9a31e6103f3269df9bd581ce9597c37a1b3949ab
+committedVerdictArtifactCount: 5
 entries:
   - domainId: eval:a2a
     classification: active_decision_bearing
@@ -101,7 +101,7 @@ entries:
     sourceSelector:
       adapter: capability-wakeup-eval
       kind: capability-wakeup-trial-window
-    committedVerdictArtifactCount: 0
+    committedVerdictArtifactCount: 1
     functionalEquivalents:
       - capability-wakeup-eval
       - capability-wakeup-trial-window

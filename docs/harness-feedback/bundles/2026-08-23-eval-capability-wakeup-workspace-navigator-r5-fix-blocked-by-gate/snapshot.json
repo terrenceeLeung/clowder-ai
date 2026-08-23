@@ -1,0 +1,31 @@
+{
+  "verdictId": "2026-08-23-eval-capability-wakeup-workspace-navigator-r5-fix-blocked-by-gate",
+  "evalSnapshotId": "eval-F203-workspace_navigator-2026-08-23",
+  "featureId": "F203",
+  "generatedAt": "2026-08-23T03:09:10.651Z",
+  "window": {
+    "startMs": 1785893938265,
+    "endMs": 1786327701517,
+    "durationHours": 120.49
+  },
+  "components": [
+    {
+      "id": "workspace-navigator",
+      "name": "workspace-navigator",
+      "activationCounts": {
+        "opportunity_count": 12,
+        "used_count": 0,
+        "false_positive_count": 0
+      },
+      "frictionCounts": {
+        "miss_count": 12,
+        "cognitive_count": 12,
+        "behavioral_count": 0,
+        "attention_dilution_count": 0,
+        "reachability_doubt_count": 0,
+        "unclassified_count": 0
+      },
+      "confidence": "medium"
+    }
+  ]
+}
