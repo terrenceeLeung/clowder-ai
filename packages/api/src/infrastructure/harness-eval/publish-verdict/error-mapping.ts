@@ -34,5 +34,8 @@ export function mapPublishVerdictError(message: string): HandlerError | null {
   if (message.startsWith('handoff_incomplete')) {
     return { status: 400, error: 'handoff_incomplete', detail: message };
   }
+  if (message.startsWith('measurement_bundle_census_missing')) {
+    return { status: 503, error: 'census_unavailable', detail: message };
+  }
   return null;
 }
