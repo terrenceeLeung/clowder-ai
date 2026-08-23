@@ -1,0 +1,304 @@
+kind: f267-measurement-bundle-census
+schemaVersion: 2
+generatedAt: 2026-08-21T00:00:00.000Z
+sources:
+  registryDir: docs/harness-feedback/eval-domains
+  instructionMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#DOMAIN_INSTRUCTIONS
+  publishMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#PUBLISH_VERDICT_INSTRUCTIONS_BY_DOMAIN
+  verdictDir: docs/harness-feedback/verdicts
+verdictCorpusHash: f7ee57365b6a410f69841c0bfd3c75ece7c7f26c5b0ec37da1094f6daf623dec
+committedVerdictArtifactCount: 3
+entries:
+  - domainId: eval:a2a
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F167
+      ownerCatId: opus-47
+      allowedActions: &a1
+        - keep_observe
+        - fix
+        - build
+        - delete_sunset
+    sourceSelector:
+      adapter: f167-runtime-eval
+      kind: a2a-snapshot-attribution
+    committedVerdictArtifactCount: 2
+    functionalEquivalents:
+      - f167-runtime-eval
+      - a2a-snapshot-attribution
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 2
+      batch: 2
+      status: contract_ready
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Canonical measurement bundle evidence is not checked in for this domain.
+  - domainId: eval:anchor-first
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F236
+      ownerCatId: opus-47
+      allowedActions: *a1
+    sourceSelector:
+      adapter: f236-anchor-telemetry-rollup
+      kind: anchor-telemetry-snapshot
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - f236-anchor-telemetry-rollup
+      - anchor-telemetry-snapshot
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 7
+      batch: 7
+      status: contract_ready
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Canonical measurement bundle evidence is not checked in for this domain.
+  - domainId: eval:capability-tips
+    classification: gated
+    enabled: false
+    decisionConsumer:
+      featureId: F244
+      ownerCatId: codex-sol
+      allowedActions: []
+    sourceSelector:
+      adapter: capability-tips-usage
+      kind: capability-tips-usage-window
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - capability-tips-usage
+      - capability-tips-usage-window
+    evidence:
+      domainInstructions: false
+      publishInstructions: false
+    validityMigration:
+      riskRank: null
+      batch: null
+      status: gated
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Domain is disabled.
+  - domainId: eval:capability-wakeup
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F203
+      ownerCatId: opus-47
+      allowedActions: *a1
+    sourceSelector:
+      adapter: capability-wakeup-eval
+      kind: capability-wakeup-trial-window
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - capability-wakeup-eval
+      - capability-wakeup-trial-window
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 4
+      batch: 4
+      status: contract_ready
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Canonical measurement bundle evidence is not checked in for this domain.
+  - domainId: eval:external-case-closure
+    classification: registered_nonoperational
+    enabled: true
+    decisionConsumer:
+      featureId: F168
+      ownerCatId: opus48
+      allowedActions: []
+    sourceSelector:
+      adapter: f168-external-case-eval
+      kind: a2a-snapshot-attribution
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - f168-external-case-eval
+      - a2a-snapshot-attribution
+    evidence:
+      domainInstructions: false
+      publishInstructions: false
+    validityMigration:
+      riskRank: null
+      batch: null
+      status: nonoperational
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Domain has no publish instructions.
+  - domainId: eval:freshness
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F254
+      ownerCatId: codex
+      allowedActions: *a1
+    sourceSelector:
+      adapter: f254-freshness-replay
+      kind: freshness-closure-replay
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - f254-freshness-replay
+      - freshness-closure-replay
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 5
+      batch: 5
+      status: contract_ready
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Canonical measurement bundle evidence is not checked in for this domain.
+  - domainId: eval:friction
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F245
+      ownerCatId: opus-47
+      allowedActions: *a1
+    sourceSelector:
+      adapter: f245-friction-rollup
+      kind: friction-rollup-snapshot
+    committedVerdictArtifactCount: 1
+    functionalEquivalents:
+      - f245-friction-rollup
+      - friction-rollup-snapshot
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 8
+      batch: null
+      status: certified_insufficient
+      certificateRef: docs/harness-feedback/certificates/f267-friction-opportunity-to-action.yaml
+      resultRef: docs/harness-feedback/measurement-results/f267-friction-2026-07-18.yaml
+      replayRef: docs/harness-feedback/replays/f267-friction-2026-07-18-same-version.yaml
+      actionGate: keep_observe_only
+      hardBlockReason: Only insufficient closed-window friction evidence is certified;
+        owner actions remain gated until a usable measurement bundle exists.
+  - domainId: eval:memory
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F200
+      ownerCatId: opus-47
+      allowedActions: *a1
+    sourceSelector:
+      adapter: f200-f188-memory-eval
+      kind: memory-recall-snapshot
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - f200-f188-memory-eval
+      - memory-recall-snapshot
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 1
+      batch: 1
+      status: certified_insufficient
+      certificateRef: docs/harness-feedback/certificates/f267-memory-search-quality.yaml
+      resultRef: docs/harness-feedback/measurement-results/f267-memory-search-quality-negative-control-v1.yaml
+      replayRef: docs/harness-feedback/replays/f267-memory-search-quality-negative-control-v1.yaml
+      actionGate: keep_observe_only
+      hardBlockReason: Only negative-control evidence is certified; owner actions
+        remain gated until a usable measurement bundle exists.
+  - domainId: eval:qc
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F253
+      ownerCatId: opus
+      allowedActions: *a1
+    sourceSelector:
+      adapter: qc-metrics-eval
+      kind: qc-metrics-rollup
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - qc-metrics-eval
+      - qc-metrics-rollup
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 6
+      batch: 6
+      status: contract_ready
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Canonical measurement bundle evidence is not checked in for this domain.
+  - domainId: eval:sop
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F192
+      ownerCatId: opus
+      allowedActions: *a1
+    sourceSelector:
+      adapter: sop-trace-eval
+      kind: sop-trace-eval
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - sop-trace-eval
+      - sop-trace-eval
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 3
+      batch: 3
+      status: contract_ready
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: Canonical measurement bundle evidence is not checked in for this domain.
+  - domainId: eval:task-outcome
+    classification: active_decision_bearing
+    enabled: true
+    decisionConsumer:
+      featureId: F192
+      ownerCatId: opus
+      allowedActions: *a1
+    sourceSelector:
+      adapter: task-outcome-eval
+      kind: task-outcome-snapshot
+    committedVerdictArtifactCount: 0
+    functionalEquivalents:
+      - task-outcome-eval
+      - task-outcome-snapshot
+    evidence:
+      domainInstructions: true
+      publishInstructions: true
+    validityMigration:
+      riskRank: 9
+      batch: null
+      status: blocked_f275
+      certificateRef: null
+      resultRef: null
+      replayRef: null
+      actionGate: keep_observe_only
+      hardBlockReason: F275 canonical work identity and eligibility remain
+        authoritative prerequisites.
