@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-23-eval-capability-wakeup-workspace-navigator-r5-fix-blocked-by-gate",
+  "rawInputs": [
+    {
+      "path": "generated/capability-wakeup/2026-08-23-eval-capability-wakeup-workspace-navigator-r5-fix-blocked-by-gate/trials.json",
+      "sha256": "32077deab4eb796ae3006a286b255a5747089f30edaef054db4cf2e8d6e5299e"
+    },
+    {
+      "path": "generated/capability-wakeup/2026-08-23-eval-capability-wakeup-workspace-navigator-r5-fix-blocked-by-gate/summary.json",
+      "sha256": "bfff07f310e0799179c3a750ac115c4bef5ad36eeaaaa75d1dd5c5036ff70532"
+    }
+  ],
+  "generatedAt": "2026-08-23T03:09:10.651Z",
+  "generator": {
+    "name": "eval-capability-wakeup-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-capability-wakeup-v1"
+}
