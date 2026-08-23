@@ -1,0 +1,15 @@
+{
+  "verdictId": "qc-w34-2026",
+  "rawInputs": [
+    {
+      "path": "bundles/qc-w34-2026/snapshot.json",
+      "sha256": "22f91f45d7a1c2633e4642254a444c31c25b1a2e2e506f5d1fa4a04d3f728f98"
+    }
+  ],
+  "generatedAt": "2026-08-23T03:08:19.938Z",
+  "generator": {
+    "name": "qc-generator-adapter",
+    "version": "1.0.0"
+  },
+  "sanitizeRulesVersion": "1.0.0"
+}
