@@ -1,0 +1,21 @@
+{
+  "verdictId": "qc-w34-2026",
+  "domainId": "eval:qc",
+  "createdAt": "2026-08-23T03:00:00Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F253",
+    "componentId": "qc-metrics-provider",
+    "name": "QC Pipeline Metrics Provider"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F253",
+    "targetOwnerCatId": "opus",
+    "requestedAction": "No action needed — zero-baseline is expected at Phase C. Monitor for review telemetry wiring in future phases."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-30T03:00:00Z",
+    "closureCondition": "prCount > 0 in a weekly window (review telemetry wired and producing data)"
+  },
+  "schemaVersion": 1
+}

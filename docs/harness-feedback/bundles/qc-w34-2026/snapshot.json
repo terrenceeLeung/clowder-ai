@@ -1,0 +1,27 @@
+{
+  "verdictId": "qc-w34-2026",
+  "evalSnapshotId": "qc-snapshot-qc-w34-2026",
+  "featureId": "F253",
+  "generatedAt": "2026-08-23T03:08:19.938Z",
+  "window": {
+    "startMs": 1786838400000,
+    "endMs": 1787443200000,
+    "durationHours": 168
+  },
+  "components": [
+    {
+      "componentId": "qc-pipeline",
+      "componentName": "QC Pipeline",
+      "activationCounts": {
+        "finding_yield": 0,
+        "reviewer_delta": 0,
+        "pr_count": 0
+      },
+      "frictionCounts": {
+        "false_positive_rate": 0,
+        "post_merge_bug_rate": 0
+      },
+      "confidence": "no-data"
+    }
+  ]
+}
