@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-23-eval-a2a-c2-regression-publish-visibility-watch",
+  "domainId": "eval:a2a",
+  "createdAt": "2026-08-23T03:06:13Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F167",
+    "componentId": "eval:a2a",
+    "name": "F167 A2A harness eval with F267 measurement-publish gate"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F267",
+    "targetOwnerCatId": "codex-sol",
+    "requestedAction": "Restore or migrate the canonical F267 measurement baseline into publisher-visible committed history, including the census and referenced artifact graph, then rerun eval:a2a publish; after the gate can publish durable evidence, inspect the 2026-08-23 C2 product-thread reject sample before assigning a fix owner."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-24T03:00:00Z",
+    "closureCondition": "Next eval:a2a run has exactly one daily RUN_DELIVERED row, sourceRefs are prewritten or publish-visible, F267 census/artifact graph is available to isolated publish worktrees, C2 verdict_without_pass_count returns to 0 or the sample is adjudicated benign, and all Phase Q/event-backed/action-successor/Phase T zero-tolerance metrics remain 0."
+  },
+  "schemaVersion": 1
+}
