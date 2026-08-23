@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-23-eval-freshness-no-data-provider-native-gap-keep-observe",
+  "domainId": "eval:freshness",
+  "createdAt": "2026-08-23T03:11:14Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F254",
+    "componentId": "freshness-closure-replay",
+    "name": "freshness closure replay"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F254",
+    "targetOwnerCatId": "codex",
+    "requestedAction": "Keep the weekly eval active and gather either non-zero eligible live closure samples or wired queued_seen exposure so the next window can distinguish no-data from real freshness health."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-30T03:11:14Z",
+    "closureCondition": "A replay window with non-zero eligible live samples or durable queued_seen visibility, plus fewer unsupported-carrier-only notice misses."
+  },
+  "schemaVersion": 1
+}

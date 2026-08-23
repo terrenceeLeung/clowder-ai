@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-23-eval-freshness-no-data-provider-native-gap-keep-observe",
+  "featureId": "F254",
+  "evalSnapshotId": "eval-F254-2026-08-23",
+  "generatedAt": "2026-08-23T03:13:04.982Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no_eligible_samples",
+    "evidence": "No eligible live freshness closure samples resolved for this window."
+  }
+}

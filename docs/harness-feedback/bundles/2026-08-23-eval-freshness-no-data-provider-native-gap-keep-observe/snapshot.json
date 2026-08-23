@@ -1,0 +1,68 @@
+{
+  "verdictId": "2026-08-23-eval-freshness-no-data-provider-native-gap-keep-observe",
+  "evalSnapshotId": "eval-F254-2026-08-23",
+  "featureId": "F254",
+  "generatedAt": "2026-08-23T03:13:04.982Z",
+  "window": {
+    "startMs": 1786849561424,
+    "endMs": 1787454361424,
+    "durationHours": 168
+  },
+  "replayVerdict": "no_data",
+  "healthy": false,
+  "noDataReason": "No eligible live freshness closure samples resolved for this window.",
+  "rawReplaySha256": "32378d4bbc87c2dbc842c950055543f836d7671c0a59cc2533eb0320830bddd9",
+  "components": [
+    {
+      "id": "freshness-closure-replay",
+      "name": "F254 replayable freshness closure invariants",
+      "confidence": "no-data",
+      "activationCounts": {
+        "eligible_samples": 8,
+        "passed_samples": 8,
+        "fixture_samples": 8,
+        "live_samples": 0,
+        "attention_samples": 0,
+        "scenario_original_double_message_dogfood": 1,
+        "scenario_existing_coverage_without_closure": 1,
+        "scenario_crash_cancel": 1,
+        "scenario_continuous_new_messages": 1,
+        "scenario_multi_target": 1,
+        "scenario_parallel_same_batch": 1,
+        "scenario_attempt_recheck_budget": 1,
+        "scenario_connector_blocked": 1,
+        "provider_native_cells": 3,
+        "provider_native_all_tool_carriers": 0,
+        "provider_native_opportunities": 5,
+        "provider_native_delivered": 0,
+        "provider_native_seen": 0,
+        "provider_native_handled": 0
+      },
+      "frictionCounts": {
+        "failed_samples": 0,
+        "violation_responsibility_without_custody": 0,
+        "violation_formal_final_limit_exceeded": 0,
+        "violation_known_stale_final_visible": 0,
+        "violation_target_outcome_missing": 0,
+        "violation_same_batch_sibling_triggered": 0,
+        "violation_automatic_attempt_budget_exceeded": 0,
+        "violation_commit_recheck_budget_exceeded": 0,
+        "violation_terminal_evidence_missing": 0
+      }
+    },
+    {
+      "id": "provider-native-freshness-coverage",
+      "name": "F254 provider by carrier by tool-surface coverage",
+      "confidence": "medium",
+      "activationCounts": {
+        "cells": 3,
+        "carrier_rows": 2,
+        "all_tool_carriers": 0
+      },
+      "frictionCounts": {
+        "missed": 5,
+        "partial_carriers": 2
+      }
+    }
+  ]
+}
