@@ -1,0 +1,205 @@
+{
+  "verdictId": "2026-08-23-eval-a2a-c2-regression-publish-visibility-watch",
+  "evalSnapshotId": "eval-F167-2026-08-23",
+  "featureId": "F167",
+  "generatedAt": "2026-08-23T03:04:50.303Z",
+  "window": {
+    "startMs": 1787368139146,
+    "endMs": 1787454237501,
+    "durationHours": 23.916209722222224
+  },
+  "counterWindow": {
+    "startMs": 1787274670544,
+    "endMs": 1787454243015,
+    "durationHours": 49.881241854861116
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "eval-domain-daily scheduled lane and legacy cleanup",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1,
+        "eval_domain_daily.eval_a2a_ledger_row_id": 589106,
+        "eval_domain_daily.days_with_runs_since_2026_08_21": 3,
+        "eval_domain_daily.consecutive_recovered_days_since_2026_08_21": 3,
+        "eval_domain_daily.current_ledger_db_root_evidence_sqlite": 1
+      },
+      "frictionCounts": {
+        "eval_domain_daily.duplicate_runs_for_2026_08_23": 0,
+        "eval_domain_daily.eval_a2a_missing_days_since_2026_08_14": 6,
+        "legacy.dynamic_task_defs.harness_fit_digest_enabled": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "source-ref-prewrite",
+      "name": "scheduled sourceRefs prewrite contract",
+      "confidence": "high",
+      "activationCounts": {
+        "source_refs.publish_contract_present": 1,
+        "source_refs.eval_cat_generated_raw_evidence": 1,
+        "source_refs.current_runtime_has_counter_window": 1
+      },
+      "frictionCounts": {
+        "source_refs.prewritten_source_refs_missing_in_2026_08_23_invocation": 1,
+        "source_refs.current_source_eval_domain_daily_lacks_f167_prewrite_path": 1,
+        "source_refs.current_dist_eval_domain_daily_lacks_f167_prewrite_call": 1
+      }
+    },
+    {
+      "id": "implementation-lineage",
+      "name": "runtime checkout and implementation lineage",
+      "confidence": "high",
+      "activationCounts": {
+        "implementation.current_head_4efe0c450": 1,
+        "implementation.origin_main_09d17ba": 1,
+        "implementation.upstream_main_f466c20": 1,
+        "implementation.current_head_contains_measurement_bundles_yaml": 1,
+        "implementation.dist_rebuilt_after_source_changes": 1
+      },
+      "frictionCounts": {
+        "implementation.current_head_ahead_origin_main_commits": 1,
+        "implementation.current_head_behind_origin_main_commits": 1,
+        "implementation.current_head_ahead_upstream_main_commits": 1,
+        "implementation.current_head_behind_upstream_main_commits": 7,
+        "implementation.origin_main_lacks_measurement_bundles_yaml": 1
+      }
+    },
+    {
+      "id": "runtime-process-build",
+      "name": "live API process and dist build freshness",
+      "confidence": "high",
+      "activationCounts": {
+        "runtime.pid_58400_running": 1,
+        "runtime.api_port_3006_listening": 1,
+        "runtime.process_started_after_2026_08_14_source_sync": 1,
+        "runtime.dist_index_rebuilt_2026_08_21": 1
+      },
+      "frictionCounts": {
+        "runtime.pid_21571_running": 0,
+        "runtime.dist_artifacts_older_than_source_changes": 0
+      }
+    },
+    {
+      "id": "f267-measurement-baseline",
+      "name": "F267 canonical measurement baseline publish visibility",
+      "confidence": "high",
+      "activationCounts": {
+        "f267.measurement_bundles_yaml_present_in_head": 1,
+        "f267.local_measurement_baseline_files_present": 1
+      },
+      "frictionCounts": {
+        "f267.measurement_bundles_yaml_missing_from_origin_main": 1,
+        "f267.certificate_artifact_dir_missing_from_head": 1,
+        "f267.measurement_results_dir_missing_from_head": 1,
+        "f267.replays_dir_missing_from_head": 1,
+        "f267.artifact_dirs_untracked_in_acceptance_checkout": 1,
+        "f267.publish_visibility_canonical_history_gap": 1
+      }
+    },
+    {
+      "id": "action-successor-single-flight",
+      "name": "action successor single-flight guard",
+      "confidence": "medium",
+      "activationCounts": {
+        "successor.unique_cats_invoked_total": 0,
+        "successor.actions_observed": 0,
+        "successor.explicit_parallel_observations": 0,
+        "successor.safe_wait": 0,
+        "successor.replace": 0,
+        "successor.multi_mention_total": 0,
+        "successor.single_target_multi_mention_total": 0,
+        "successor.single_target_multi_mention_rate": 0
+      },
+      "frictionCounts": {
+        "successor.concurrent_single_violations": 0,
+        "successor.responses_after_terminal_state": 0,
+        "successor.unfenced_single_target_multi_mention": 0,
+        "successor.action_fence_unavailable": 0,
+        "successor.agent_key_action_rejected": 0
+      }
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "medium",
+      "activationCounts": {
+        "grounding.check_total": 0,
+        "grounding.verdict_total": 0,
+        "grounding.resolver_total": 0,
+        "grounding.cache_hit_total": 0,
+        "grounding.sample_count": 0,
+        "grounding.mismatch_sample_count": 0
+      },
+      "frictionCounts": {
+        "grounding.budget_exhausted_total": 0
+      }
+    },
+    {
+      "id": "hold-lifecycle-phase-q",
+      "name": "hold lifecycle (Phase Q event-backed retirement)",
+      "confidence": "medium",
+      "activationCounts": {
+        "hold_lifecycle.event_retired_total": 0,
+        "hold_lifecycle.stale_wake_suppressed_total": 0
+      },
+      "frictionCounts": {
+        "hold_lifecycle.expired_after_satisfied_total": 0
+      }
+    },
+    {
+      "id": "event-backed-routing-exit",
+      "name": "routing guard (verified event-backed exit)",
+      "confidence": "medium",
+      "activationCounts": {
+        "event_wait.bypass_total": 0,
+        "event_wait.rejected_total": 2,
+        "event_wait.rejected_stale_total": 0,
+        "event_wait.rejected_unrelated_total": 0,
+        "event_wait.rejected_uncovered_total": 0,
+        "event_wait.rejected_query_failed_total": 0,
+        "event_wait.rejected_other_total": 2,
+        "event_wait.redundant_hold_prevented_total": 0,
+        "terminal_release.clean_stop_total": 4
+      },
+      "frictionCounts": {
+        "event_wait.false_bypass_total": 0,
+        "terminal_release.remedial_total": 0
+      }
+    },
+    {
+      "id": "turn-custody-stop-gate",
+      "name": "turn-scoped custody stop gate",
+      "confidence": "medium",
+      "activationCounts": {
+        "turn_custody.projections_total": 80,
+        "turn_custody.covered_active_total": 2,
+        "turn_custody.covered_empty_total": 77,
+        "turn_custody.unknown_legacy_total": 1,
+        "turn_custody.unknown_legacy_rate": 0.0125,
+        "turn_custody.agree_allow_total": 16,
+        "turn_custody.agree_block_total": 2,
+        "turn_custody.agreements_total": 18,
+        "turn_custody.disagreements_total": 62,
+        "turn_custody.shadow_old_block_total": 64,
+        "turn_custody.shadow_new_block_total": 2,
+        "turn_custody.old_only_block_total": 62,
+        "turn_custody.new_only_block_total": 0,
+        "turn_custody.projected_block_increase_total": 0,
+        "turn_custody.new_only_classified_total": 0,
+        "turn_custody.new_only_justified_total": 0,
+        "turn_custody.legacy_guard_without_active_custody_total": 62
+      },
+      "frictionCounts": {
+        "turn_custody.new_only_unjustified_total": 0,
+        "turn_custody.new_only_unexplained_total": 0,
+        "turn_custody.new_only_classification_gap_total": 0,
+        "turn_custody.protocol_action_without_custody_total": 0,
+        "turn_custody.user_nudge_required_total": 0,
+        "turn_custody.same_subject_post_terminal_enqueue_total": 0,
+        "turn_custody.lease_succeeded_subject_nonterminal_total": 0
+      }
+    }
+  ]
+}

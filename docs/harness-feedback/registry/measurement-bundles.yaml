@@ -1,13 +1,13 @@
 kind: f267-measurement-bundle-census
 schemaVersion: 2
-generatedAt: 2026-08-23T03:00:00.000Z
+generatedAt: 2026-08-23T03:06:13Z
 sources:
   registryDir: docs/harness-feedback/eval-domains
   instructionMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#DOMAIN_INSTRUCTIONS
   publishMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#PUBLISH_VERDICT_INSTRUCTIONS_BY_DOMAIN
   verdictDir: docs/harness-feedback/verdicts
-verdictCorpusHash: 444bd7ef30bd57be7b73207e9a31e6103f3269df9bd581ce9597c37a1b3949ab
-committedVerdictArtifactCount: 5
+verdictCorpusHash: 368f1c669ca7756fbf48eb74a52fa056d562cc431e310b4af824e68a53f7cb36
+committedVerdictArtifactCount: 6
 entries:
   - domainId: eval:a2a
     classification: active_decision_bearing
@@ -23,7 +23,7 @@ entries:
     sourceSelector:
       adapter: f167-runtime-eval
       kind: a2a-snapshot-attribution
-    committedVerdictArtifactCount: 2
+    committedVerdictArtifactCount: 3
     functionalEquivalents:
       - f167-runtime-eval
       - a2a-snapshot-attribution
