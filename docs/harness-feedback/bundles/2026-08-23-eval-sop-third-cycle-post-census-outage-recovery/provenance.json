@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-23-eval-sop-third-cycle-post-census-outage-recovery",
+  "rawInputs": [
+    {
+      "path": "generated/sop/2026-08-23-eval-sop-third-cycle-post-census-outage-recovery/trace.json",
+      "sha256": "bac7b6c674b1c2136dcc09b48edec34dd42eb8f1cad4615a1618e27876399dc2"
+    },
+    {
+      "path": "generated/sop/2026-08-23-eval-sop-third-cycle-post-census-outage-recovery/eval-results.json",
+      "sha256": "82954a91e3dcefb7882b844962c8080bdf5e95b30803fe0943f4188caa0ee203"
+    }
+  ],
+  "generatedAt": "2026-08-23T03:00:00.000Z",
+  "generator": {
+    "name": "eval-sop-live-verdict",
+    "version": "2"
+  },
+  "sanitizeRulesVersion": "f192-sop-trace-v1"
+}

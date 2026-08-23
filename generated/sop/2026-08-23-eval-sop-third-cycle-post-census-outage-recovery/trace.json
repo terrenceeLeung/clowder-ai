@@ -1,0 +1,46 @@
+{
+  "verdictId": "2026-08-23-eval-sop-third-cycle-post-census-outage-recovery",
+  "featureId": "F192",
+  "generatedAt": "2026-08-23T03:00:00.000Z",
+  "trace": {
+    "sessionId": "eval-sop-2026-08-01-pr-165-clean-second-cycle-anchor-with-outage-recovery-context",
+    "sopDefinitionId": "development",
+    "observedStage": "merge",
+    "commands": [
+      {
+        "command": "gh pr merge 165 --squash --delete-branch",
+        "exitCode": 0,
+        "eventNo": 1
+      }
+    ],
+    "changedFiles": [
+      "docs/harness-feedback/bundles/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/attribution.json",
+      "docs/harness-feedback/bundles/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/provenance.json",
+      "docs/harness-feedback/bundles/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/snapshot.json",
+      "docs/harness-feedback/verdicts/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress.md",
+      "generated/sop/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/eval-results.json",
+      "generated/sop/2026-08-01-eval-sop-second-clean-cycle-partial-ops-progress/trace.json"
+    ],
+    "changedFileEvents": [],
+    "envSnapshot": {
+      "REDIS_URL": "redis://localhost:6399"
+    },
+    "gitState": {
+      "branch": "main",
+      "ahead": 0,
+      "behind": 0,
+      "clean": true,
+      "worktreeRoot": "/Users/tianyiliang/projects/clowder-ai"
+    },
+    "handles": {
+      "author": "opus-47"
+    },
+    "shaContext": {
+      "verdict_commit": "3c4008cf31876db8e117de28f25551899ebf07d9",
+      "merged_at": "2026-08-02T03:04:08Z",
+      "prior_verdict_pr": "165",
+      "census_seed_pr": "198",
+      "census_seed_merge": "4460f71812c6302476bfec22574719bcf5f1ef03"
+    }
+  }
+}
