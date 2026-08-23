@@ -28,7 +28,19 @@ function nonDerivedMetadata(input: unknown) {
 }
 
 export function readMeasurementBundleCensusFile(repoRoot: string): string {
-  return readFileSync(resolve(repoRoot, MEASUREMENT_BUNDLE_CENSUS_REF), 'utf8');
+  const path = resolve(repoRoot, MEASUREMENT_BUNDLE_CENSUS_REF);
+  try {
+    return readFileSync(path, 'utf8');
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new Error(
+        `measurement_bundle_census_missing: ${MEASUREMENT_BUNDLE_CENSUS_REF} does not exist at ${path}. ` +
+          'This file must be committed to origin/main for verdict publishing to work. ' +
+          'The publish worktree checks out from origin/main, so the file must be in the tracked tree.',
+      );
+    }
+    throw error;
+  }
 }
 
 export function refreshMeasurementBundleCensusFile(repoRoot: string, generatedAt: string, cleanSource: string): string {
