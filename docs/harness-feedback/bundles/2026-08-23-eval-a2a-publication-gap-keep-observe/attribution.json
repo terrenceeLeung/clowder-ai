@@ -1,0 +1,131 @@
+{
+  "verdictId": "2026-08-23-eval-a2a-publication-gap-keep-observe",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-23",
+  "generatedAt": "2026-08-23T03:06:13Z",
+  "findings": [
+    {
+      "id": "f167-eval-a2a-publication-baseline-still-insufficient",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "eval_loop_publication_validity_gap",
+        "severity": "high",
+        "confidence": 0.9
+      },
+      "attribution": {
+        "primaryLayer": "eval-domain-scheduler",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "scheduler",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 589106 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-23T02:59:59.899Z; 2026-08-21 and 2026-08-22 also delivered once, giving three recovered daily runs."
+          },
+          {
+            "type": "scheduler-gap",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_missing_days_since_2026_08_14",
+            "excerpt": "Daily streak still has zero eval:a2a rows on 2026-08-15 through 2026-08-20; this remains historical traceability debt even though 2026-08-21 through 2026-08-23 fired."
+          },
+          {
+            "type": "legacy-cleanup",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "Legacy duplicate trigger status remains disabled: dynamic_task_defs has 0 harness-fit-digest definitions and task_run_ledger has 0 harness-fit-digest runs."
+          },
+          {
+            "type": "publish-contract",
+            "anchor": "source-ref-prewrite/source_refs.prewritten_source_refs_missing_in_2026_08_23_invocation",
+            "excerpt": "The 2026-08-23 scheduled callback again carried no sourceRefs; this eval-cat manually generated 2026-08-23 f167-a2a raw snapshot and attribution files under docs/harness-feedback."
+          },
+          {
+            "type": "source-tree",
+            "anchor": "source-ref-prewrite/source_refs.current_source_eval_domain_daily_lacks_f167_prewrite_path",
+            "excerpt": "Current src/infrastructure/harness-eval/domain/eval-domain-daily.ts builds and delivers buildEvalCatInvocation output but does not import or call predefineF167SnapshotForCron/writeF167SnapshotYaml."
+          },
+          {
+            "type": "dist-tree",
+            "anchor": "source-ref-prewrite/source_refs.current_dist_eval_domain_daily_lacks_f167_prewrite_call",
+            "excerpt": "dist/infrastructure/harness-eval/domain/eval-domain-daily.js also lacks a call to predefineF167SnapshotForCron; the live scheduler path is not wired to prewrite F167 raw sourceRefs."
+          },
+          {
+            "type": "runtime-provenance",
+            "anchor": "implementation-lineage/implementation.current_head_4efe0c450",
+            "excerpt": "Outer repo HEAD is runtime/main-sync 4efe0c450, which commits docs/harness-feedback/registry/measurement-bundles.yaml; origin/main is 09d17ba and upstream/main is f466c20b."
+          },
+          {
+            "type": "runtime-provenance",
+            "anchor": "implementation-lineage/implementation.origin_main_lacks_measurement_bundles_yaml",
+            "excerpt": "git cat-file confirms HEAD contains docs/harness-feedback/registry/measurement-bundles.yaml, but origin/main does not; HEAD and origin/main are currently diverged by 1/1 commits."
+          },
+          {
+            "type": "runtime-provenance",
+            "anchor": "runtime-process-build/runtime.pid_58400_running",
+            "excerpt": "The live API process is PID 58400, node dist/index.js on 127.0.0.1:3006, started 2026-08-21T01:11:10Z; old PID 21571 remains gone."
+          },
+          {
+            "type": "build-artifact",
+            "anchor": "runtime-process-build/runtime.dist_artifacts_older_than_source_changes",
+            "excerpt": "dist/index.js and dist/infrastructure/harness-eval/f167-eval.js were rebuilt on 2026-08-21 after their 2026-08-14 source mtimes, so stale-dist is not today's blocker."
+          },
+          {
+            "type": "f267-baseline",
+            "anchor": "f267-measurement-baseline/f267.measurement_bundles_yaml_present_in_head",
+            "excerpt": "measurement-bundles.yaml is now committed in local runtime/main-sync HEAD, but it is not present in origin/main; publisher visibility depends on which canonical ref the isolated publish worktree checks out."
+          },
+          {
+            "type": "f267-baseline",
+            "anchor": "f267-measurement-baseline/f267.artifact_dirs_untracked_in_acceptance_checkout",
+            "excerpt": "Local certificates/, measurement-results/, and replays/ directories exist, but git status shows them untracked and git cat-file confirms they are absent from HEAD and origin/main."
+          },
+          {
+            "type": "telemetry-window",
+            "anchor": "source-ref-prewrite/source_refs.current_runtime_has_counter_window",
+            "excerpt": "counter_window.duration_hours is 49.881241854861116, so counter-based rates use the process counter window rather than the trace window denominator; confidence is not downgraded for a short restart window."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "grounding-phase-o/grounding.mismatch_sample_count",
+            "excerpt": "Grounding Phase O counters are wired and report grounding.check_total=0, grounding.verdict_total=0, and no stored samples; no mismatch pattern warrants fail-closed escalation."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "hold-lifecycle-phase-q/hold_lifecycle.expired_after_satisfied_total",
+            "excerpt": "Phase Q hold lifecycle zero-tolerance metric expired_after_satisfied_total remains 0; event_retired_total and stale_wake_suppressed_total are exposed at 0."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "event-backed-routing-exit/event_wait.false_bypass_total",
+            "excerpt": "Event-backed routing exit counters are exposed; false_bypass_total is 0, rejected_other_total is 2, and redundant_hold_prevented_total is 0."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "action-successor-single-flight/successor.action_fence_unavailable",
+            "excerpt": "Action successor carrier migration counters are exposed with single_target_multi_mention_rate=0, unfenced_single_target_multi_mention=0, action_fence_unavailable=0, and agent_key_action_rejected=0."
+          },
+          {
+            "type": "telemetry",
+            "anchor": "turn-custody-stop-gate/turn_custody.new_only_classification_gap_total",
+            "excerpt": "Turn custody projected 80 samples: new_only_block_total=0 equals justified+unjustified+unexplained=0; all zero-tolerance Phase T metrics are 0. old_only_block_total=62 and unknown_legacy_rate=0.0125 are migration context only."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "restore_or_replace_source_ref_prewrite",
+          "target": "src/infrastructure/harness-eval/domain/eval-domain-daily.ts",
+          "rationale": "The publish contract still requires a2a sourceRefs basenames, but scheduled invocations do not prewrite the raw snapshot/attribution before invoking the eval cat."
+        },
+        {
+          "action": "restore_f267_measurement_baseline_to_canonical_history",
+          "target": "docs/harness-feedback/registry/measurement-bundles.yaml and referenced F267 artifact graph",
+          "rationale": "The census exists in local runtime/main-sync HEAD but not origin/main, and referenced artifact directories remain untracked; publish and replay need a canonical committed source of truth."
+        },
+        {
+          "action": "keep_observe_until_measurement_gate_usable",
+          "target": "eval:a2a verdict lane",
+          "rationale": "F267 measurement validity still gates non-usable or insufficient bundles to keep_observe_only; do not escalate publication insufficiency into fix/build/delete_sunset."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
