@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-24-eval-friction-empty-insufficient-three-day-window",
+  "featureId": "F245",
+  "evalSnapshotId": "eval-F245-2026-08-24",
+  "generatedAt": "2026-08-24T03:07:53.528Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no friction cluster surfaced in the selected window",
+    "evidence": "friction-rollup/cluster_count"
+  }
+}

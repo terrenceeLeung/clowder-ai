@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-24-eval-friction-empty-insufficient-three-day-window",
+  "domainId": "eval:friction",
+  "createdAt": "2026-08-24T03:07:14.000Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F245",
+    "componentId": "friction-rollup",
+    "name": "friction rollup (Top-N + sensorForm)"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F245",
+    "targetOwnerCatId": "opus-47",
+    "requestedAction": "Keep the every-3d friction eval running, preserve the keep_observe stance for zero-count degraded windows, and only escalate when a future window surfaces actionable/reference-only clusters or a non-degraded closed-window capture with cancel opportunity materially changes the measurement-validity decision."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-27T03:00:00.000Z",
+    "closureCondition": "A future every-3d window either remains quiet with materially stronger measurement validity or surfaces a non-zero cluster/actionable candidate that changes the verdict direction."
+  },
+  "schemaVersion": 1
+}
