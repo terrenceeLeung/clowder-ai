@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-08-24-eval-task-outcome-d50-gated-observation",
+  "windowStartMs": 1787454000000,
+  "windowEndMs": 1787540400000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}

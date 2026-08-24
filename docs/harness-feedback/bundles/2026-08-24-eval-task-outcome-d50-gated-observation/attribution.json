@@ -1,0 +1,11 @@
+{
+  "verdictId": "2026-08-24-eval-task-outcome-d50-gated-observation",
+  "featureId": "F192",
+  "evalSnapshotId": "eval-F192-2026-08-24",
+  "generatedAt": "2026-08-24T03:01:53.632Z",
+  "findings": [],
+  "noFindingRecord": {
+    "reason": "no actionable task-outcome finding exceeded threshold in the selected window",
+    "evidence": "Phase-G-v0/episodes_total"
+  }
+}

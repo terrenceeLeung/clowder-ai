@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-24-eval-task-outcome-d50-gated-observation",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-24-eval-task-outcome-d50-gated-observation/raw/episodes.json",
+      "sha256": "2dca9648b8c431d43fda41986ca84c1654414fd9b99c021800e1d3aac3f178ed"
+    }
+  ],
+  "generatedAt": "2026-08-24T03:01:53.632Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
