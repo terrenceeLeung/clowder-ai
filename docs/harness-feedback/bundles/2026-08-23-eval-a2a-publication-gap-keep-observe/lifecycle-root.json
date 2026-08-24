@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-23-eval-a2a-publication-gap-keep-observe",
+  "domainId": "eval:a2a",
+  "createdAt": "2026-08-23T03:06:13Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F167",
+    "componentId": "f167-runtime-eval-publication-validity",
+    "name": "A2A runtime eval publication validity and guard telemetry"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F167",
+    "targetOwnerCatId": "opus-47",
+    "requestedAction": "Keep observing eval:a2a; do not open a F167 code fix from this packet. Re-check sourceRefs prewrite, F267 canonical baseline visibility, and the C2 sample after the measurement gate is usable."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-26T03:06:13Z",
+    "closureCondition": "Within the next 72h eval window, keep zero-tolerance F167 metrics at 0, preserve daily single-fire with legacy scheduled tasks disabled, and either restore sourceRefs prewrite plus canonical F267 visibility or keep publication-gap verdicts evidence-only."
+  },
+  "schemaVersion": 1
+}

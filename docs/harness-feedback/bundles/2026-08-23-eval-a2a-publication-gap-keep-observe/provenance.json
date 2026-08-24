@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-23-eval-a2a-publication-gap-keep-observe",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-08-23-f167-a2a-snapshot.yaml",
+      "sha256": "8ad06ad7f7a99036e8370e8d15c587a078a7d0d2b9dcd7e589899f8b6daf2b17"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-08-23-f167-a2a-attribution.yaml",
+      "sha256": "bd84ad699e70af72d74b680a8d0da98c2aff689eef3fec9abc610651e2217a50"
+    }
+  ],
+  "generatedAt": "2026-08-23T03:06:13Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
