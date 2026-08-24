@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-24-eval-task-outcome-d50-gated-observation",
+  "domainId": "eval:task-outcome",
+  "createdAt": "2026-08-24T03:12:00.000Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F192",
+    "componentId": "eval:task-outcome-collector",
+    "name": "Task Outcome Signal Collector"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F192",
+    "targetOwnerCatId": "opus-47",
+    "requestedAction": "Two asks. (1) Investigate F275 measurement bundle evidence prerequisite for eval:task-outcome — what artifacts need to be committed to lift keep_observe_only gate? (2) Independently investigate real-time collector regression: check ingest process, audit stuck in_progress lifecycle, restore streaming capture. Both require co-creator authority (governance + process/config)."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-25T03:00:00Z",
+    "closureCondition": "Two closures needed: (a) F275 gate lifted (bundle evidence committed) allowing verdict severity to match observation; (b) new real-time signal captured OR stuck in_progress episodes transition."
+  },
+  "schemaVersion": 1
+}

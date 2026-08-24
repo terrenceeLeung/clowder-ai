@@ -1,13 +1,13 @@
 kind: f267-measurement-bundle-census
 schemaVersion: 2
-generatedAt: 2026-08-23T03:11:14Z
+generatedAt: 2026-08-24T03:12:00.000Z
 sources:
   registryDir: docs/harness-feedback/eval-domains
   instructionMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#DOMAIN_INSTRUCTIONS
   publishMap: packages/api/src/infrastructure/harness-eval/eval-cat-invocation.ts#PUBLISH_VERDICT_INSTRUCTIONS_BY_DOMAIN
   verdictDir: docs/harness-feedback/verdicts
-verdictCorpusHash: 96806bebc736b730d8958673575d7b23a6a4b232d4b1e554d7526c8d1628f1ff
-committedVerdictArtifactCount: 8
+verdictCorpusHash: 812448143a93bbd8eeda10eaf375a828640981178eb296ced573cc8d3012b398
+committedVerdictArtifactCount: 9
 entries:
   - domainId: eval:a2a
     classification: active_decision_bearing
@@ -285,7 +285,7 @@ entries:
     sourceSelector:
       adapter: task-outcome-eval
       kind: task-outcome-snapshot
-    committedVerdictArtifactCount: 0
+    committedVerdictArtifactCount: 1
     functionalEquivalents:
       - task-outcome-eval
       - task-outcome-snapshot
