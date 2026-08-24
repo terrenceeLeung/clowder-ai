@@ -1,0 +1,25 @@
+{
+  "verdictId": "2026-08-24-eval-friction-empty-insufficient-three-day-window",
+  "evalSnapshotId": "eval-F245-2026-08-24",
+  "featureId": "F245",
+  "generatedAt": "2026-08-24T03:07:53.528Z",
+  "window": {
+    "startMs": 1787281200000,
+    "endMs": 1787540400000,
+    "durationHours": 72
+  },
+  "components": [
+    {
+      "id": "friction-rollup",
+      "name": "friction rollup (Top-N + sensorForm)",
+      "confidence": "low",
+      "activationCounts": {},
+      "frictionCounts": {
+        "cluster_count": 0,
+        "top_cluster_count": 0,
+        "tail_cluster_count": 0,
+        "tail_signal_count": 0
+      }
+    }
+  ]
+}

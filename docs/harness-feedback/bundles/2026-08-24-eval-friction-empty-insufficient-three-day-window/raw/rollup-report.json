@@ -1,0 +1,39 @@
+{
+  "verdictId": "2026-08-24-eval-friction-empty-insufficient-three-day-window",
+  "selector": {
+    "kind": "friction-rollup-snapshot",
+    "windowStartMs": 1787281200000,
+    "windowEndMs": 1787540400000,
+    "topN": 10,
+    "tokenCap": 4000
+  },
+  "window": {
+    "sinceMs": 1787281200000,
+    "untilMs": 1787540400000
+  },
+  "signalCount": 0,
+  "clusterCount": 0,
+  "degraded": true,
+  "droppedChannels": [],
+  "report": {
+    "window": {
+      "sinceMs": 1787281200000,
+      "untilMs": 1787540400000
+    },
+    "generatedAt": "2026-08-24T03:07:53.528Z",
+    "topClusters": [],
+    "actionableCandidates": [],
+    "referenceOnly": [],
+    "tailSummary": {
+      "clusterCount": 0,
+      "signalCount": 0,
+      "byChannel": {}
+    },
+    "degraded": true,
+    "droppedChannels": [],
+    "tokenBudget": {
+      "cap": 4000,
+      "estimated": 78
+    }
+  }
+}

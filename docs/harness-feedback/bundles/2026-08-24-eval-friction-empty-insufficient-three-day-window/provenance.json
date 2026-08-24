@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-24-eval-friction-empty-insufficient-three-day-window",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-24-eval-friction-empty-insufficient-three-day-window/raw/rollup-report.json",
+      "sha256": "c2079c489307ce15a643e0916dfa69bf62fc05036d9d08ed8b3c34c9de00c62c"
+    },
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-24-eval-friction-empty-insufficient-three-day-window/raw/measurement-validity.json",
+      "sha256": "4f0a79e599b12fa7d11fd751d114bbdcb517efb9c3232a372e2f96fe9502843b"
+    }
+  ],
+  "generatedAt": "2026-08-24T03:07:53.528Z",
+  "generator": {
+    "name": "eval-friction-live-verdict",
+    "version": "2"
+  },
+  "sanitizeRulesVersion": "f267-friction-measurement-v1"
+}
