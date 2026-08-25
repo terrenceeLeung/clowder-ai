@@ -1,0 +1,10 @@
+{
+  "verdictId": "2026-08-25-eval-task-outcome-d51-continued-gap",
+  "windowStartMs": 1787540400000,
+  "windowEndMs": 1787626800000,
+  "taskOutcomeDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/task-outcome-episodes.sqlite",
+  "eventMemoryDbPath": "/Users/tianyiliang/projects/cat-cafe-runtime/event-memory.sqlite",
+  "episodes": [],
+  "signals": [],
+  "eventRows": []
+}

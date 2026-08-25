@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-25-eval-task-outcome-d51-continued-gap",
+  "domainId": "eval:task-outcome",
+  "createdAt": "2026-08-25T03:05:00.000Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F192",
+    "componentId": "eval:task-outcome-collector",
+    "name": "Task Outcome Signal Collector"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F192",
+    "targetOwnerCatId": "opus-47",
+    "requestedAction": "No new asks this cycle. Day 50 asks (F275 unlock path + real-time collector repair) remain open. Continue daily gated observation until either signal (a) new signal appears, (b) stuck in_progress transitions, (c) gate lifts."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-26T03:00:00Z",
+    "closureCondition": "Any of: (a) new real-time signal captured, (b) any stuck in_progress transitions to terminal, (c) F275 gate lifts allowing fix verdict, (d) explicit co-creator direction on either dimension."
+  },
+  "schemaVersion": 1
+}
