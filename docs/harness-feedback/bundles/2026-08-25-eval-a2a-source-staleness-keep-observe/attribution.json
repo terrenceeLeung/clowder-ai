@@ -1,0 +1,96 @@
+{
+  "verdictId": "2026-08-25-eval-a2a-source-staleness-keep-observe",
+  "featureId": "F167",
+  "evalSnapshotId": "eval-F167-2026-08-25",
+  "generatedAt": "2026-08-25T03:03:17Z",
+  "findings": [
+    {
+      "id": "f167-eval-a2a-raw-source-stale-after-recovered-cron",
+      "relatedFeature": "F167",
+      "frictionSignal": {
+        "type": "eval_loop_publication_validity_gap",
+        "severity": "high",
+        "confidence": 0.88
+      },
+      "attribution": {
+        "primaryLayer": "eval-domain-scheduler",
+        "pipelineOrHuman": "eval-domain-daily-runtime",
+        "evidence": [
+          {
+            "type": "counter",
+            "anchor": "eval-domain-daily/eval_domain_daily.eval_a2a_runs_per_day",
+            "excerpt": "task_run_ledger id 668794 shows eval-domain-daily/eval:a2a RUN_DELIVERED once at 2026-08-25T02:59:59.940Z; 2026-08-24 also delivered once, extending the recovered streak since 2026-08-21 to five runs."
+          },
+          {
+            "type": "counter",
+            "anchor": "eval-domain-daily/legacy.task_run_ledger.harness_fit_digest_runs",
+            "excerpt": "Legacy duplicate trigger status remains disabled: dynamic_task_defs has 0 harness-fit-digest definitions and task_run_ledger has 0 harness-fit-digest runs."
+          },
+          {
+            "type": "counter",
+            "anchor": "source-ref-prewrite/source_refs.prewritten_source_refs_missing_in_2026_08_25_invocation",
+            "excerpt": "The 2026-08-25 scheduled callback included no sourceRefs, and docs/harness-feedback has no 2026-08-25 f167-a2a raw snapshot or attribution before this eval-cat write."
+          },
+          {
+            "type": "counter",
+            "anchor": "source-ref-prewrite/source_refs.raw_2026_08_24_source_refs_missing",
+            "excerpt": "The prior delivered eval:a2a run on 2026-08-24 also has no f167-a2a raw snapshot or attribution files under docs/harness-feedback, so the latest existing raw source remains 2026-08-23."
+          },
+          {
+            "type": "counter",
+            "anchor": "f267-measurement-baseline/f267.eval_a2a_action_gate_keep_observe_only",
+            "excerpt": "origin/main contains PR #207 merge commit 904f0824c09390e13ea9b92726c9d73534162874; the current measurement census still keeps eval:a2a under actionGate=keep_observe_only with a canonical measurement bundle hard block."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "fresh-f167-telemetry-source/telemetry.counter_window_missing",
+            "excerpt": "No fresh 2026-08-25 raw snapshot exists, so no counter_window.duration_hours is available for this run; shell access to http://127.0.0.1:3006/api/telemetry/metrics returns 401 Session required."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "grounding-phase-o/telemetry.grounding_phase_o_no_fresh_source",
+            "excerpt": "Grounding Phase O cannot be freshly evaluated for 2026-08-25 because the eval:a2a invocation did not provide sourceRefs and no raw F153 snapshot was prewritten."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "hold-lifecycle-phase-q/telemetry.hold_lifecycle_phase_q_no_fresh_source",
+            "excerpt": "Phase Q hold lifecycle counters cannot be freshly evaluated for 2026-08-25 because the eval:a2a invocation did not provide sourceRefs and no raw F153 snapshot was prewritten."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "event-backed-routing-exit/telemetry.event_backed_routing_exit_no_fresh_source",
+            "excerpt": "Event-backed routing exit counters cannot be freshly evaluated for 2026-08-25 because the eval:a2a invocation did not provide sourceRefs and no raw F153 snapshot was prewritten."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "action-successor-single-flight/telemetry.action_successor_no_fresh_source",
+            "excerpt": "Action successor carrier migration counters cannot be freshly evaluated for 2026-08-25 because the eval:a2a invocation did not provide sourceRefs and no raw F153 snapshot was prewritten."
+          },
+          {
+            "type": "telemetry-gap",
+            "anchor": "turn-custody-stop-gate/telemetry.turn_custody_stop_gate_no_fresh_source",
+            "excerpt": "Turn custody stop-gate counters cannot be freshly evaluated for 2026-08-25 because the eval:a2a invocation did not provide sourceRefs and no raw F153 snapshot was prewritten."
+          }
+        ]
+      },
+      "proposedAction": [
+        {
+          "action": "keep_observe_until_fresh_source_refs_restored",
+          "target": "eval:a2a verdict lane",
+          "rationale": "F267 measurement validity still gates eval:a2a to keep_observe_only, so this source-staleness observation should not become a F167 fix/build/delete_sunset verdict."
+        },
+        {
+          "action": "restore_or_replace_source_ref_prewrite",
+          "target": "src/infrastructure/harness-eval/domain/eval-domain-daily.ts",
+          "rationale": "The scheduler fires, but raw F167 sourceRefs are not prewritten before invoking the eval cat; without them, counter_window and zero-tolerance guard telemetry cannot be evaluated from the current run."
+        },
+        {
+          "action": "provide_authenticated_runtime_source_or_prewrite",
+          "target": "F153 telemetry source adapter for eval:a2a",
+          "rationale": "If the cron path cannot prewrite, the eval invocation needs an authenticated source path; unauthenticated shell probes to the live API return 401 Session required."
+        }
+      ],
+      "status": "open"
+    }
+  ]
+}
