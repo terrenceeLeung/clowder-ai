@@ -1,0 +1,15 @@
+{
+  "verdictId": "2026-08-25-eval-task-outcome-d51-continued-gap",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/bundles/2026-08-25-eval-task-outcome-d51-continued-gap/raw/episodes.json",
+      "sha256": "bd32c0afea52566fe0fff6e9d19b28b69d22e71a6b16fe2c2a23b6010e6352da"
+    }
+  ],
+  "generatedAt": "2026-08-25T03:00:54.854Z",
+  "generator": {
+    "name": "eval-task-outcome-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-task-outcome-v1"
+}
