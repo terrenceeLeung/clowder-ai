@@ -1,0 +1,117 @@
+{
+  "verdictId": "2026-08-25-eval-a2a-source-staleness-keep-observe",
+  "evalSnapshotId": "eval-F167-2026-08-25",
+  "featureId": "F167",
+  "generatedAt": "2026-08-25T03:03:17Z",
+  "window": {
+    "startMs": 1787540399956,
+    "endMs": 1787626799940,
+    "durationHours": 23.999995555555557
+  },
+  "components": [
+    {
+      "id": "eval-domain-daily",
+      "name": "eval-domain-daily scheduled lane and legacy cleanup",
+      "confidence": "high",
+      "activationCounts": {
+        "eval_domain_daily.eval_a2a_runs_per_day": 1,
+        "eval_domain_daily.eval_a2a_ledger_row_id": 668794,
+        "eval_domain_daily.consecutive_recovered_days_since_2026_08_21": 5,
+        "eval_domain_daily.days_with_runs_since_2026_08_14": 6,
+        "eval_domain_daily.current_ledger_db_root_evidence_sqlite": 1
+      },
+      "frictionCounts": {
+        "eval_domain_daily.duplicate_runs_for_2026_08_25": 0,
+        "eval_domain_daily.eval_a2a_missing_days_since_2026_08_14": 6,
+        "legacy.dynamic_task_defs.harness_fit_digest_enabled": 0,
+        "legacy.task_run_ledger.harness_fit_digest_runs": 0
+      }
+    },
+    {
+      "id": "source-ref-prewrite",
+      "name": "scheduled sourceRefs prewrite contract",
+      "confidence": "high",
+      "activationCounts": {
+        "source_refs.publish_contract_present": 1,
+        "source_refs.pr207_evidence_verdict_merged": 1,
+        "source_refs.origin_main_contains_pr207_merge": 1
+      },
+      "frictionCounts": {
+        "source_refs.prewritten_source_refs_missing_in_2026_08_25_invocation": 1,
+        "source_refs.raw_2026_08_25_source_refs_missing_before_eval_cat_write": 1,
+        "source_refs.raw_2026_08_24_source_refs_missing": 1,
+        "source_refs.days_since_latest_raw_f167_a2a_evidence": 2
+      }
+    },
+    {
+      "id": "f267-measurement-baseline",
+      "name": "F267 measurement baseline action gate",
+      "confidence": "high",
+      "activationCounts": {
+        "f267.origin_main_measurement_bundles_yaml_present": 1,
+        "f267.origin_main_committed_verdict_artifact_count": 10,
+        "f267.eval_a2a_committed_verdict_artifact_count": 4
+      },
+      "frictionCounts": {
+        "f267.eval_a2a_action_gate_keep_observe_only": 1,
+        "f267.eval_a2a_canonical_measurement_bundle_hard_block": 1
+      }
+    },
+    {
+      "id": "fresh-f167-telemetry-source",
+      "name": "fresh F167 runtime telemetry source availability",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.fresh_f167_raw_snapshot_missing": 1,
+        "telemetry.counter_window_missing": 1,
+        "telemetry.current_shell_telemetry_requires_session": 1
+      }
+    },
+    {
+      "id": "grounding-phase-o",
+      "name": "claim grounding (Phase O shadow)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.grounding_phase_o_no_fresh_source": 1
+      }
+    },
+    {
+      "id": "hold-lifecycle-phase-q",
+      "name": "hold lifecycle (Phase Q event-backed retirement)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.hold_lifecycle_phase_q_no_fresh_source": 1
+      }
+    },
+    {
+      "id": "event-backed-routing-exit",
+      "name": "routing guard (verified event-backed exit)",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.event_backed_routing_exit_no_fresh_source": 1
+      }
+    },
+    {
+      "id": "action-successor-single-flight",
+      "name": "action successor single-flight guard",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.action_successor_no_fresh_source": 1
+      }
+    },
+    {
+      "id": "turn-custody-stop-gate",
+      "name": "turn-scoped custody stop gate",
+      "confidence": "no-data",
+      "activationCounts": {},
+      "frictionCounts": {
+        "telemetry.turn_custody_stop_gate_no_fresh_source": 1
+      }
+    }
+  ]
+}

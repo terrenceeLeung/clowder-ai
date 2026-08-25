@@ -1,0 +1,21 @@
+{
+  "verdictId": "2026-08-25-eval-a2a-source-staleness-keep-observe",
+  "domainId": "eval:a2a",
+  "createdAt": "2026-08-25T03:03:17Z",
+  "verdict": "keep_observe",
+  "harnessUnderEval": {
+    "featureId": "F167",
+    "componentId": "f167-eval-source-ref-prewrite",
+    "name": "A2A eval sourceRefs prewrite and fresh guard telemetry availability"
+  },
+  "ownerAsk": {
+    "targetFeatureId": "F167",
+    "targetOwnerCatId": "opus-47",
+    "requestedAction": "Keep observing eval:a2a; do not open a F167 fix/build from this packet. Verify the sourceRefs prewrite or authenticated telemetry source path before treating future zero-tolerance guard metrics as fresh evidence."
+  },
+  "acceptanceReevalPlan": {
+    "nextEvalAt": "2026-08-28T03:03:17Z",
+    "closureCondition": "Within the next 72h eval window, eval:a2a either prewrites fresh raw sourceRefs with counter_window.duration_hours and guard subdomain counters, or records an explicit skipped/no-source status while legacy harness-fit-digest remains disabled."
+  },
+  "schemaVersion": 1
+}

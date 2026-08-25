@@ -1,0 +1,19 @@
+{
+  "verdictId": "2026-08-25-eval-a2a-source-staleness-keep-observe",
+  "rawInputs": [
+    {
+      "path": "docs/harness-feedback/snapshots/2026-08-25-f167-a2a-snapshot.yaml",
+      "sha256": "7fed034de26ecc2c6346e2aac0012b4f8c74b3ee11e29de88d383f9e046eb42d"
+    },
+    {
+      "path": "docs/harness-feedback/attributions/2026-08-25-f167-a2a-attribution.yaml",
+      "sha256": "cbaed069a15bacf9e528c49abf71a79cdb47c3ccf009e4f5622288801f88eb3a"
+    }
+  ],
+  "generatedAt": "2026-08-25T03:03:17Z",
+  "generator": {
+    "name": "eval-a2a-live-verdict",
+    "version": "1"
+  },
+  "sanitizeRulesVersion": "f192-e-pilot-v1"
+}
